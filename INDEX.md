@@ -1,8 +1,8 @@
 # 📖 Документация КММ Project MKS - Указатель
 
-**Версия:** 1.0 Consolidated + Nginx Reverse Proxy  
-**Дата обновления:** 10 января 2026  
-**Статус:** ✅ Production Ready с Nginx
+**Версия:** 1.1 Full Docker Compose Setup  
+**Дата обновления:** 25 января 2026  
+**Статус:** ✅ Production Ready с полной Docker оркестрацией
 
 ---
 
@@ -10,11 +10,24 @@
 
 ### 🚀 Начните отсюда
 
-| Документ                                                 | Для кого           | Время чтения |
-| -------------------------------------------------------- | ------------------ | ------------ |
-| **[README.md](README.md)** ⭐ НОВОЕ                      | Все разработчики   | 15 минут     |
-| **[QUICKSTART.md](QUICKSTART.md)** ⭐ НОВОЕ              | Новые разработчики | 10 минут     |
-| **[DOCKER_COMPOSE_README.md](DOCKER_COMPOSE_README.md)** | DevOps / Backend   | 10 минут     |
+| Документ                                                      | Для кого           | Время чтения |
+| ------------------------------------------------------------- | ------------------ | ------------ |
+| **[README.md](README.md)** ⭐                                 | Все разработчики   | 15 минут     |
+| **[QUICKSTART.md](QUICKSTART.md)** ⭐                         | Новые разработчики | 10 минут     |
+| **[DOCKER_SETUP_SUMMARY.md](DOCKER_SETUP_SUMMARY.md)** ⭐ NEW | DevOps / Backend   | 5 минут      |
+| **[DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md)** ⭐ NEW | DevOps / Backend   | 15 минут     |
+
+### 🐳 Docker & Deployment
+
+| Документ                                                      | Содержание                                          |
+| ------------------------------------------------------------- | --------------------------------------------------- |
+| **[docker-compose.yml](docker-compose.yml)** ⭐ NEW           | Полная конфигурация всех 22 сервисов                |
+| **[docker-compose.prod.yml](docker-compose.prod.yml)** ⭐ NEW | Production конфигурация с resource limits и logging |
+| **[DOCKER_SETUP_SUMMARY.md](DOCKER_SETUP_SUMMARY.md)** ⭐ NEW | Краткая сводка реализации Docker Compose            |
+| **[DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md)** ⭐ NEW | Полное руководство по использованию Docker Compose  |
+| **[scripts/init-db.sql](scripts/init-db.sql)** ⭐ NEW         | Скрипт инициализации PostgreSQL схем                |
+| **[.env.example](.env.example)** ⭐ NEW                       | Шаблон переменных окружения                         |
+| **[Makefile](Makefile)** (обновлен)                           | Команды для управления Docker Compose               |
 
 ### 📡 API и Интеграция
 
@@ -31,12 +44,12 @@
 
 ### 🔐 Безопасность
 
-| Документ                                                                              | Содержание                                                  |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **[SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md)**                          | JWT, encryption, OWASP compliance, password management      |
-| **[JWT_SECRET_ROTATION_IMPLEMENTATION.md](JWT_SECRET_ROTATION_IMPLEMENTATION.md)**    | Автоматическая смена JWT ключей, rotation strategy          |
-| **[services/nginx-proxy/README.md](./services/nginx-proxy/README.md)** ⭐ НОВОЕ       | Nginx reverse proxy, rate limiting, SSL/TLS config          |
-| **[services/nginx-proxy/SSL-SETUP.md](./services/nginx-proxy/SSL-SETUP.md)** ⭐ НОВОЕ | HTTPS настройка, Let's Encrypt, самоподписанные сертифікаты |
+| Документ                                                                           | Содержание                                                  |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **[SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md)**                       | JWT, encryption, OWASP compliance, password management      |
+| **[JWT_SECRET_ROTATION_IMPLEMENTATION.md](JWT_SECRET_ROTATION_IMPLEMENTATION.md)** | Автоматическая смена JWT ключей, rotation strategy          |
+| **[services/nginx-proxy/README.md](./services/nginx-proxy/README.md)**             | Nginx reverse proxy, rate limiting, SSL/TLS config          |
+| **[services/nginx-proxy/SSL-SETUP.md](./services/nginx-proxy/SSL-SETUP.md)**       | HTTPS настройка, Let's Encrypt, самоподписанные сертификаты |
 
 ### 📊 Производительность и Тестирование
 

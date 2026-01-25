@@ -1,4 +1,4 @@
-.PHONY: help build run stop clean dev-up dev-down prod-up prod-down logs test docker-build docker-push
+.PHONY: help build run stop clean dev-up dev-down prod-up prod-down logs test docker-build docker-push docker-up docker-down docker-logs docker-ps docker-restart docker-clean
 
 # Variables
 IMAGE_NAME := user-server
@@ -8,6 +8,122 @@ DOCKER_REGISTRY := # Set your registry here, e.g., ghcr.io/username
 help: ## Show this help
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
+
+# ===================================
+# Docker Compose Commands
+# ===================================
+
+docker-up: ## Start all services with docker-compose
+	docker compose up -d
+
+docker-down: ## Stop all services
+	docker compose down
+
+docker-down-volumes: ## Stop all services and remove volumes
+	docker compose down -v
+
+docker-build-all: ## Build all Docker images
+	docker compose build
+
+docker-build-no-cache: ## Build all Docker images without cache
+	docker compose build --no-cache
+
+docker-ps: ## Show running containers status
+	docker compose ps
+
+docker-logs: ## Show logs from all services
+	docker compose logs -f
+
+docker-logs-api: ## Show API Gateway logs
+	docker compose logs -f api-gateway
+
+docker-logs-nginx: ## Show Nginx logs
+	docker compose logs -f nginx-proxy
+
+docker-logs-postgres: ## Show PostgreSQL logs
+	docker compose logs -f postgres
+
+docker-logs-redis: ## Show Redis logs
+	docker compose logs -f redis
+
+docker-logs-rabbitmq: ## Show RabbitMQ logs
+	docker compose logs -f rabbitmq
+
+docker-restart: ## Restart all services
+	docker compose restart
+
+docker-restart-service: ## Restart specific service (usage: make docker-restart-service SERVICE=api-gateway)
+	docker compose restart $(SERVICE)
+
+docker-clean: ## Remove all stopped containers, networks, and volumes
+	docker compose down -v
+	docker system prune -f
+
+docker-health: ## Check health of all services
+	@echo "=== Service Health Status ==="
+	@docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.State}}"
+
+docker-stats: ## Show resource usage statistics
+	docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+
+# ===================================
+# Production Compose
+# ===================================
+
+prod-up: ## Start production stack
+	docker compose -f docker-compose.prod.yml up -d
+
+prod-down: ## Stop production stack
+	docker compose -f docker-compose.prod.yml down
+
+prod-logs: ## Show production logs
+	docker compose -f docker-compose.prod.yml logs -f
+
+prod-build: ## Build production images
+	docker compose -f docker-compose.prod.yml build
+
+prod-restart: ## Restart production stack
+	docker compose -f docker-compose.prod.yml restart
+
+# ===================================
+# Infrastructure Only
+# ===================================
+
+infra-up: ## Start only infrastructure services (postgres, redis, rabbitmq)
+	docker compose up -d postgres redis rabbitmq
+
+infra-down: ## Stop infrastructure services
+	docker compose stop postgres redis rabbitmq
+
+# ===================================
+# Monitoring
+# ===================================
+
+monitoring-up: ## Start monitoring services (prometheus, grafana, jaeger)
+	docker compose up -d prometheus grafana jaeger
+
+monitoring-down: ## Stop monitoring services
+	docker compose stop prometheus grafana jaeger
+
+# ===================================
+# Individual Services
+# ===================================
+
+start-user-server: ## Start user-server
+	docker compose up -d user-server
+
+start-catalog-server: ## Start catalog-server
+	docker compose up -d catalog-server
+
+start-invoice-server: ## Start invoice-server
+	docker compose up -d invoice-server
+
+start-api-gateway: ## Start api-gateway
+	docker compose up -d api-gateway
+
+# ===================================
+# Local Build & Run
+# ===================================
 
 build: ## Build the Go binary locally
 	go build -v -o bin/user-server ./cmd/main.go

@@ -35,7 +35,7 @@ func (h *DocumentHandlerWithTracing) GetDocument(ctx context.Context, req *pb.Ge
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	if req.DocumentId == "" {
 		h.metrics.RecordValidationError()
@@ -59,7 +59,7 @@ func (h *DocumentHandlerWithTracing) CreateDocument(ctx context.Context, req *pb
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateCreateDocumentRequest(
@@ -105,7 +105,7 @@ func (h *DocumentHandlerWithTracing) UpdateDocument(ctx context.Context, req *pb
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	validationErrors := document.ValidateUpdateDocumentRequest(req.Id, req.Title, req.Content)
 	if len(validationErrors) > 0 {
@@ -142,7 +142,7 @@ func (h *DocumentHandlerWithTracing) SendDocument(ctx context.Context, req *pb.S
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	validationErrors := document.ValidateSendDocumentRequest(req.DocumentId, req.RecipientId, req.Message)
 	if len(validationErrors) > 0 {
@@ -179,7 +179,7 @@ func (h *DocumentHandlerWithTracing) ListDocuments(ctx context.Context, req *pb.
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	validationErrors := document.ValidateListDocumentsRequest(req.OrganizationId, int(req.Page), int(req.PerPage))
 	if len(validationErrors) > 0 {
@@ -218,7 +218,7 @@ func (h *DocumentHandlerWithTracing) ApproveDocument(ctx context.Context, req *p
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	validationErrors := document.ValidateApproveDocumentRequest(req.DocumentId, req.ApprovedBy)
 	if len(validationErrors) > 0 {
@@ -256,7 +256,7 @@ func (h *DocumentHandlerWithTracing) RejectDocument(ctx context.Context, req *pb
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	validationErrors := document.ValidateRejectDocumentRequest(req.DocumentId, req.RejectedBy, req.Reason)
 	if len(validationErrors) > 0 {
@@ -294,7 +294,7 @@ func (h *DocumentHandlerWithTracing) ArchiveDocument(ctx context.Context, req *p
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	if err := h.service.ArchiveDocumentWithTracing(ctx, req.DocumentId); err != nil {
 		h.logger.Error("Failed to archive document",

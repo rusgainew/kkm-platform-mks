@@ -34,7 +34,9 @@ func (h *DocumentHandler) GetDocument(ctx context.Context, req *pb.GetDocumentRe
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() {
+		h.metrics.RecordRequestDuration(time.Since(start))
+	}()
 
 	if req.DocumentId == "" {
 		h.metrics.RecordValidationError()
@@ -58,7 +60,9 @@ func (h *DocumentHandler) CreateDocument(ctx context.Context, req *pb.CreateDocu
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() {
+		h.metrics.RecordRequestDuration(time.Since(start))
+	}()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateCreateDocumentRequest(
@@ -104,7 +108,9 @@ func (h *DocumentHandler) UpdateDocument(ctx context.Context, req *pb.UpdateDocu
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() {
+		h.metrics.RecordRequestDuration(time.Since(start))
+	}()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateUpdateDocumentRequest(
@@ -146,7 +152,9 @@ func (h *DocumentHandler) SendDocument(ctx context.Context, req *pb.SendDocument
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() {
+		h.metrics.RecordRequestDuration(time.Since(start))
+	}()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateSendDocumentRequest(
@@ -189,7 +197,7 @@ func (h *DocumentHandler) ApproveDocument(ctx context.Context, req *pb.ApproveDo
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateApproveDocumentRequest(
@@ -232,7 +240,7 @@ func (h *DocumentHandler) RejectDocument(ctx context.Context, req *pb.RejectDocu
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateRejectDocumentRequest(
@@ -275,7 +283,7 @@ func (h *DocumentHandler) ArchiveDocument(ctx context.Context, req *pb.ArchiveDo
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateArchiveDocumentRequest(req.DocumentId)
@@ -316,7 +324,7 @@ func (h *DocumentHandler) ListDocuments(ctx context.Context, req *pb.ListDocumen
 	start := time.Now()
 	h.metrics.IncActiveRequests()
 	defer h.metrics.DecActiveRequests()
-	defer h.metrics.RecordRequestDuration(time.Since(start))
+	defer func() { h.metrics.RecordRequestDuration(time.Since(start)) }()
 
 	// Валидация входных параметров
 	validationErrors := document.ValidateListDocumentsRequest(

@@ -1,0 +1,600 @@
+services:
+  # ===================================
+  # Infrastructure Services
+  # ===================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kkm_user
+      POSTGRES_PASSWORD: kkm_password
+      POSTGRES_DB: kkm_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kkm_user -d kkm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - kkm-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: kkm_user
+      RABBITMQ_DEFAULT_PASS: kkm_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - kkm-network
+
+  # ===================================
+  # Command Services (Write)
+  # ===================================
+
+  user-server:
+    build:
+      context: .
+      dockerfile: services/user-server/Dockerfile
+    container_name: user-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50051
+      METRICS_PORT: 9101
+    ports:
+      - "50051:50051"
+      - "9101:9101"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  company-server:
+    build:
+      context: .
+      dockerfile: services/company-server/Dockerfile
+    container_name: company-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50052
+      METRICS_PORT: 9103
+    ports:
+      - "50052:50052"
+      - "9103:9103"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  catalog-server:
+    build:
+      context: .
+      dockerfile: services/catalog-server/Dockerfile
+    container_name: catalog-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50053
+      METRICS_PORT: 9105
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
+    ports:
+      - "50053:50053"
+      - "9105:9105"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  invoice-server:
+    build:
+      context: .
+      dockerfile: services/invoice-server/Dockerfile
+    container_name: invoice-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50054
+      METRICS_PORT: 9107
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
+    ports:
+      - "50054:50054"
+      - "9107:9107"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  bank-account-server:
+    build:
+      context: .
+      dockerfile: services/bank-account-server/Dockerfile
+    container_name: bank-account-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50055
+      METRICS_PORT: 9109
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
+    ports:
+      - "50055:50055"
+      - "9109:9109"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  foreign-company-server:
+    build:
+      context: .
+      dockerfile: services/foreign-company-server/Dockerfile
+    container_name: foreign-company-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50056
+      METRICS_PORT: 9111
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
+    ports:
+      - "50056:50056"
+      - "9111:9111"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  document-server:
+    build:
+      context: .
+      dockerfile: services/document-server/Dockerfile
+    container_name: document-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      GRPC_PORT: 50057
+      METRICS_PORT: 9113
+    ports:
+      - "50057:50057"
+      - "9113:9113"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  # ===================================
+  # Query Services (Read - CQRS)
+  # ===================================
+
+  user-query-server:
+    build:
+      context: .
+      dockerfile: services/user-query-server/Dockerfile
+    container_name: user-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      GRPC_PORT: 50061
+      METRICS_PORT: 9102
+    ports:
+      - "50061:50061"
+      - "9102:9102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  catalog-query-server:
+    build:
+      context: .
+      dockerfile: services/catalog-query-server/Dockerfile
+    container_name: catalog-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/1
+      GRPC_PORT: 50063
+      METRICS_PORT: 9106
+    ports:
+      - "50063:50063"
+      - "9106:9106"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  invoice-query-server:
+    build:
+      context: .
+      dockerfile: services/invoice-query-server/Dockerfile
+    container_name: invoice-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/2
+      GRPC_PORT: 50064
+      METRICS_PORT: 9108
+    ports:
+      - "50064:50064"
+      - "9108:9108"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  bank-account-query-server:
+    build:
+      context: .
+      dockerfile: services/bank-account-query-server/Dockerfile
+    container_name: bank-account-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/3
+      GRPC_PORT: 50065
+      METRICS_PORT: 9110
+    ports:
+      - "50065:50065"
+      - "9110:9110"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  # foreign-company-query-server:
+  #   build:
+  #     context: .
+  #     dockerfile: services/foreign-company-query-server/Dockerfile
+  #   container_name: foreign-company-query-server
+  #   restart: unless-stopped
+  #   environment:
+  #     DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+  #     REDIS_URL: redis://redis:6379/4
+  #     GRPC_PORT: 50066
+  #     METRICS_PORT: 9112
+  #   ports:
+  #     - "50066:50066"
+  #     - "9112:9112"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - kkm-network
+
+  document-query-server:
+    build:
+      context: .
+      dockerfile: services/document-query-server/Dockerfile
+    container_name: document-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/5
+      GRPC_PORT: 50067
+      METRICS_PORT: 9114
+    ports:
+      - "50067:50067"
+      - "9114:9114"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  # ===================================
+  # API Gateway
+  # ===================================
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      HTTP_PORT: 8080
+      GRPC_PORT: 9090
+      USER_SERVICE_URL: user-server:50051
+      USER_QUERY_SERVICE_URL: user-query-server:50061
+      COMPANY_SERVICE_URL: company-server:50052
+      CATALOG_SERVICE_URL: catalog-server:50053
+      CATALOG_QUERY_SERVICE_URL: catalog-query-server:50063
+      INVOICE_SERVICE_URL: invoice-server:50054
+      INVOICE_QUERY_SERVICE_URL: invoice-query-server:50064
+      BANK_ACCOUNT_SERVICE_URL: bank-account-server:50055
+      BANK_ACCOUNT_QUERY_SERVICE_URL: bank-account-query-server:50065
+      FOREIGN_COMPANY_SERVICE_URL: foreign-company-server:50056
+      # FOREIGN_COMPANY_QUERY_SERVICE_URL: foreign-company-query-server:50066
+      DOCUMENT_SERVICE_URL: document-server:50057
+      DOCUMENT_QUERY_SERVICE_URL: document-query-server:50067
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    depends_on:
+      - user-server
+      - user-query-server
+      - company-server
+      - catalog-server
+      - catalog-query-server
+      - invoice-server
+      - invoice-query-server
+      - bank-account-server
+      - bank-account-query-server
+      - foreign-company-server
+      # - foreign-company-query-server
+      - document-server
+      - document-query-server
+    networks:
+      - kkm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Nginx Reverse Proxy
+  # ===================================
+
+  nginx-proxy:
+    build:
+      context: .
+      dockerfile: services/nginx-proxy/Dockerfile
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - kkm-network
+    volumes:
+      - ./services/nginx-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./services/nginx-proxy/certs:/etc/nginx/certs:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ===================================
+  # Frontend (Next.js)
+  # ===================================
+
+  kkm-platform:
+    build:
+      context: .
+      dockerfile: kkm-platform/Dockerfile
+    container_name: kkm-platform
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://nginx-proxy:80/api/v1
+    ports:
+      - "4000:4000"
+    depends_on:
+      - nginx-proxy
+    networks:
+      - kkm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Monitoring & Observability
+  # ===================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - kkm-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_INSTALL_PLUGINS: ""
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana-dashboard-overview.json:/var/lib/grafana/dashboards/overview.json:ro
+      - ./monitoring/grafana-dashboard-detailed.json:/var/lib/grafana/dashboards/detailed.json:ro
+      - ./monitoring/grafana-dashboard-nginx.json:/var/lib/grafana/dashboards/nginx.json:ro
+    depends_on:
+      - prometheus
+    networks:
+      - kkm-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - kkm-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:14269/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ===================================
+# Networks
+# ===================================
+
+networks:
+  kkm-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===================================
+# Volumes
+# ===================================
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

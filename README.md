@@ -1,8 +1,8 @@
 # 🚀 KKM Project MKS - Микросервисная архитектура
 
-**Версия:** 1.0 Production Ready  
-**Дата обновления:** 10 января 2026  
-**Статус:** ✅ Полностью развёрнута с Nginx Reverse Proxy
+**Версия:** 1.1 Full Docker Compose  
+**Дата обновления:** 25 января 2026  
+**Статус:** ✅ Production Ready с полной Docker оркестрацией
 
 ---
 
@@ -10,6 +10,7 @@
 
 - [Архитектура](#архитектура)
 - [Быстрый старт](#быстрый-старт)
+- [Docker Compose](#docker-compose)
 - [Порты и сервисы](#порты-и-сервисы)
 - [API документация](#api-документация)
 - [Мониторинг](#мониторинг)
@@ -58,19 +59,20 @@
     └─────────────────────────┘
 ```
 
-### Компоненты
+### Компоненты (22 сервиса)
 
-| Компонент         | Порт        | Описание                                                                      |
-| ----------------- | ----------- | ----------------------------------------------------------------------------- |
-| **Nginx Proxy**   | 80, 443     | Reverse proxy, rate limiting, SSL/TLS                                         |
-| **API Gateway**   | 8080        | HTTP маршрутизатор → microservices                                            |
-| **Microservices** | 50051-50059 | gRPC сервисы (user, company, invoice, catalog, bank-account, foreign-company) |
-| **PostgreSQL**    | 5432        | Основная БД (6 схем)                                                          |
-| **Redis**         | 6379        | Кеш и сессии                                                                  |
-| **RabbitMQ**      | 5672        | Message broker (AMQP)                                                         |
-| **Prometheus**    | 9091        | Метрики                                                                       |
-| **Jaeger**        | 16686       | Трейсинг запросов                                                             |
-| **Grafana**       | 3000        | Визуализация метрик                                                           |
+| Компонент         | Порт        | Описание                                    |
+| ----------------- | ----------- | ------------------------------------------- |
+| **Nginx Proxy**   | 80, 443     | Reverse proxy, rate limiting, SSL/TLS       |
+| **API Gateway**   | 8080, 9090  | HTTP/gRPC маршрутизатор → microservices     |
+| **Frontend**      | 4000        | Next.js фронтенд приложение                 |
+| **Microservices** | 50051-50067 | 7 Command + 6 Query сервисов (CQRS pattern) |
+| **PostgreSQL**    | 5432        | Основная БД (7 схем)                        |
+| **Redis**         | 6379        | Кеш и сессии для Query сервисов             |
+| **RabbitMQ**      | 5672, 15672 | Message broker (AMQP) + Management UI       |
+| **Prometheus**    | 9091        | Сбор метрик со всех сервисов                |
+| **Jaeger**        | 16686       | Distributed tracing для gRPC                |
+| **Grafana**       | 3000        | Визуализация метрик и дашборды              |
 
 ---
 
@@ -80,21 +82,104 @@
 
 - Docker 20.10+
 - Docker Compose 2.0+
+- 4GB RAM свободно
 - Go 1.24+ (для локальной разработки)
-- curl или grpcurl (для тестирования)
 
-### 1️⃣ Запустить весь стек
+### 🚀 3 способа запуска
+
+#### Способ 1: Docker Compose (рекомендуется)
 
 ```bash
-# Перейти в корень проекта
-cd /path/to/kkm-project-mks
+# Запустить все 22 сервиса одной командой
+docker compose up -d
 
-# Запустить production stack с Nginx
-docker-compose -f docker-compose.prod.yml up -d
+# Проверить статус
+docker compose ps
 
-# Проверить статус контейнеров
-docker-compose -f docker-compose.prod.yml ps
+# Проверить health
+curl http://localhost/api/v1/health
 ```
+
+#### Способ 2: Makefile
+
+```bash
+# Запустить все
+make docker-up
+
+# Проверить здоровье
+make docker-health
+
+# Логи
+make docker-logs
+```
+
+#### Способ 3: Интерактивный менеджер
+
+```bash
+# Запустить интерактивное меню
+./docker-manager.sh
+```
+
+---
+
+## 🐳 Docker Compose
+
+### Полная конфигурация
+
+Проект включает полную Docker Compose конфигурацию для всех сервисов:
+
+📄 **Основные файлы:**
+
+- [docker-compose.yml](docker-compose.yml) - Полная конфигурация (22 сервиса)
+- [docker-compose.prod.yml](docker-compose.prod.yml) - Production версия
+- [.env.example](.env.example) - Шаблон переменных окружения
+
+📚 **Документация:**
+
+- [DOCKER_SETUP_COMPLETE.md](DOCKER_SETUP_COMPLETE.md) - ⚡ Начните здесь!
+- [DOCKER_SETUP_SUMMARY.md](DOCKER_SETUP_SUMMARY.md) - Краткая сводка
+- [DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md) - Полное руководство
+- [DOCKER_CHEATSHEET.md](DOCKER_CHEATSHEET.md) - Шпаргалка команд
+
+🛠️ **Утилиты:**
+
+- [docker-manager.sh](docker-manager.sh) - Интерактивный менеджер
+- [Makefile](Makefile) - Быстрые команды
+
+### Быстрые команды
+
+```bash
+# Запуск и остановка
+docker compose up -d              # Запустить все
+docker compose down               # Остановить все
+docker compose restart            # Перезапустить все
+
+# Логи и статус
+docker compose logs -f            # Логи всех сервисов
+docker compose ps                 # Статус контейнеров
+
+# Сборка
+docker compose build              # Собрать все образы
+docker compose up -d --build      # Собрать и запустить
+
+# Частичный запуск
+docker compose up -d postgres redis rabbitmq  # Только инфраструктура
+docker compose up -d prometheus grafana jaeger # Только мониторинг
+```
+
+### Доступ к сервисам
+
+После запуска доступны:
+
+| Сервис          | URL                      | Учетные данные          |
+| --------------- | ------------------------ | ----------------------- |
+| **API**         | http://localhost         | -                       |
+| **Swagger UI**  | http://localhost/swagger | -                       |
+| **Frontend**    | http://localhost:4000    | -                       |
+| **Grafana**     | http://localhost:3000    | admin / admin           |
+| **Prometheus**  | http://localhost:9091    | -                       |
+| **Jaeger**      | http://localhost:16686   | -                       |
+| **RabbitMQ UI** | http://localhost:15672   | kkm_user / kkm_password |
 
 ### 2️⃣ Проверить здоровье системы
 
