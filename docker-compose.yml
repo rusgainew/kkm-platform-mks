@@ -230,7 +230,6 @@ services:
     container_name: user-query-server
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       GRPC_PORT: 50061
       METRICS_PORT: 9102
@@ -238,8 +237,6 @@ services:
       - "50061:50061"
       - "9102:9102"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -252,7 +249,6 @@ services:
     container_name: catalog-query-server
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/1
       GRPC_PORT: 50063
       METRICS_PORT: 9106
@@ -260,8 +256,6 @@ services:
       - "50063:50063"
       - "9106:9106"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -274,7 +268,6 @@ services:
     container_name: invoice-query-server
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/2
       GRPC_PORT: 50064
       METRICS_PORT: 9108
@@ -282,8 +275,6 @@ services:
       - "50064:50064"
       - "9108:9108"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -296,7 +287,6 @@ services:
     container_name: bank-account-query-server
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/3
       GRPC_PORT: 50065
       METRICS_PORT: 9110
@@ -304,8 +294,6 @@ services:
       - "50065:50065"
       - "9110:9110"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -340,7 +328,6 @@ services:
     container_name: document-query-server
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/5
       GRPC_PORT: 50067
       METRICS_PORT: 9114
@@ -348,8 +335,6 @@ services:
       - "50067:50067"
       - "9114:9114"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
