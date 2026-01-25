@@ -1,0 +1,190 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/cache"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/config"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/middleware"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/migration"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/observability"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/repository"
+	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/interfaces/grpc/handlers"
+	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+)
+
+func main() {
+	// Load and validate config
+	cfg, err := config.LoadValidated()
+	if err != nil {
+		log.Fatalf("Invalid configuration: %v", err)
+	}
+
+	// Setup logger
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	// Initialize OpenTelemetry tracer
+	tp, err := observability.InitTracer("catalog-query-service", cfg.JaegerEndpoint)
+	if err != nil {
+		logger.Warn("Failed to initialize tracer", zap.Error(err))
+	} else {
+		defer func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := observability.ShutdownTracer(ctx, tp); err != nil {
+				logger.Error("Failed to shutdown tracer", zap.Error(err))
+			}
+		}()
+		logger.Info("OpenTelemetry tracer initialized", zap.String("jaeger_endpoint", cfg.JaegerEndpoint))
+	}
+
+	// Connect to database
+	db, err := sql.Open(cfg.DatabaseDriver, cfg.DatabaseURL)
+	if err != nil {
+		logger.Fatal("Failed to open database", zap.Error(err))
+	}
+	defer db.Close()
+
+	// Test database connection
+	if err := db.Ping(); err != nil {
+		logger.Fatal("Failed to ping database", zap.Error(err))
+	}
+	logger.Info("Database connected successfully")
+
+	// Выполнение автоматических миграций
+	migrator := migration.NewMigrator(db, logger)
+	if err := migrator.Run(); err != nil {
+		logger.Fatal("Failed to run database migrations", zap.Error(err))
+	}
+
+	// Create repository
+	repo := repository.NewPostgresCatalogRepository(db)
+
+	// Initialize metrics
+	metrics := observability.NewMetricsCollector("catalog_query", "service")
+
+	// Initialize Redis cache
+	redisCache, err := cache.NewRedisCache(cfg.RedisURL, cfg.CacheTTL, logger)
+	if err != nil {
+		logger.Warn("Failed to initialize Redis cache, continuing without cache", zap.Error(err))
+		redisCache = nil
+	} else {
+		defer redisCache.Close()
+		logger.Info("Redis cache initialized", zap.String("url", cfg.RedisURL), zap.Duration("ttl", cfg.CacheTTL))
+	}
+
+	// JWT secret from environment
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "test-jwt-secret-key-12345"
+	}
+	authMiddleware := middleware.NewAuthMiddleware(jwtSecret, logger)
+
+	// Create gRPC server with JWT interceptor
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(authMiddleware.UnaryServerInterceptor()),
+	)
+
+	// Health check
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("api.CatalogQueryService", grpc_health_v1.HealthCheckResponse_SERVING)
+
+	// Register handler with repository, metrics, and cache
+	handler := handlers.NewCatalogQueryHandler(logger, repo, metrics, redisCache)
+	pb.RegisterCatalogQueryServiceServer(grpcServer, handler)
+
+	// Listen on gRPC port
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	// Health check endpoint for Docker
+	healthMux := http.NewServeMux()
+	healthMux.HandleFunc("/health", healthCheckHandler)
+	// Metrics endpoint
+	healthMux.Handle("/metrics", promhttp.Handler())
+
+	httpServer := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.HealthPort),
+		Handler:      healthMux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
+	go func() {
+		logger.Info("Starting health check server", zap.String("addr", httpServer.Addr))
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("Health check server error", zap.Error(err))
+		}
+	}()
+
+	logger.Info("Catalog Query Server starting", zap.Int("grpc_port", cfg.GRPCPort))
+
+	// Run gRPC server in background
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			logger.Fatal("gRPC server error", zap.Error(err))
+		}
+	}()
+
+	// Wait for interrupt
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	logger.Info("Shutdown signal received, gracefully stopping servers")
+
+	// Create context with timeout for graceful shutdown
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	defer cancel()
+
+	// Shutdown gRPC server gracefully
+	stopped := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(stopped)
+	}()
+
+	// Wait for gRPC shutdown or timeout
+	select {
+	case <-stopped:
+		logger.Info("gRPC server stopped gracefully")
+	case <-shutdownCtx.Done():
+		logger.Warn("gRPC graceful shutdown timeout exceeded, forcing stop")
+		grpcServer.Stop()
+	}
+
+	// Shutdown HTTP server gracefully
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("HTTP server shutdown error", zap.Error(err))
+	} else {
+		logger.Info("HTTP server stopped gracefully")
+	}
+
+	logger.Info("Catalog Query Server stopped")
+}
+
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, `{"status":"ok","service":"catalog-query-server"}`)
+}

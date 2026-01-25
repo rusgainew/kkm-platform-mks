@@ -1,0 +1,93 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+main
+api
+user-server
+
+# Build artifacts
+/services/*/cmd/main
+/services/api-gateway/api
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.mcp-debug-tools/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
+.env.*.local
+!.env*.example
+!.env*.sample
+!.env.development.sample
+!.env.production.sample
+!.env.test.sample
+*.local
+!**/*.example
+!**/*.sample
+
+# Test coverage
+coverage.out
+*.coverprofile
+
+# Logs
+*.log
+
+# Temporary files
+/tmp/
+*.tmp
+
+# Rust/Dioxus
+kkm-ui/target/
+kkm-ui/dist/
+kkm-ui/assets/out.css
+
+# Node/Next.js
+node_modules/
+kkm-ui/node_modules/
+kkm-platform/node_modules/
+kkm-platform/.next/
+kkm-platform/.turbo/
+kkm-platform/out/
+kkm-platform/build/
+kkm-platform/dist/
+.next/
+.turbo/
+out/
+dist/
+build/
+!kkm-platform/next-env.d.ts
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# Package managers
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+.pnpm-store/
+
+# Database
+*.db
+*.sqlite
+
+# Passwords
+user_password.txt
+
+# Docker
+*.pid
+
+# Go workspace
+go.work.sum

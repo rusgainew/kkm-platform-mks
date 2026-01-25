@@ -1,0 +1,101 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"github.com/rusgainew/kkm-project-mks/bank-account-query-server/internal/domain/ports"
+	"github.com/rusgainew/kkm-project-mks/proto-lib/dictionaries"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+)
+
+type PostgresBankAccountRepository struct {
+	db     *sql.DB
+	logger *zap.Logger
+}
+
+func NewPostgresBankAccountRepository(db *sql.DB, logger *zap.Logger) ports.BankAccountQueryRepository {
+	return &PostgresBankAccountRepository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+func (r *PostgresBankAccountRepository) ListBankAccounts(ctx context.Context, page, size int32) ([]*dictionaries.BankAccount, int32, error) {
+	offset := page * size
+
+	query := `
+		SELECT id, account_number, account_name, 
+		       bank_name, currency_code, 
+		       account_status, account_type
+		FROM bank_accounts
+		ORDER BY account_number
+		LIMIT $1 OFFSET $2
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, size, offset)
+	if err != nil {
+		r.logger.Error("Failed to query bank accounts", zap.Error(err))
+		return nil, 0, fmt.Errorf("query bank accounts: %w", err)
+	}
+	defer rows.Close()
+
+	var accounts []*dictionaries.BankAccount
+	for rows.Next() {
+		account := &dictionaries.BankAccount{}
+		var id, bankName, status, accountType sql.NullString
+
+		err := rows.Scan(
+			&id,
+			&account.AccountNumber,
+			&account.AccountName,
+			&bankName,
+			&account.CurrencyCode,
+			&status,
+			&accountType,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan bank account row", zap.Error(err))
+			return nil, 0, fmt.Errorf("scan bank account: %w", err)
+		}
+
+		if id.Valid {
+			account.Id = id.String
+		}
+		if bankName.Valid {
+			account.BankName = bankName.String
+		}
+		if status.Valid {
+			account.Status = &wrapperspb.StringValue{Value: status.String}
+		}
+		if accountType.Valid {
+			account.AccountType = &wrapperspb.StringValue{Value: accountType.String}
+		}
+
+		accounts = append(accounts, account)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("Rows iteration error", zap.Error(err))
+		return nil, 0, fmt.Errorf("rows error: %w", err)
+	}
+
+	var totalCount int32
+	countQuery := "SELECT COUNT(*) FROM bank_accounts"
+	err = r.db.QueryRowContext(ctx, countQuery).Scan(&totalCount)
+	if err != nil {
+		r.logger.Error("Failed to count bank accounts", zap.Error(err))
+		return nil, 0, fmt.Errorf("count bank accounts: %w", err)
+	}
+
+	r.logger.Info("Listed bank accounts",
+		zap.Int32("page", page),
+		zap.Int32("size", size),
+		zap.Int("returned", len(accounts)),
+		zap.Int32("total", totalCount),
+	)
+
+	return accounts, totalCount, nil
+}

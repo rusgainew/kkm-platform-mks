@@ -1,0 +1,157 @@
+syntax = "proto3";
+
+package errors;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/errors";
+
+// ErrorResponse представляет единую ошибку в ответе API.
+// Структурированное представление ошибки с кодом, сообщением и деталями.
+message ErrorResponse {
+  // Code - Код ошибки (машиночитаемый идентификатор).
+  // Используется для программной обработки ошибок и локализации.
+  // Примеры: "INVALID_REQUEST", "DOCUMENT_NOT_FOUND", "UNAUTHORIZED"
+  string code = 1;
+
+  // Message - Человеческое сообщение об ошибке на русском языке.
+  // Короткое и понятное описание проблемы.
+  // Примеры: "Документ не найден", "Неверный формат даты"
+  string message = 2;
+
+  // Details - Дополнительные детали об ошибке (опционально).
+  // Может содержать более подробное объяснение, стек вызовов или
+  // другую информацию для отладки (обычно только в режиме разработки).
+  // Может быть пусто для ошибок в production.
+  string details = 3;
+}
+
+// ErrorCodes определяет константы кодов ошибок ESF API.
+// Используется для унификации и программной обработки ошибок.
+// В protobuf это реализуется через enum.
+enum ErrorCode {
+  // UNKNOWN - Неизвестная ошибка (по умолчанию)
+  ERROR_CODE_UNKNOWN = 0;
+
+  // ========== ОШИБКИ ВАЛИДАЦИИ ==========
+
+  // InvalidRequest - Запрос имеет неверный формат или структуру.
+  // Примеры: неверный JSON, отсутствуют обязательные поля
+  ERROR_CODE_INVALID_REQUEST = 1;
+
+  // MissingRequiredField - Отсутствует обязательное поле в запросе.
+  // Указывает на то, что некоторые необходимые данные не предоставлены.
+  ERROR_CODE_MISSING_REQUIRED_FIELD = 2;
+
+  // InvalidFieldValue - Значение поля не соответствует ожидаемому формату.
+  // Примеры: неверная дата, отрицательная сумма, недопустимый код
+  ERROR_CODE_INVALID_FIELD_VALUE = 3;
+
+  // InvalidDocumentType - Неверный тип документа (не Реализация/Приобретение/Корректировочная).
+  ERROR_CODE_INVALID_DOCUMENT_TYPE = 4;
+
+  // InvalidDocumentStatus - Операция недопустима для текущего статуса документа.
+  // Примеры: попытка отредактировать подписанный документ
+  ERROR_CODE_INVALID_DOCUMENT_STATUS = 5;
+
+  // InvalidParty - Неверные реквизиты юридического лица или контрагента.
+  // Примеры: несуществующий ИНН, пустое наименование
+  ERROR_CODE_INVALID_PARTY = 6;
+
+  // ========== ОШИБКИ ПОИСКА/ДОСТУПА ==========
+
+  // NotFound - Запрашиваемый ресурс не найден.
+  // Общая ошибка "не найдено" для любых объектов.
+  ERROR_CODE_NOT_FOUND = 100;
+
+  // DocumentNotFound - Счет-фактура с указанным ID/UUID не найден.
+  ERROR_CODE_DOCUMENT_NOT_FOUND = 101;
+
+  // PartyNotFound - Юридическое лицо с указанным ИНН не найдено.
+  ERROR_CODE_PARTY_NOT_FOUND = 102;
+
+  // BankAccountNotFound - Банковский счет с указанным ID не найден.
+  ERROR_CODE_BANK_ACCOUNT_NOT_FOUND = 103;
+
+  // CatalogNotFound - Элемент справочника с указанным ID не найден.
+  ERROR_CODE_CATALOG_NOT_FOUND = 104;
+
+  // ========== ОШИБКИ АВТОРИЗАЦИИ И АУТЕНТИФИКАЦИИ ==========
+
+  // Unauthorized - Отсутствует авторизация или токен недействителен.
+  // Требуется аутентификация для доступа к ресурсу.
+  ERROR_CODE_UNAUTHORIZED = 200;
+
+  // Forbidden - Доступ запрещен. У пользователя нет прав на операцию.
+  // Пользователь аутентифицирован, но не авторизован.
+  ERROR_CODE_FORBIDDEN = 201;
+
+  // TokenExpired - Токен авторизации истек.
+  ERROR_CODE_TOKEN_EXPIRED = 202;
+
+  // InvalidToken - Токен авторизации невалиден или поврежден.
+  ERROR_CODE_INVALID_TOKEN = 203;
+
+  // ========== БИЗНЕС-ЛОГИЧЕСКИЕ ОШИБКИ ==========
+
+  // DuplicateInvoiceNumber - Счет-фактура с таким номером уже существует.
+  ERROR_CODE_DUPLICATE_INVOICE_NUMBER = 300;
+
+  // InvalidTaxCalculation - Ошибка расчета налогов.
+  // Суммы налогов не сходятся с ожидаемыми значениями.
+  ERROR_CODE_INVALID_TAX_CALCULATION = 301;
+
+  // InsufficientBalance - Недостаточный баланс для операции.
+  ERROR_CODE_INSUFFICIENT_BALANCE = 302;
+
+  // OperationNotAllowed - Операция недопустима в текущем состоянии.
+  ERROR_CODE_OPERATION_NOT_ALLOWED = 303;
+
+  // ========== СИСТЕМНЫЕ ОШИБКИ ==========
+
+  // InternalServerError - Внутренняя ошибка сервера.
+  // Общая ошибка сервера, когда что-то пошло не так.
+  ERROR_CODE_INTERNAL_SERVER_ERROR = 500;
+
+  // DatabaseError - Ошибка работы с базой данных.
+  ERROR_CODE_DATABASE_ERROR = 501;
+
+  // ServiceUnavailable - Сервис временно недоступен.
+  ERROR_CODE_SERVICE_UNAVAILABLE = 502;
+
+  // TimeoutError - Превышено время ожидания операции.
+  ERROR_CODE_TIMEOUT_ERROR = 503;
+
+  // ========== ОШИБКИ ИНТЕГРАЦИИ ==========
+
+  // ExternalServiceError - Ошибка внешнего сервиса (ТУНДУК, банки и т.д.).
+  ERROR_CODE_EXTERNAL_SERVICE_ERROR = 600;
+
+  // SignatureVerificationFailed - Не удалось проверить электронную подпись.
+  ERROR_CODE_SIGNATURE_VERIFICATION_FAILED = 601;
+
+  // TaxSystemError - Ошибка взаимодействия с налоговой системой.
+  ERROR_CODE_TAX_SYSTEM_ERROR = 602;
+}
+
+// ValidationError представляет ошибку валидации конкретного поля.
+// Используется для детализации ошибок валидации запросов.
+message ValidationError {
+  // Field - Название поля, в котором обнаружена ошибка.
+  // Путь к полю в JSON-структуре (например, "invoice.details[0].price")
+  string field = 1;
+
+  // Code - Код ошибки валидации для этого поля.
+  ErrorCode code = 2;
+
+  // Message - Человеческое описание ошибки.
+  string message = 3;
+}
+
+// MultipleErrorsResponse представляет множественные ошибки в ответе API.
+// Используется, когда запрос содержит несколько ошибок валидации.
+message MultipleErrorsResponse {
+  // Errors - Список всех ошибок, обнаруженных при обработке запроса.
+  repeated ErrorResponse errors = 1;
+
+  // ValidationErrors - Специфические ошибки валидации полей.
+  repeated ValidationError validation_errors = 2;
+}

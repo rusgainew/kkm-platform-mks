@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package entities;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/entities";
+
+// FinancialData содержит все финансовые данные счета-фактуры.
+// Используется для группировки и упрощения работы с финансовыми операциями.
+message FinancialData {
+  // TotalAmount - Общая сумма счета-фактуры.
+  // Включает все суммы: базовую стоимость, НДС, НСП и другие налоги.
+  double total_amount = 1;
+
+  // Данные для специальных документов (авансовые платежи, кредиты и т.д.)
+  double opening_balances = 2; // Сальдо на начало периода
+  double assessed_contributions_amount = 3; // Сумма начисленных взносов
+  double paid_amount = 4; // Сумма оплаченная/перечисленная
+  double penalties_amount = 5; // Сумма штрафов
+  double fines_amount = 6; // Сумма пени (процентные штрафы)
+  double closing_balances = 7; // Сальдо на конец периода
+  double amount_to_be_paid = 8; // Сумма к оплате/перечислению
+  string personal_account_number = 9; // Номер личного счета налогоплательщика
+
+  // Банковские реквизиты
+  string legal_person_bank_account = 10; // Счет поставщика/продавца
+  string contractor_bank_account = 11; // Счет покупателя/контрагента
+}

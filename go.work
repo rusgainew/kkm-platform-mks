@@ -1,0 +1,17 @@
+go 1.24.0
+
+use ./proto-lib
+
+use (
+	./services/api-gateway
+	./services/bank-account-query-server
+	./services/bank-account-server
+	./services/catalog-query-server
+	./services/catalog-server
+	./services/company-server
+	./services/document-server
+	./services/foreign-company-server
+	./services/invoice-query-server
+	./services/invoice-server
+	./services/user-server
+)

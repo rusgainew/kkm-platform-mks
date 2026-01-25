@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package api.company;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/company";
+
+/**
+ * Организация - агрегатный корень.
+ * Представляет компанию/организацию в системе.
+ */
+message Organization {
+  // Уникальный идентификатор организации (UUID)
+  string id = 1;
+  // Название организации
+  string name = 2;
+  // Описание организации
+  string description = 3;
+  // ID владельца-пользователя (ссылка на auth-service)
+  string owner_id = 4;
+  // Общее количество участников
+  int32 member_count = 5;
+  // Временная метка создания организации (Unix миллисекунды)
+  int64 created_at = 6;
+  // Временная метка последнего обновления (Unix миллисекунды)
+  int64 updated_at = 7;
+  // Статус организации: "active" (активна), "inactive" (неактивна), "archived" (архивирована)
+  string status = 8;
+}
+
+/**
+ * Сотрудник - агрегатный корень.
+ * Представляет членство пользователя в организации.
+ */
+message Employee {
+  // Уникальный идентификатор сотрудника (UUID)
+  string id = 1;
+  // ID организации
+  string organization_id = 2;
+  // ID пользователя (ссылка на auth-service)
+  string user_id = 3;
+  // Роль сотрудника: "member" (участник), "manager" (менеджер), "admin" (администратор)
+  string role = 4;
+  // Статус сотрудника: "active" (активен), "inactive" (неактивен)
+  string status = 5;
+  // Должность или название позиции
+  string position = 6;
+  // Отдел (опционально)
+  string department = 7;
+  // Временная метка присоединения (Unix миллисекунды)
+  int64 joined_at = 8;
+  // Временная метка последней активности (Unix миллисекунды)
+  int64 last_active_at = 9;
+}
+
+/**
+ * Отдел - объект значения.
+ * Единица организационной структуры.
+ */
+message Department {
+  // Уникальный идентификатор отдела (UUID)
+  string id = 1;
+  // ID организации
+  string organization_id = 2;
+  // Название отдела
+  string name = 3;
+  // Описание отдела
+  string description = 4;
+  // ID родительского отдела (для иерархии)
+  string parent_id = 5;
+  // ID сотрудника-руководителя
+  string manager_id = 6;
+  // Временная метка создания (Unix миллисекунды)
+  int64 created_at = 7;
+}
+
+/**
+ * Роль - объект значения.
+ * Роль, специфичная для организации.
+ */
+message OrganizationRole {
+  // Идентификатор роли
+  string id = 1;
+  // ID организации
+  string organization_id = 2;
+  // Название роли: "member" (участник), "manager" (менеджер), "admin" (администратор)
+  string name = 3;
+  // Описание роли
+  string description = 4;
+  // Коды разрешений
+  repeated string permissions = 5;
+  // Является ли системной ролью (не может быть удалена)
+  bool is_system = 6;
+  // Временная метка создания (Unix миллисекунды)
+  int64 created_at = 7;
+}

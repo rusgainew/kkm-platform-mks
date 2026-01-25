@@ -1,0 +1,234 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'kkm-cluster'
+    env: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Load alert rules
+rule_files:
+  - '/etc/prometheus/prometheus-alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # User Server metrics
+  - job_name: 'user-server'
+    static_configs:
+      - targets: ['user-server:9090']
+        labels:
+          service: 'user-server'
+          component: 'api'
+    
+    # Scrape interval override for high-frequency metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Relabeling for better labels
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+  # Company Server metrics
+  - job_name: 'company-server'
+    static_configs:
+      - targets: ['company-server:9092']
+        labels:
+          service: 'company-server'
+          component: 'api'
+    
+    # Scrape interval override for high-frequency metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Relabeling for better labels
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+  # API Gateway metrics
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:9097']
+        labels:
+          service: 'api-gateway'
+          component: 'gateway'
+    
+    # Scrape interval override for high-frequency metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Relabeling for better labels
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+  # Invoice Server metrics
+  - job_name: 'invoice-server'
+    static_configs:
+      - targets: ['invoice-server:9093']
+        labels:
+          service: 'invoice-server'
+          component: 'api'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+  # Catalog Server metrics
+  - job_name: 'catalog-server'
+    static_configs:
+      - targets: ['catalog-server:9093']
+        labels:
+          service: 'catalog-server'
+          component: 'api'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+  # Bank Account Server metrics
+  - job_name: 'bank-account-server'
+    static_configs:
+      - targets: ['bank-account-server:9094']
+        labels:
+          service: 'bank-account-server'
+          component: 'api'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+  # Foreign Company Server
+  - job_name: 'foreign-company-server'
+    static_configs:
+      - targets: ['foreign-company-server:9096']
+        labels:
+          service: 'foreign-company-server'
+          component: 'api'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Invoice Query Server metrics
+  - job_name: 'invoice-query-server'
+    static_configs:
+      - targets: ['invoice-query-server:8053']
+        labels:
+          service: 'invoice-query-server'
+          component: 'query'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Bank Account Query Server metrics
+  - job_name: 'bank-account-query-server'
+    static_configs:
+      - targets: ['bank-account-query-server:8054']
+        labels:
+          service: 'bank-account-query-server'
+          component: 'query'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Catalog Query Server metrics
+  - job_name: 'catalog-query-server'
+    static_configs:
+      - targets: ['catalog-query-server:8055']
+        labels:
+          service: 'catalog-query-server'
+          component: 'query'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Node exporter (if available)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    
+  # PostgreSQL exporter (optional)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Redis exporter (optional)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # RabbitMQ exporter (optional)
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+
+  # Nginx Exporter metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+        labels:
+          service: 'nginx-proxy'
+          component: 'reverse-proxy'
+    
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+        target_label: host
+
+# Remote write for long-term storage (optional)
+# remote_write:
+#   - url: 'http://cortex:9009/api/prom/push'
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 200
+#       max_samples_per_send: 1000
+
+# Remote read for querying long-term storage (optional)
+# remote_read:
+#   - url: 'http://cortex:9009/api/prom/read'

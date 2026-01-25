@@ -1,0 +1,15 @@
+go.work
+go.work.sum
+.git
+.gitignore
+*.md
+test-*.sh
+test-*.go
+load-tests/
+monitoring/
+k8s/
+scripts/
+.env
+.env.*
+*.log
+node_modules/

@@ -1,0 +1,403 @@
+# Prometheus Alert Rules for User Server
+# Load with: prometheus --config.file=prometheus.yml --web.enable-lifecycle
+
+groups:
+  # ========================
+  # Service Availability Alerts
+  # ========================
+  - name: service_availability
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up{job="user-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: user-server
+        annotations:
+          summary: "User Server is down"
+          description: "User Server instance {{ $labels.instance }} has been down for more than 1 minute."
+          runbook: "https://docs.company.com/runbooks/service-down"
+
+      - alert: HighServiceRestarts
+        expr: rate(process_start_time_seconds{job="user-server"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "User Server restarting frequently"
+          description: "User Server instance {{ $labels.instance }} has restarted {{ $value }} times in the last 5 minutes."
+
+  # ========================
+  # gRPC Performance Alerts
+  # ========================
+  - name: grpc_performance
+    interval: 30s
+    rules:
+      - alert: HighGRPCErrorRate
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_code!="OK",job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{job="user-server"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High gRPC error rate"
+          description: "gRPC error rate is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 5%)."
+          runbook: "https://docs.company.com/runbooks/high-error-rate"
+
+      - alert: CriticalGRPCErrorRate
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_code!="OK",job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{job="user-server"}[5m]))
+          ) > 0.20
+        for: 2m
+        labels:
+          severity: critical
+          component: user-server
+        annotations:
+          summary: "Critical gRPC error rate"
+          description: "gRPC error rate is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 20%)."
+          runbook: "https://docs.company.com/runbooks/critical-error-rate"
+
+      - alert: HighGRPCLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(grpc_server_handling_seconds_bucket{job="user-server"}[5m])) by (le, grpc_method)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High gRPC latency (P95)"
+          description: "gRPC method {{ $labels.grpc_method }} P95 latency is {{ $value }}s (threshold: 1s)."
+          runbook: "https://docs.company.com/runbooks/high-latency"
+
+      - alert: VeryHighGRPCLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(grpc_server_handling_seconds_bucket{job="user-server"}[5m])) by (le, grpc_method)
+          ) > 3.0
+        for: 2m
+        labels:
+          severity: critical
+          component: user-server
+        annotations:
+          summary: "Very high gRPC latency (P95)"
+          description: "gRPC method {{ $labels.grpc_method }} P95 latency is {{ $value }}s (threshold: 3s)."
+
+  # ========================
+  # Rate Limiting Alerts
+  # ========================
+  - name: rate_limiting
+    interval: 30s
+    rules:
+      - alert: HighRateLimitHits
+        expr: |
+          (
+            sum(rate(rate_limit_hits_total{job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{job="user-server"}[5m]))
+          ) > 0.30
+        for: 10m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High rate limit hit rate"
+          description: "{{ $value | humanizePercentage }} of requests are hitting rate limits (threshold: 30%)."
+          runbook: "https://docs.company.com/runbooks/rate-limit-analysis"
+
+      - alert: RateLimitExhaustion
+        expr: |
+          (
+            sum(rate(rate_limit_hits_total{job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{job="user-server"}[5m]))
+          ) > 0.60
+        for: 5m
+        labels:
+          severity: critical
+          component: user-server
+        annotations:
+          summary: "Rate limit exhaustion"
+          description: "{{ $value | humanizePercentage }} of requests are hitting rate limits (threshold: 60%). Possible attack or misconfiguration."
+          runbook: "https://docs.company.com/runbooks/rate-limit-exhaustion"
+
+  # ========================
+  # Database Health Alerts
+  # ========================
+  - name: database_health
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            db_connections_in_use{job="user-server"}
+            /
+            db_connections_max{job="user-server"}
+          ) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }} (threshold: 90%)."
+          runbook: "https://docs.company.com/runbooks/db-pool-exhausted"
+
+      - alert: HighDatabaseLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(db_query_duration_seconds_bucket{job="user-server"}[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database query latency"
+          description: "Database query P95 latency is {{ $value }}s (threshold: 0.5s)."
+          runbook: "https://docs.company.com/runbooks/slow-queries"
+
+      - alert: DatabaseDown
+        expr: db_up{job="user-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database is down"
+          description: "Database connection from {{ $labels.instance }} has been down for more than 1 minute."
+          runbook: "https://docs.company.com/runbooks/db-down"
+
+  # ========================
+  # Redis Cache Alerts
+  # ========================
+  - name: redis_health
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: redis_up{job="user-server"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis connection from {{ $labels.instance }} has been down for more than 2 minutes. Service is degraded but operational."
+          runbook: "https://docs.company.com/runbooks/redis-down"
+
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(cache_hits_total{job="user-server"}[10m])
+            /
+            (rate(cache_hits_total{job="user-server"}[10m]) + rate(cache_misses_total{job="user-server"}[10m]))
+          ) < 0.50
+        for: 15m
+        labels:
+          severity: info
+          component: redis
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} over the last 10 minutes (threshold: 50%)."
+          runbook: "https://docs.company.com/runbooks/cache-optimization"
+
+  # ========================
+  # RabbitMQ Messaging Alerts
+  # ========================
+  - name: rabbitmq_health
+    interval: 30s
+    rules:
+      - alert: RabbitMQDown
+        expr: rabbitmq_up{job="user-server"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: rabbitmq
+        annotations:
+          summary: "RabbitMQ is down"
+          description: "RabbitMQ connection from {{ $labels.instance }} has been down for more than 2 minutes. Events not being published."
+          runbook: "https://docs.company.com/runbooks/rabbitmq-down"
+
+      - alert: HighEventPublishFailureRate
+        expr: |
+          (
+            rate(events_publish_failed_total{job="user-server"}[5m])
+            /
+            rate(events_published_total{job="user-server"}[5m])
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: rabbitmq
+        annotations:
+          summary: "High event publish failure rate"
+          description: "Event publish failure rate is {{ $value | humanizePercentage }} (threshold: 10%)."
+          runbook: "https://docs.company.com/runbooks/event-publish-failures"
+
+  # ========================
+  # Resource Usage Alerts
+  # ========================
+  - name: resource_usage
+    interval: 30s
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes{job="user-server"}
+            /
+            node_memory_MemTotal_bytes
+          ) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 80%)."
+          runbook: "https://docs.company.com/runbooks/high-memory"
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="user-server"}[5m]) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 90%)."
+          runbook: "https://docs.company.com/runbooks/high-cpu"
+
+      - alert: HighGoroutineCount
+        expr: go_goroutines{job="user-server"} > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "High goroutine count"
+          description: "Goroutine count is {{ $value }} on {{ $labels.instance }} (threshold: 1000). Possible goroutine leak."
+          runbook: "https://docs.company.com/runbooks/goroutine-leak"
+
+      - alert: FileDescriptorExhaustion
+        expr: |
+          (
+            process_open_fds{job="user-server"}
+            /
+            process_max_fds{job="user-server"}
+          ) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          component: user-server
+        annotations:
+          summary: "File descriptor exhaustion"
+          description: "File descriptor usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 80%)."
+          runbook: "https://docs.company.com/runbooks/fd-exhaustion"
+
+  # ========================
+  # SLA & Business Metrics
+  # ========================
+  - name: sla_metrics
+    interval: 1m
+    rules:
+      - alert: SLAViolation_Availability
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_code="OK",job="user-server"}[1h]))
+            /
+            sum(rate(grpc_server_handled_total{job="user-server"}[1h]))
+          ) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          component: sla
+          sla_type: availability
+        annotations:
+          summary: "SLA violation: Availability below 99.9%"
+          description: "Service availability is {{ $value | humanizePercentage }} over the last hour (SLA: 99.9%)."
+          runbook: "https://docs.company.com/runbooks/sla-violation"
+
+      - alert: SLAViolation_Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(grpc_server_handling_seconds_bucket{job="user-server"}[1h])) by (le)
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: critical
+          component: sla
+          sla_type: latency
+        annotations:
+          summary: "SLA violation: P95 latency above 500ms"
+          description: "P95 latency is {{ $value }}s over the last hour (SLA: 500ms)."
+          runbook: "https://docs.company.com/runbooks/latency-sla-violation"
+
+      - alert: LowRequestRate
+        expr: rate(grpc_server_handled_total{job="user-server"}[5m]) < 0.1
+        for: 15m
+        labels:
+          severity: info
+          component: user-server
+        annotations:
+          summary: "Unusually low request rate"
+          description: "Request rate is {{ $value }} req/s over the last 5 minutes. Possible issue with clients or load balancer."
+
+  # ========================
+  # Authentication & Security
+  # ========================
+  - name: security_alerts
+    interval: 30s
+    rules:
+      - alert: HighAuthenticationFailureRate
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_method="/api.AuthService/Login",grpc_code="Unauthenticated",job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{grpc_method="/api.AuthService/Login",job="user-server"}[5m]))
+          ) > 0.30
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate is {{ $value | humanizePercentage }} (threshold: 30%). Possible brute-force attack."
+          runbook: "https://docs.company.com/runbooks/auth-failures"
+
+      - alert: SuspiciousAuthenticationActivity
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_method="/api.AuthService/Login",grpc_code="Unauthenticated",job="user-server"}[5m]))
+            /
+            sum(rate(grpc_server_handled_total{grpc_method="/api.AuthService/Login",job="user-server"}[5m]))
+          ) > 0.70
+        for: 2m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Suspicious authentication activity detected"
+          description: "Authentication failure rate is {{ $value | humanizePercentage }} (threshold: 70%). Possible ongoing attack."
+          runbook: "https://docs.company.com/runbooks/security-incident"
+
+      - alert: JWTKeyRotationFailed
+        expr: jwt_key_rotation_errors_total{job="user-server"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "JWT key rotation failed"
+          description: "JWT key rotation has failed {{ $value }} times. Manual intervention required."
+          runbook: "https://docs.company.com/runbooks/jwt-rotation-failure"

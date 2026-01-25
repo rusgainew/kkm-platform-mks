@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package api.document;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/document";
+
+/**
+ * Документ - агрегатный корень.
+ * Представляет документ в системе с возможностью управления workflow.
+ */
+message Document {
+  // Уникальный идентификатор документа (UUID)
+  string id = 1;
+  // ID организации (ссылка на company-service)
+  string organization_id = 2;
+  // Заголовок документа
+  string title = 3;
+  // Содержимое документа
+  string content = 4;
+  // Статус документа: "draft" (черновик), "sent" (отправлен), "approved" (одобрен), "rejected" (отклонен), "archived" (архивирован)
+  string status = 5;
+  // Пользователь, создавший документ (ссылка на auth-service)
+  string created_by = 6;
+  // Текущий владелец/исполнитель документа
+  string assigned_to = 7;
+  // Временная метка создания документа (Unix миллисекунды)
+  int64 created_at = 8;
+  // Временная метка последнего обновления (Unix миллисекунды)
+  int64 updated_at = 9;
+  // Временная метка последнего изменения статуса (Unix миллисекунды)
+  int64 status_changed_at = 10;
+  // Записи документа (пары ключ-значение)
+  repeated DocumentEntry entries = 11;
+  // Номер версии документа (для оптимистичной блокировки)
+  int32 version = 12;
+  // Метаданные workflow
+  DocumentWorkflow workflow = 13;
+}
+
+/**
+ * Запись документа - объект значения.
+ * Пара ключ-значение внутри документа.
+ */
+message DocumentEntry {
+  // Уникальный идентификатор записи (UUID)
+  string id = 1;
+  // ID документа
+  string document_id = 2;
+  // Ключ записи
+  string key = 3;
+  // Значение записи
+  string value = 4;
+  // Временная метка создания (Unix миллисекунды)
+  int64 created_at = 5;
+  // Временная метка последнего обновления (Unix миллисекунды)
+  int64 updated_at = 6;
+}
+
+/**
+ * Workflow документа - объект значения.
+ * Управляет состоянием workflow одобрения документа.
+ */
+message DocumentWorkflow {
+  // Текущий шаг в workflow
+  string current_step = 1;
+  // Список согласующих
+  repeated ApprovalRequest approvals = 2;
+  // Причина отклонения (если отклонен)
+  string rejection_reason = 3;
+  // Временная метка отклонения (Unix миллисекунды)
+  int64 rejected_at = 4;
+  // Временная метка одобрения (Unix миллисекунды)
+  int64 approved_at = 5;
+}
+
+/**
+ * Запрос на одобрение - объект значения.
+ * Отслеживает статус одобрения для каждого согласующего.
+ */
+message ApprovalRequest {
+  // ID пользователя-согласующего (ссылка на auth-service)
+  string approver_id = 1;
+  // Статус одобрения: "pending" (в ожидании), "approved" (одобрено), "rejected" (отклонено)
+  string status = 2;
+  // Комментарии согласующего
+  string comments = 3;
+  // Когда был создан запрос на одобрение (Unix миллисекунды)
+  int64 created_at = 4;
+  // Когда было выполнено одобрение/отклонение (Unix миллисекунды)
+  int64 responded_at = 5;
+}
+
+/**
+ * Версия документа - объект значения.
+ * Хранит историю ревизий документа.
+ */
+message DocumentVersion {
+  // Номер версии
+  int32 version = 1;
+  // Снимок документа на этой версии
+  Document document_snapshot = 2;
+  // ID пользователя, внесшего изменения
+  string changed_by = 3;
+  // Временная метка изменения (Unix миллисекунды)
+  int64 changed_at = 4;
+  // Описание изменения
+  string change_description = 5;
+}
+
+/**
+ * Шаблон документа - объект значения.
+ * Предопределенные шаблоны документов.
+ */
+message DocumentTemplate {
+  // Идентификатор шаблона (UUID)
+  string id = 1;
+  // ID организации (владелец шаблона)
+  string organization_id = 2;
+  // Название шаблона
+  string name = 3;
+  // Описание шаблона
+  string description = 4;
+  // Содержимое шаблона (с плейсхолдерами типа {{key}})
+  string content = 5;
+  // Определение записей шаблона
+  repeated TemplateEntry entries = 6;
+  // Активный ли шаблон
+  bool is_active = 7;
+  // Временная метка создания (Unix миллисекунды)
+  int64 created_at = 8;
+}
+
+/**
+ * Запись шаблона - объект значения.
+ * Определяет структуру поля шаблона.
+ */
+message TemplateEntry {
+  // Имя ключа поля
+  string key = 1;
+  // Метка отображения поля
+  string label = 2;
+  // Тип поля: "text" (текст), "number" (число), "date" (дата), "select" (выбор), "textarea" (текстовая область)
+  string field_type = 3;
+  // Обязательное ли поле
+  bool required = 4;
+  // Порядок поля
+  int32 order = 5;
+  // Паттерн валидации поля (regex)
+  string validation_pattern = 6;
+  // Значение по умолчанию для поля
+  string default_value = 7;
+}

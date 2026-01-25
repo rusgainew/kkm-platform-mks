@@ -1,0 +1,2533 @@
+basePath: /api/v1
+definitions:
+  http.AssignRoleRequest:
+    properties:
+      role:
+        enum:
+        - user
+        - manager
+        type: string
+    required:
+    - role
+    type: object
+  http.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        minLength: 8
+        type: string
+      user_id:
+        type: string
+    required:
+    - new_password
+    - old_password
+    - user_id
+    type: object
+  http.CreateForeignCompanyRequest:
+    properties:
+      address:
+        type: string
+      country_code:
+        type: string
+      full_name:
+        type: string
+      pin:
+        type: string
+    required:
+    - country_code
+    - full_name
+    - pin
+    type: object
+  http.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  http.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  http.LogoutRequest:
+    properties:
+      revoke_all_sessions:
+        type: boolean
+    type: object
+  http.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  http.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  http.ResetPasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      reset_token:
+        type: string
+    required:
+    - new_password
+    - reset_token
+    type: object
+  http.UpdateForeignCompanyRequest:
+    properties:
+      address:
+        type: string
+      country_code:
+        type: string
+      full_name:
+        type: string
+      pin:
+        type: string
+    required:
+    - country_code
+    - full_name
+    - pin
+    type: object
+  http.UpdateProfileRequest:
+    properties:
+      first_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      last_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  models.APIError:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  models.APIResponse:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/models.APIError'
+      meta:
+        $ref: '#/definitions/models.MetaData'
+      success:
+        type: boolean
+    type: object
+  models.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      timestamp:
+        type: integer
+      token_type:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.BankAccount:
+    properties:
+      account_number:
+        type: string
+      bank_code:
+        type: string
+      bank_name:
+        type: string
+      created_at:
+        type: integer
+      currency:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      owner_id:
+        type: string
+      updated_at:
+        type: integer
+    type: object
+  models.Catalog:
+    properties:
+      category:
+        type: string
+      created_at:
+        type: integer
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      unit:
+        type: string
+      updated_at:
+        type: integer
+    type: object
+  models.Company:
+    properties:
+      created_at:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      member_count:
+        type: integer
+      name:
+        type: string
+      owner_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: integer
+    type: object
+  models.Document:
+    properties:
+      assigned_to:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: integer
+      created_by:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/models.DocumentEntry'
+        type: array
+      id:
+        type: string
+      organization_id:
+        type: string
+      status:
+        type: string
+      status_changed_at:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: integer
+      version:
+        type: integer
+    type: object
+  models.DocumentEntry:
+    properties:
+      created_at:
+        type: integer
+      document_id:
+        type: string
+      id:
+        type: string
+      key:
+        type: string
+      updated_at:
+        type: integer
+      value:
+        type: string
+    type: object
+  models.DocumentListResponse:
+    properties:
+      documents:
+        items:
+          $ref: '#/definitions/models.Document'
+        type: array
+      page_info:
+        $ref: '#/definitions/models.PageInfo'
+    type: object
+  models.ForeignCompany:
+    properties:
+      address:
+        type: string
+      country_code:
+        type: string
+      created_at:
+        type: integer
+      full_name:
+        type: string
+      id:
+        type: integer
+      pin:
+        type: string
+      updated_at:
+        type: integer
+    type: object
+  models.Invoice:
+    properties:
+      created_at:
+        type: integer
+      delivery_date:
+        type: string
+      id:
+        type: string
+      invoice_date:
+        type: string
+      invoice_number:
+        type: string
+      is_resident:
+        type: boolean
+      note:
+        type: string
+      status:
+        type: string
+      total_amount:
+        type: number
+      updated_at:
+        type: integer
+    type: object
+  models.ListUsersResponse:
+    properties:
+      page_info:
+        $ref: '#/definitions/models.PageInfo'
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    type: object
+  models.MetaData:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  models.PageInfo:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  models.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      timestamp:
+        type: integer
+      token_type:
+        type: string
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: integer
+      email:
+        type: string
+      first_name:
+        type: string
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: integer
+      user_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@kkm-project.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Microservices API Gateway with command and query services. Supports
+    CQRS pattern with separate command and query endpoints.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: KKM API Gateway
+  version: "1.0"
+paths:
+  /api/v1/foreign-companies/{id}:
+    delete:
+      parameters:
+      - description: Foreign Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Foreign company deleted successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Удаление иностранной компании
+      tags:
+      - foreign-companies
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Foreign Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateForeignCompanyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ForeignCompany'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновление иностранной компании
+      tags:
+      - foreign-companies
+  /bank-accounts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new bank account
+      parameters:
+      - description: Bank account data
+        in: body
+        name: bankAccount
+        required: true
+        schema:
+          $ref: '#/definitions/models.BankAccount'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.BankAccount'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create bank account
+      tags:
+      - Bank Accounts
+  /bank-accounts-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of bank accounts
+      parameters:
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BankAccount'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List bank accounts
+      tags:
+      - Bank Accounts
+  /bank-accounts-query/filter:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of bank accounts with filter criteria
+      parameters:
+      - description: Account/bank name filter
+        in: query
+        name: account_name
+        type: string
+      - description: Bank account number filter
+        in: query
+        name: bank_account
+        type: string
+      - description: Is active filter
+        in: query
+        name: is_active
+        type: boolean
+      - description: Search text
+        in: query
+        name: search_text
+        type: string
+      - description: Sort field (account_name, bank_account)
+        in: query
+        name: sort_field
+        type: string
+      - description: Sort order (ASC/DESC)
+        in: query
+        name: sort_order
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BankAccount'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List bank accounts with filter
+      tags:
+      - Bank Accounts
+  /bank-accounts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a bank account by ID
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Bank account deleted successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete bank account
+      tags:
+      - Bank Accounts
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a bank account by its ID
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.BankAccount'
+              type: object
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get bank account by ID
+      tags:
+      - Bank Accounts
+    put:
+      consumes:
+      - application/json
+      description: Update an existing bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated bank account data
+        in: body
+        name: bankAccount
+        required: true
+        schema:
+          $ref: '#/definitions/models.BankAccount'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.BankAccount'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update bank account
+      tags:
+      - Bank Accounts
+  /catalog:
+    post:
+      consumes:
+      - application/json
+      description: Create a new catalog item
+      parameters:
+      - description: Catalog data
+        in: body
+        name: catalog
+        required: true
+        schema:
+          $ref: '#/definitions/models.Catalog'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Catalog'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create catalog item
+      tags:
+      - Catalog
+  /catalog/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a catalog item by ID
+      parameters:
+      - description: Catalog ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Catalog deleted successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete catalog item
+      tags:
+      - Catalog
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a catalog item by its ID
+      parameters:
+      - description: Catalog ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Catalog'
+              type: object
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get catalog item by ID
+      tags:
+      - Catalog
+    put:
+      consumes:
+      - application/json
+      description: Update an existing catalog item
+      parameters:
+      - description: Catalog ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated catalog data
+        in: body
+        name: catalog
+        required: true
+        schema:
+          $ref: '#/definitions/models.Catalog'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Catalog'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update catalog item
+      tags:
+      - Catalog
+  /catalogs-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of catalogs
+      parameters:
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Catalog'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List catalogs
+      tags:
+      - Catalogs
+  /catalogs-query/filter:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of catalogs with filter criteria
+      parameters:
+      - description: Name filter
+        in: query
+        name: name
+        type: string
+      - description: Number/code filter
+        in: query
+        name: number
+        type: string
+      - description: TNVED code filter
+        in: query
+        name: tnved_code
+        type: string
+      - description: GKED code filter
+        in: query
+        name: gked_code
+        type: string
+      - description: Search text
+        in: query
+        name: search_text
+        type: string
+      - description: Sort field (name, number)
+        in: query
+        name: sort_field
+        type: string
+      - description: Sort order (ASC/DESC)
+        in: query
+        name: sort_order
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Catalog'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List catalogs with filter
+      tags:
+      - Catalogs
+  /companies:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of companies
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Company'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List companies
+      tags:
+      - Companies
+    post:
+      consumes:
+      - application/json
+      description: Create a new company with provided details. Available to all authenticated
+        users.
+      parameters:
+      - description: Company data including PIN, full name, address
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/models.Company'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Company successfully created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Company'
+              type: object
+        "400":
+          description: Invalid input - validation errors
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new company
+      tags:
+      - Companies
+  /companies/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a company by ID
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Company deleted successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete company
+      tags:
+      - Companies
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a company by its ID
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Company'
+              type: object
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get company by ID
+      tags:
+      - Companies
+    put:
+      consumes:
+      - application/json
+      description: Update company information
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated company data
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/models.Company'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Company'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update company
+      tags:
+      - Companies
+  /documents:
+    get:
+      description: List documents with pagination
+      parameters:
+      - description: Organization ID
+        in: query
+        name: organization_id
+        required: true
+        type: string
+      - description: Status filter
+        in: query
+        name: status
+        type: string
+      - description: Created by filter
+        in: query
+        name: created_by
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.DocumentListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List documents
+      tags:
+      - Documents
+    post:
+      consumes:
+      - application/json
+      description: Create a new document in organization
+      parameters:
+      - description: Document payload
+        in: body
+        name: document
+        required: true
+        schema:
+          $ref: '#/definitions/models.Document'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create document
+      tags:
+      - Documents
+  /documents/{id}:
+    get:
+      description: Get document by ID
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get document
+      tags:
+      - Documents
+    put:
+      consumes:
+      - application/json
+      description: Update document title/content
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Document payload
+        in: body
+        name: document
+        required: true
+        schema:
+          $ref: '#/definitions/models.Document'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update document
+      tags:
+      - Documents
+  /documents/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Approve payload
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            approved_by:
+              type: string
+            comments:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve document
+      tags:
+      - Documents
+  /documents/{id}/archive:
+    post:
+      description: Archive document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive document
+      tags:
+      - Documents
+  /documents/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reject payload
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            reason:
+              type: string
+            rejected_by:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject document
+      tags:
+      - Documents
+  /documents/{id}/send:
+    post:
+      consumes:
+      - application/json
+      description: Send document for approval
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Recipient info
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            message:
+              type: string
+            recipient_id:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Document'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Send document
+      tags:
+      - Documents
+  /foreign-companies:
+    post:
+      consumes:
+      - application/json
+      description: Create a new foreign company. Requires admin or manager role.
+      parameters:
+      - description: Foreign company data including PIN, full name, country code (ISO
+          3166-1 alpha-2)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateForeignCompanyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Foreign company successfully created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ForeignCompany'
+              type: object
+        "400":
+          description: Invalid input - validation errors
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden - requires admin or manager role
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create foreign company
+      tags:
+      - Foreign Companies
+  /foreign-companies/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about a foreign company by its ID
+      parameters:
+      - description: Foreign Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Foreign company information
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ForeignCompany'
+              type: object
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Foreign company not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get foreign company by ID
+      tags:
+      - Foreign Companies
+  /health:
+    get:
+      description: Returns API health status for Kubernetes liveness probe
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check (liveness)
+      tags:
+      - Health
+  /invoices:
+    post:
+      consumes:
+      - application/json
+      description: Create a new invoice. Requires admin or manager role.
+      parameters:
+      - description: Invoice data with all required fields
+        in: body
+        name: invoice
+        required: true
+        schema:
+          $ref: '#/definitions/models.Invoice'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Invoice successfully created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid input - validation errors
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden - requires admin or manager role
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create invoice
+      tags:
+      - Invoices
+  /invoices-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of invoices
+      parameters:
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Invoice'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List invoices
+      tags:
+      - Invoices
+  /invoices-query/by-number/{number}:
+    get:
+      consumes:
+      - application/json
+      description: Get invoice by its number
+      parameters:
+      - description: Invoice number
+        in: path
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Invoice not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get invoice by number
+      tags:
+      - Invoices
+  /invoices-query/filter:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of invoices with filter criteria
+      parameters:
+      - description: Invoice number
+        in: query
+        name: invoice_number
+        type: string
+      - description: Date from (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: Date to (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Minimum amount
+        in: query
+        name: min_amount
+        type: number
+      - description: Maximum amount
+        in: query
+        name: max_amount
+        type: number
+      - description: Search text
+        in: query
+        name: search_text
+        type: string
+      - description: Sort field
+        in: query
+        name: sort_field
+        type: string
+      - description: Sort order (ASC/DESC)
+        in: query
+        name: sort_order
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Invoice'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List invoices with filter
+      tags:
+      - Invoices
+  /invoices-query/search:
+    get:
+      consumes:
+      - application/json
+      description: Search invoices by query
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Invoice'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search invoices
+      tags:
+      - Invoices
+  /invoices/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated invoice data
+        in: body
+        name: invoice
+        required: true
+        schema:
+          $ref: '#/definitions/models.Invoice'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update invoice
+      tags:
+      - Invoices
+  /invoices/{id}/accept-reject:
+    post:
+      consumes:
+      - application/json
+      description: Accept or reject an existing invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Accept/reject decision
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            accept:
+              type: boolean
+            reason:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Accept or reject invoice
+      tags:
+      - Invoices
+  /invoices/{id}/revoke:
+    post:
+      consumes:
+      - application/json
+      description: Revoke an existing invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Revocation reason
+        in: body
+        name: body
+        schema:
+          properties:
+            reason:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke invoice
+      tags:
+      - Invoices
+  /invoices/{id}/sign:
+    post:
+      consumes:
+      - application/json
+      description: Sign an existing invoice with digital signature
+      parameters:
+      - description: Invoice ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Signature data
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            signature_data:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Invoice signed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Invoice'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Sign invoice
+      tags:
+      - Invoices
+  /ready:
+    get:
+      description: Returns API readiness status with backend services check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Readiness check
+      tags:
+      - Health
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: List users with pagination (admin only)
+      parameters:
+      - description: Page (0-based)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (1-100)
+        in: query
+        name: size
+        type: integer
+      - description: Status filter
+        in: query
+        name: status
+        type: string
+      - description: Role filter
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Users list
+          schema:
+            $ref: '#/definitions/models.ListUsersResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - Users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific user by their ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+  /users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Assign role (user/manager) to a target user. Admin only.
+      parameters:
+      - description: Target user ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role payload (user or manager)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user with new role
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign role to user
+      tags:
+      - Users
+  /users/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send reset instructions to email
+      parameters:
+      - description: Email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email sent
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Forgot password
+      tags:
+      - Users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: User authentication with email and password. Returns JWT access
+        and refresh tokens.
+      parameters:
+      - description: Login credentials (email and password)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "400":
+          description: Invalid input - validation errors
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: User login
+      tags:
+      - Users
+  /users/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate access token (and optionally all sessions)
+      parameters:
+      - description: Revoke options
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged out
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Users
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get information about the currently authenticated user from JWT
+        token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current user information
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing token
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Users
+  /users/password:
+    put:
+      consumes:
+      - application/json
+      description: Change password for current user
+      parameters:
+      - description: Passwords payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - Users
+  /users/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update first_name and/or last_name
+      parameters:
+      - description: Profile fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - Users
+  /users/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access and refresh tokens using refresh_token
+      parameters:
+      - description: Refresh token payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New tokens
+          schema:
+            $ref: '#/definitions/models.TokenResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Refresh tokens
+      tags:
+      - Users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account. Returns access and refresh tokens.
+      parameters:
+      - description: Registration data with email, password (min 8 chars), first_name
+          and last_name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User successfully registered
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "400":
+          description: Invalid input - validation errors
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: User registration
+      tags:
+      - Users
+  /users/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using reset token
+      parameters:
+      - description: Reset payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New tokens and user
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Token expired
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Reset password
+      tags:
+      - Users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

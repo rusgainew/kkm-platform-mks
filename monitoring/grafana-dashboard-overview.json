@@ -1,0 +1,356 @@
+{
+  "dashboard": {
+    "title": "User Server - Overview Dashboard",
+    "tags": ["user-server", "grpc", "overview"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Status",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 4, "h": 4},
+        "targets": [
+          {
+            "expr": "up{job=\"user-server\"}",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DOWN", "color": "red"},
+              {"type": "value", "value": "1", "text": "UP", "color": "green"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate (RPS)",
+        "type": "graph",
+        "gridPos": {"x": 4, "y": 0, "w": 10, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m]))",
+            "legendFormat": "Total RPS"
+          },
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code=\"OK\"}[5m]))",
+            "legendFormat": "Success RPS"
+          },
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code!=\"OK\"}[5m]))",
+            "legendFormat": "Error RPS"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate (%)",
+        "type": "graph",
+        "gridPos": {"x": 14, "y": 0, "w": 10, "h": 4},
+        "targets": [
+          {
+            "expr": "(sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code!=\"OK\"}[5m])) / sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m]))) * 100",
+            "legendFormat": "Error Rate"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error %", "max": 100},
+          {"format": "short"}
+        ],
+        "thresholds": [
+          {"value": 5, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "P95 Latency by Method",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le, grpc_method))",
+            "legendFormat": "{{grpc_method}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (P95)"},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"type": "gt", "params": [1]},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"type": "avg"},
+              "type": "query"
+            }
+          ],
+          "frequency": "60s",
+          "handler": 1,
+          "name": "High P95 Latency",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 5,
+        "title": "Request Count by Method",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m])) by (grpc_method)",
+            "legendFormat": "{{grpc_method}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Database Connection Pool",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 10, "w": 8, "h": 5},
+        "targets": [
+          {
+            "expr": "db_connections_in_use{job=\"user-server\"}",
+            "legendFormat": "In Use"
+          },
+          {
+            "expr": "db_connections_idle{job=\"user-server\"}",
+            "legendFormat": "Idle"
+          },
+          {
+            "expr": "db_connections_max{job=\"user-server\"}",
+            "legendFormat": "Max"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Connections"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Redis Cache Hit Rate",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 10, "w": 4, "h": 5},
+        "targets": [
+          {
+            "expr": "(sum(rate(cache_hits_total{job=\"user-server\"}[5m])) / (sum(rate(cache_hits_total{job=\"user-server\"}[5m])) + sum(rate(cache_misses_total{job=\"user-server\"}[5m])))) * 100"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 50, "color": "yellow"},
+                {"value": 80, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Rate Limit Hits",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 10, "w": 12, "h": 5},
+        "targets": [
+          {
+            "expr": "sum(rate(rate_limit_hits_total{job=\"user-server\"}[5m]))",
+            "legendFormat": "Rate Limited Requests"
+          },
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m]))",
+            "legendFormat": "Total Requests"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 15, "w": 8, "h": 5},
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"user-server\"}",
+            "legendFormat": "RSS"
+          },
+          {
+            "expr": "go_memstats_alloc_bytes{job=\"user-server\"}",
+            "legendFormat": "Go Alloc"
+          },
+          {
+            "expr": "go_memstats_heap_inuse_bytes{job=\"user-server\"}",
+            "legendFormat": "Heap In Use"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Goroutines",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 15, "w": 8, "h": 5},
+        "targets": [
+          {
+            "expr": "go_goroutines{job=\"user-server\"}",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Count"},
+          {"format": "short"}
+        ],
+        "thresholds": [
+          {"value": 1000, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 11,
+        "title": "CPU Usage",
+        "type": "graph",
+        "gridPos": {"x": 16, "y": 15, "w": 8, "h": 5},
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"user-server\"}[5m]) * 100",
+            "legendFormat": "CPU %"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU Usage", "max": 100},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Authentication Success Rate",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 20, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_method=~\"/api.AuthService/(Login|Register)\",grpc_code=\"OK\"}[5m])) / sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_method=~\"/api.AuthService/(Login|Register)\"}[5m]))) * 100"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 70, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 13,
+        "title": "Active JWT Keys",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 20, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "jwt_keys_active_total{job=\"user-server\"}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "Event Publish Success Rate",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 20, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(sum(rate(events_published_total{job=\"user-server\"}[5m])) / (sum(rate(events_published_total{job=\"user-server\"}[5m])) + sum(rate(events_publish_failed_total{job=\"user-server\"}[5m])))) * 100"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 99, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 15,
+        "title": "SLA Compliance (Availability)",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 20, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code=\"OK\"}[1h])) / sum(rate(grpc_server_handled_total{job=\"user-server\"}[1h]))) * 100"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "decimals": 3,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 99.9, "color": "green"}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

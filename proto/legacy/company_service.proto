@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package api.company;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/company";
+
+import "legacy/common.proto";
+import "legacy/company.proto";
+
+/**
+ * CompanyService предоставляет операции управления организациями.
+ * Используется:
+ * - company-service: реализует этот сервис
+ * - document-service: клиент для получения информации об организации
+ * - api-gateway: клиент для маршрутизации запросов
+ */
+service CompanyService {
+  /**
+   * Получение организации по ID.
+   * Запрос: organization_id
+   * Ответ: organization
+   */
+  rpc GetOrganization(GetOrganizationRequest) returns (Organization);
+
+  /**
+   * Создание новой организации.
+   * Запрос: name, description, owner_id
+   * Ответ: organization
+   * Генерирует событие: OrganizationCreatedEvent (через RabbitMQ)
+   */
+  rpc CreateOrganization(CreateOrganizationRequest) returns (Organization);
+
+  /**
+   * Обновление организации.
+   * Запрос: id, name, description
+   * Ответ: organization
+   * Генерирует событие: OrganizationUpdatedEvent (через RabbitMQ)
+   */
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (Organization);
+
+  /**
+   * Удаление организации.
+   * Запрос: organization_id
+   * Ответ: empty
+   * Генерирует событие: OrganizationDeletedEvent (через RabbitMQ)
+   */
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (api.common.Empty);
+
+  /**
+   * Список организаций с пагинацией.
+   * Запрос: page, per_page, owner_id (опционально)
+   * Ответ: список организаций с информацией о пагинации
+   */
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+
+  /**
+   * Получение участников организации.
+   * Запрос: organization_id, page, per_page
+   * Ответ: список сотрудников
+   */
+  rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (ListEmployeesResponse);
+
+  /**
+   * Добавление участника в организацию.
+   * Запрос: organization_id, user_id, role
+   * Ответ: employee
+   * Генерирует событие: EmployeeAddedEvent (через RabbitMQ)
+   */
+  rpc AddMember(AddMemberRequest) returns (Employee);
+
+  /**
+   * Удаление участника из организации.
+   * Запрос: organization_id, employee_id
+   * Ответ: empty
+   * Генерирует событие: EmployeeRemovedEvent (через RabbitMQ)
+   */
+  rpc RemoveMember(RemoveMemberRequest) returns (api.common.Empty);
+}
+
+// ============================================
+// Сообщения запросов и ответов
+// ============================================
+
+message GetOrganizationRequest {
+  string organization_id = 1;
+}
+
+message CreateOrganizationRequest {
+  string name = 1;
+  string description = 2;
+  string owner_id = 3;
+}
+
+message UpdateOrganizationRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message DeleteOrganizationRequest {
+  string organization_id = 1;
+}
+
+message ListOrganizationsRequest {
+  int32 page = 1;
+  int32 per_page = 2;
+  string owner_id = 3; // Фильтр по владельцу (опционально)
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  api.common.PageInfo page_info = 2;
+}
+
+message GetOrganizationMembersRequest {
+  string organization_id = 1;
+  int32 page = 2;
+  int32 per_page = 3;
+}
+
+message ListEmployeesResponse {
+  repeated Employee employees = 1;
+  api.common.PageInfo page_info = 2;
+}
+
+message AddMemberRequest {
+  string organization_id = 1;
+  string user_id = 2;
+  string role = 3; // "member" (участник), "manager" (менеджер), "admin" (администратор)
+}
+
+message RemoveMemberRequest {
+  string organization_id = 1;
+  string employee_id = 2;
+}

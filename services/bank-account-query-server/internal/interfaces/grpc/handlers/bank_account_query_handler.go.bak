@@ -1,0 +1,41 @@
+package handlers
+package handlers
+
+import (
+	"context"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}	}, nil		},			Total:   0,			PerPage: req.PerPage,			Page:    req.Page,		PageInfo: &pb.PageInfo{		Message: "bank accounts listed",		Success: true,	return &pb.APIResponse{	// 3. Return results	// 2. Transform to APIResponse format	// 1. Query PostgreSQL for bank accounts with pagination	// This would typically:	// TODO: Implement query logic	h.logger.Info("ListBankAccounts called", zap.Int32("page", req.Page), zap.Int32("per_page", req.PerPage))func (h *BankAccountQueryHandler) ListBankAccounts(ctx context.Context, req *pb.PageInfo) (*pb.APIResponse, error) {}	}		logger: logger,	return &BankAccountQueryHandler{func NewBankAccountQueryHandler(logger *zap.Logger) *BankAccountQueryHandler {}	logger *zap.Logger	pb.UnimplementedBankAccountQueryServiceServertype BankAccountQueryHandler struct {)	"go.uber.org/zap"	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"

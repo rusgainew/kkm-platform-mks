@@ -1,0 +1,13 @@
+# SSL/TLS Certificates
+certs/*.crt
+certs/*.key
+certs/*.pem
+certs/*.der
+
+# Don't commit the directory itself, but allow the structure
+!certs/.gitkeep
+
+# Self-signed test certificates (regenerate in dev)
+*.local.crt
+*.local.key
+*.dev.pem

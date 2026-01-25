@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package api.auth;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/auth";
+
+/**
+ * Пользователь - агрегатный корень.
+ * Содержит полную информацию о пользователе.
+ */
+message User {
+  // Уникальный идентификатор пользователя (UUID)
+  string id = 1;
+  // Email адрес пользователя (уникальный)
+  string email = 2;
+  // Имя пользователя
+  string first_name = 3;
+  // Фамилия пользователя
+  string last_name = 4;
+  // Хэш пароля пользователя (не передается клиенту)
+  string password_hash = 9;
+  // Временная метка создания пользователя (Unix миллисекунды)
+  int64 created_at = 5;
+  // Временная метка последнего обновления (Unix миллисекунды)
+  int64 updated_at = 6;
+  // Статус пользователя: "active" (активен), "inactive" (неактивен), "banned" (заблокирован)
+  string status = 7;
+  // Роль пользователя: "admin" (администратор), "user" (пользователь), "organization_owner" (владелец организации)
+  string role = 8;
+}
+
+/**
+ * Токен - объект значения.
+ * Содержит информацию о JWT токене.
+ */
+message Token {
+  // JWT токен доступа
+  string access_token = 1;
+  // Время истечения токена (секунды)
+  int64 expires_in = 2;
+  // Тип токена (обычно "Bearer")
+  string token_type = 3;
+  // Опциональный токен обновления для ротации токенов
+  string refresh_token = 4;
+  // Время истечения токена обновления (секунды)
+  int64 refresh_expires_in = 5;
+}
+
+/**
+ * Учетные данные - объект значения.
+ * Используется для запросов входа/регистрации.
+ */
+message Credential {
+  // Email пользователя
+  string email = 1;
+  // Пароль пользователя (хешируется на уровне персистентности)
+  string password = 2;
+}
+
+/**
+ * Информация о роли.
+ * Связана с пользователем для RBAC (ролевого контроля доступа).
+ */
+message Role {
+  // Идентификатор роли
+  string id = 1;
+  // Название роли: "admin" (администратор), "user" (пользователь), "organization_owner" (владелец организации)
+  string name = 2;
+  // Описание роли
+  string description = 3;
+  // Разрешения, назначенные этой роли
+  repeated Permission permissions = 4;
+}
+
+/**
+ * Информация о разрешении.
+ * Детальный контроль доступа.
+ */
+message Permission {
+  // Идентификатор разрешения
+  string id = 1;
+  // Код разрешения: "users.read", "organizations.write" и т.д.
+  string code = 2;
+  // Описание разрешения
+  string description = 3;
+}

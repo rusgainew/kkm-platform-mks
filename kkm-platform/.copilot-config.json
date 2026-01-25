@@ -1,0 +1,26 @@
+{
+  "userRequirements": {
+    "documentation": {
+      "createAutomatically": false,
+      "createOnlyOnRequest": true,
+      "description": "Не создавай документацию без явного запроса"
+    },
+    "focus": {
+      "primary": "code",
+      "secondary": "functionality",
+      "avoidWasting": "resources on unnecessary information"
+    },
+    "output": {
+      "type": "code_only",
+      "verbose": false,
+      "unnecessary_info": false
+    },
+    "workflow": {
+      "ask_before_creating_docs": true,
+      "implement_features": true,
+      "fix_bugs": true
+    }
+  },
+  "timestamp": "2026-01-15T03:20:00Z",
+  "version": "1.0"
+}

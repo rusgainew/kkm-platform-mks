@@ -1,0 +1,268 @@
+{
+  "dashboard": {
+    "title": "User Server - Detailed Performance Dashboard",
+    "tags": ["user-server", "grpc", "performance", "detailed"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Latency Percentiles (All Methods)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le))",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "histogram_quantile(0.90, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le))",
+            "legendFormat": "P90"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le))",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le))",
+            "legendFormat": "P99"
+          },
+          {
+            "expr": "histogram_quantile(0.999, sum(rate(grpc_server_handling_seconds_bucket{job=\"user-server\"}[5m])) by (le))",
+            "legendFormat": "P99.9"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency", "logBase": 1},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Error Rate by gRPC Status Code",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code!=\"OK\"}[5m])) by (grpc_code)",
+            "legendFormat": "{{grpc_code}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Errors/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Request Rate by Method and Status",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m])) by (grpc_method, grpc_code)",
+            "legendFormat": "{{grpc_method}} [{{grpc_code}}]"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Database Query Latency Distribution",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 14, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(db_query_duration_seconds_bucket{job=\"user-server\"}[5m])) by (le, query))",
+            "legendFormat": "P50 - {{query}}"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{job=\"user-server\"}[5m])) by (le, query))",
+            "legendFormat": "P95 - {{query}}"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(db_query_duration_seconds_bucket{job=\"user-server\"}[5m])) by (le, query))",
+            "legendFormat": "P99 - {{query}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Operations Rate",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 14, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(db_queries_total{job=\"user-server\"}[5m])) by (operation)",
+            "legendFormat": "{{operation}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Operations/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Cache Performance",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 20, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(cache_hits_total{job=\"user-server\"}[5m])",
+            "legendFormat": "Hits"
+          },
+          {
+            "expr": "rate(cache_misses_total{job=\"user-server\"}[5m])",
+            "legendFormat": "Misses"
+          },
+          {
+            "expr": "rate(cache_evictions_total{job=\"user-server\"}[5m])",
+            "legendFormat": "Evictions"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Operations/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Rate Limiting Stats",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 20, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(rate_limit_hits_total{job=\"user-server\"}[5m])) by (limiter_name)",
+            "legendFormat": "{{limiter_name}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Rate Limited/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Go Memory Stats",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 26, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "go_memstats_alloc_bytes{job=\"user-server\"}",
+            "legendFormat": "Allocated"
+          },
+          {
+            "expr": "go_memstats_heap_alloc_bytes{job=\"user-server\"}",
+            "legendFormat": "Heap Allocated"
+          },
+          {
+            "expr": "go_memstats_heap_inuse_bytes{job=\"user-server\"}",
+            "legendFormat": "Heap In Use"
+          },
+          {
+            "expr": "go_memstats_stack_inuse_bytes{job=\"user-server\"}",
+            "legendFormat": "Stack In Use"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "GC Pause Time",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 26, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(go_gc_duration_seconds_sum{job=\"user-server\"}[5m])",
+            "legendFormat": "GC Pause Rate"
+          },
+          {
+            "expr": "go_gc_duration_seconds{job=\"user-server\",quantile=\"0.95\"}",
+            "legendFormat": "P95 GC Pause"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Time"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Network I/O",
+        "type": "graph",
+        "gridPos": {"x": 16, "y": 26, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(process_network_receive_bytes_total{job=\"user-server\"}[5m])",
+            "legendFormat": "Received"
+          },
+          {
+            "expr": "rate(process_network_transmit_bytes_total{job=\"user-server\"}[5m])",
+            "legendFormat": "Transmitted"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Context Timeout Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 32, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code=\"DeadlineExceeded\"}[5m]))",
+            "legendFormat": "Timeouts"
+          },
+          {
+            "expr": "(sum(rate(grpc_server_handled_total{job=\"user-server\",grpc_code=\"DeadlineExceeded\"}[5m])) / sum(rate(grpc_server_handled_total{job=\"user-server\"}[5m]))) * 100",
+            "legendFormat": "Timeout Rate %"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Count"},
+          {"format": "percent", "label": "Rate %"}
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Event Publishing Performance",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(events_published_total{job=\"user-server\"}[5m])) by (event_type)",
+            "legendFormat": "{{event_type}} (success)"
+          },
+          {
+            "expr": "sum(rate(events_publish_failed_total{job=\"user-server\"}[5m])) by (event_type)",
+            "legendFormat": "{{event_type}} (failed)"
+          }
+        ],
+        "yaxes": [
+          {"format": "eps", "label": "Events/sec"},
+          {"format": "short"}
+        ]
+      }
+    ]
+  }
+}

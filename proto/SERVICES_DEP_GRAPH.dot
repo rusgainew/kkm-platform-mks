@@ -1,0 +1,55 @@
+digraph ProtoImports {
+  rankdir=LR;
+  node [shape=box, fontsize=10];
+
+  // entities
+  "entities/invoice_contract.proto" -> "google/protobuf/wrappers.proto";
+  "entities/invoice.proto" -> "google/protobuf/wrappers.proto";
+  "entities/invoice.proto" -> "dictionaries/reference_item.proto";
+  "entities/invoice.proto" -> "dictionaries/vat_tax_type.proto";
+  "entities/invoice.proto" -> "dictionaries/country.proto";
+  "entities/invoice.proto" -> "entities/party.proto";
+  "entities/invoice.proto" -> "entities/invoice_financial.proto";
+  "entities/invoice.proto" -> "entities/invoice_international.proto";
+  "entities/invoice.proto" -> "entities/invoice_contract.proto";
+  "entities/invoice_detail.proto" -> "dictionaries/reference_item.proto";
+  "entities/invoice_detail.proto" -> "dictionaries/vat_tax_type.proto";
+
+  // dictionaries
+  "dictionaries/bank_account.proto" -> "dictionaries/bank.proto";
+  "dictionaries/bank_account.proto" -> "dictionaries/reference_item.proto";
+  "dictionaries/catalog.proto" -> "dictionaries/reference_item.proto";
+
+  // api
+  "api/catalog_requests.proto" -> "dictionaries/catalog.proto";
+  "api/catalog_requests.proto" -> "dictionaries/reference_item.proto";
+  "api/page_info.proto" -> "api/api_response.proto";
+  "api/invoice_requests.proto" -> "google/protobuf/wrappers.proto";
+  "api/invoice_requests.proto" -> "entities/invoice.proto";
+  "api/invoice_requests.proto" -> "entities/party.proto";
+  "api/invoice_requests.proto" -> "entities/invoice_detail.proto";
+  "api/invoice_requests.proto" -> "dictionaries/reference_item.proto";
+  "api/invoice_requests.proto" -> "dictionaries/vat_tax_type.proto";
+  "api/api_response.proto" -> "google/protobuf/wrappers.proto";
+  "api/api_response.proto" -> "entities/invoice.proto";
+  "api/api_response.proto" -> "entities/invoice_detail.proto";
+  "api/api_response.proto" -> "dictionaries/bank_account.proto";
+  "api/api_response.proto" -> "dictionaries/catalog.proto";
+  "api/bank_account_requests.proto" -> "dictionaries/reference_item.proto";
+  "api/bank_account_requests.proto" -> "dictionaries/bank.proto";
+  "api/bank_account_requests.proto" -> "dictionaries/bank_account.proto";
+  "api/foreign_company_requests.proto" -> "dictionaries/foreign_company.proto";
+  "api/requests.proto" -> "api/invoice_requests.proto";
+  "api/requests.proto" -> "api/bank_account_requests.proto";
+  "api/requests.proto" -> "api/catalog_requests.proto";
+  "api/requests.proto" -> "api/foreign_company_requests.proto";
+  "api/requests.proto" -> "api/api_response.proto";
+
+  // legacy
+  "legacy/auth_service.proto" -> "legacy/auth.proto";
+  "legacy/auth_service.proto" -> "legacy/common.proto";
+  "legacy/company_service.proto" -> "legacy/common.proto";
+  "legacy/company_service.proto" -> "legacy/company.proto";
+  "legacy/document_service.proto" -> "legacy/common.proto";
+  "legacy/document_service.proto" -> "legacy/document.proto";
+}

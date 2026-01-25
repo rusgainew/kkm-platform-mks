@@ -1,0 +1,624 @@
+syntax = "proto3";
+
+package api.auth;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/auth";
+
+import "legacy/auth.proto";
+import "legacy/common.proto";
+import "google/protobuf/wrappers.proto";
+
+/**
+ * AuthService предоставляет операции аутентификации и управления пользователями.
+ * 
+ * Архитектура:
+ * - user-server: реализует этот сервис
+ * - api-gateway: проксирует REST → gRPC вызовы
+ * - другие сервисы (company, invoice, catalog): клиенты для проверки токенов через ValidateToken
+ * 
+ * Безопасность:
+ * - JWT токены с RS256 (RSA SHA-256) подписью
+ * - Поддержка refresh token для ротации токенов
+ * - Multi-key rotation (см. JWT_AUTHENTICATION_IMPLEMENTATION.md)
+ * - Валидация на уровне handlers (email, password strength)
+ * 
+ * Endpoints:
+ * - POST /api/v1/users/register → Register
+ * - POST /api/v1/users/login → Login
+ * - GET /api/v1/users/me → GetCurrentUser (через ValidateToken)
+ * - POST /api/v1/users/logout → Logout
+ * - POST /api/v1/users/refresh → RefreshToken
+ * - PUT /api/v1/users/profile → UpdateProfile
+ * - PUT /api/v1/users/password → ChangePassword
+ */
+service AuthService {
+  /**
+   * Регистрация нового пользователя в системе.
+   * 
+   * Валидация:
+   * - email: формат RFC 5322, уникальность
+   * - password: минимум 8 символов, uppercase, lowercase, digit, special char
+   * - first_name, last_name: обязательные, 1-100 символов
+   * 
+   * Ответ:
+   * - user: информация о созданном пользователе (БЕЗ password_hash)
+   * - token: JWT access_token + refresh_token
+   * - timestamp: Unix миллисекунды момента регистрации
+   * 
+   * Ошибки:
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидные данные
+   * - ERROR_CODE_ALREADY_EXISTS (409): email уже зарегистрирован
+   */
+  rpc Register(RegisterRequest) returns (AuthResponse);
+
+  /**
+   * Вход существующего пользователя в систему.
+   * 
+   * Валидация:
+   * - email: формат RFC 5322
+   * - password: не пустой
+   * 
+   * Ответ:
+   * - user: информация о пользователе (БЕЗ password_hash)
+   * - token: JWT access_token + refresh_token
+   * - timestamp: Unix миллисекунды момента входа
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): неверные credentials
+   * - ERROR_CODE_NOT_FOUND (404): пользователь не найден
+   * - ERROR_CODE_FORBIDDEN (403): пользователь заблокирован (status="banned")
+   */
+  rpc Login(LoginRequest) returns (AuthResponse);
+
+  /**
+   * Валидация токена доступа и получение информации о пользователе.
+   * 
+   * Используется:
+   * - api-gateway: middleware для всех защищенных endpoints
+   * - другими сервисами: проверка токена в gRPC metadata
+   * 
+   * Валидация:
+   * - JWT подпись (RS256)
+   * - exp (expiration time)
+   * - iat (issued at)
+   * - sub (subject = user_id)
+   * 
+   * Ответ:
+   * - user: полная информация о пользователе (БЕЗ password_hash)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): невалидный/просроченный токен
+   * - ERROR_CODE_NOT_FOUND (404): пользователь не найден (удален после выдачи токена)
+   */
+  rpc ValidateToken(ValidateTokenRequest) returns (User);
+
+  /**
+   * Получение пользователя по ID.
+   * 
+   * Используется:
+   * - внутренними сервисами для получения информации о владельце ресурса
+   * - admin панелью для просмотра профилей
+   * 
+   * Валидация:
+   * - user_id: формат UUID v4
+   * 
+   * Ответ:
+   * - user: информация о пользователе (БЕЗ password_hash)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидный UUID
+   * - ERROR_CODE_NOT_FOUND (404): пользователь не найден
+   */
+  rpc GetUser(GetUserRequest) returns (User);
+
+  /**
+   * Получение текущего пользователя из токена.
+   * 
+   * Convenience метод, эквивалентный ValidateToken, но с более удобным именем.
+   * Используется для endpoint GET /api/v1/users/me
+   * 
+   * Валидация:
+   * - access_token: JWT signature, expiration
+   * 
+   * Ответ:
+   * - user: полная информация о текущем пользователе (БЕЗ password_hash)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): невалидный/просроченный токен
+   */
+  rpc GetCurrentUser(ValidateTokenRequest) returns (User);
+
+  /**
+   * Выход пользователя (инвалидация токена).
+   * 
+   * Действия:
+   * - добавление access_token в blacklist (Redis с TTL = оставшееся время жизни токена)
+   * - опционально: инвалидация всех refresh_token пользователя
+   * 
+   * Валидация:
+   * - access_token: JWT signature, expiration
+   * 
+   * Ответ:
+   * - Empty (статус 200 означает успех)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): невалидный токен
+   */
+  rpc Logout(LogoutRequest) returns (api.common.Empty);
+
+  /**
+   * Обновление токена доступа с помощью refresh token.
+   * 
+   * Используется для "silent" обновления access_token без повторного логина.
+   * 
+   * Валидация:
+   * - refresh_token: JWT signature, expiration
+   * - refresh_token не должен быть в blacklist
+   * 
+   * Ответ:
+   * - token: новая пара access_token + refresh_token
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): невалидный/просроченный refresh_token
+   * - ERROR_CODE_FORBIDDEN (403): refresh_token в blacklist
+   * 
+   * Примечание:
+   * - старый refresh_token инвалидируется (добавляется в blacklist)
+   * - возвращается новая пара токенов для реализации token rotation
+   */
+  rpc RefreshToken(RefreshTokenRequest) returns (Token);
+
+  /**
+   * Обновление профиля пользователя.
+   * 
+   * Позволяет изменить: first_name, last_name
+   * Для смены email/password используйте отдельные методы.
+   * 
+   * Валидация:
+   * - user_id: UUID v4, должен совпадать с токеном (или admin role)
+   * - first_name, last_name: 1-100 символов
+   * 
+   * Ответ:
+   * - user: обновленная информация о пользователе
+   * 
+   * Ошибки:
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидные данные
+   * - ERROR_CODE_UNAUTHORIZED (401): токен отсутствует/невалиден
+   * - ERROR_CODE_FORBIDDEN (403): попытка изменить чужой профиль (не admin)
+   */
+  rpc UpdateProfile(UpdateProfileRequest) returns (User);
+
+  /**
+   * Смена пароля пользователя.
+   * 
+   * Требует знания текущего пароля для безопасности.
+   * 
+   * Валидация:
+   * - old_password: должен совпадать с текущим
+   * - new_password: минимум 8 символов, uppercase, lowercase, digit, special char
+   * - new_password != old_password
+   * 
+   * Действия:
+   * - обновление password_hash
+   * - инвалидация всех существующих токенов пользователя (добавление в blacklist)
+   * 
+   * Ответ:
+   * - Empty (статус 200 означает успех)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): неверный old_password или токен
+   * - ERROR_CODE_VALIDATION_FAILED (400): слабый new_password
+   */
+  rpc ChangePassword(ChangePasswordRequest) returns (api.common.Empty);
+
+  /**
+   * Список всех пользователей с пагинацией.
+   * 
+   * Требует роль: admin
+   * 
+   * Валидация:
+   * - page, size: page >= 0, 0 < size <= 100
+   * 
+   * Ответ:
+   * - users: список пользователей (БЕЗ password_hash)
+   * - page_info: информация о пагинации
+   * 
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): токен отсутствует/невалиден
+   * - ERROR_CODE_FORBIDDEN (403): недостаточно прав (не admin)
+   */
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+
+  /**
+   * Запрос на восстановление пароля (забытый пароль).
+   * 
+   * Действия:
+   * - проверка существования пользователя по email
+   * - генерация token для сброса пароля (valid 15 минут)
+   * - отправка email с ссылкой для сброса (требует email сервис)
+   * 
+   * Валидация:
+   * - email: формат RFC 5322, должен существовать в системе
+   * 
+   * Ответ:
+   * - Empty (статус 200 означает успех)
+   * - Email с инструкциями отправлен (или fake успех для защиты от enumeration)
+   * 
+   * Ошибки:
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидный email
+   * 
+   * Примечание:
+   * - возвращается успех даже если email не найден (защита от перечисления)
+   * - token отправляется по email (требует настройки SMTP)
+   */
+  rpc ForgotPassword(ForgotPasswordRequest) returns (api.common.Empty);
+
+  /**
+   * Сброс пароля с использованием token из email.
+   * 
+   * Действия:
+   * - валидация reset token
+   * - проверка что новый пароль отличается от старого
+   * - обновление пароля
+   * - инвалидация всех существующих токенов пользователя
+   * 
+   * Валидация:
+   * - reset_token: должен быть корректным и не просроченным (15 минут)
+   * - new_password: минимум 8 символов, uppercase, lowercase, digit, special char
+   * 
+   * Ответ:
+   * - token: новая пара access_token + refresh_token для автоматического входа
+   * 
+   * Ошибки:
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидный token или пароль
+   * - ERROR_CODE_UNAUTHENTICATED (401): просроченный reset token
+   * - ERROR_CODE_NOT_FOUND (404): пользователь не найден (token был выдан несуществующему пользователю)
+   * 
+   * Примечание:
+   * - reset token может быть использован только один раз
+   * - все существующие сессии пользователя завершаются
+   */
+  rpc ResetPassword(ResetPasswordRequest) returns (AuthResponse);
+
+  /**
+   * Назначение роли пользователю (только админ).
+   *
+   * Действия:
+   * - извлечение актёра из access_token
+   * - проверка, что актёр имеет роль admin
+   * - назначение целевому пользователю роли "manager" или "user"
+   *
+   * Ограничения:
+   * - роль "manager" не имеет права удалять записи из базы
+   * - роль "admin" назначать через этот метод нельзя (защита от эскалации)
+   *
+   * Ошибки:
+   * - ERROR_CODE_UNAUTHORIZED (401): невалидный токен
+   * - ERROR_CODE_FORBIDDEN (403): недостаточно прав (не admin)
+   * - ERROR_CODE_VALIDATION_FAILED (400): невалидная роль или пользователь
+   */
+  rpc AssignRole(AssignRoleRequest) returns (User);
+}
+
+// ============================================
+// Сообщения запросов и ответов
+// ============================================
+
+/**
+ * RegisterRequest - запрос на регистрацию нового пользователя.
+ * 
+ * Валидация:
+ * - email: RFC 5322 format, max 255 chars, уникальность
+ * - password: min 8 chars, must contain uppercase, lowercase, digit, special char
+ * - first_name: 1-100 chars, not empty
+ * - last_name: 1-100 chars, not empty
+ * 
+ * Примеры:
+ * {
+ *   "email": "user@example.com",
+ *   "password": "SecurePass123!",
+ *   "first_name": "Иван",
+ *   "last_name": "Иванов"
+ * }
+ */
+message RegisterRequest {
+  // Email адрес пользователя (будет использоваться для входа)
+  // Обязательное поле, должно быть уникальным в системе
+  string email = 1;
+
+  // Пароль пользователя (будет захеширован с bcrypt)
+  // Обязательное поле, минимум 8 символов
+  string password = 2;
+
+  // Имя пользователя
+  // Обязательное поле, 1-100 символов
+  string first_name = 3;
+
+  // Фамилия пользователя
+  // Обязательное поле, 1-100 символов
+  string last_name = 4;
+
+  // Опциональная роль пользователя при регистрации
+  // Если не указано, по умолчанию "user"
+  // Для установки "admin" требуется существующий admin токен
+  google.protobuf.StringValue role = 5;
+}
+
+/**
+ * LoginRequest - запрос на вход существующего пользователя.
+ * 
+ * Валидация:
+ * - email: RFC 5322 format
+ * - password: not empty
+ * 
+ * Примеры:
+ * {
+ *   "email": "user@example.com",
+ *   "password": "SecurePass123!"
+ * }
+ */
+message LoginRequest {
+  // Email адрес пользователя
+  string email = 1;
+
+  // Пароль пользователя
+  string password = 2;
+}
+
+/**
+ * AuthResponse - ответ на успешную аутентификацию (Register/Login).
+ * 
+ * Содержит:
+ * - информацию о пользователе (без password_hash)
+ * - JWT токены (access + refresh)
+ * - временную метку операции
+ */
+message AuthResponse {
+  // Информация о пользователе (БЕЗ password_hash)
+  User user = 1;
+
+  // JWT токены для доступа к защищенным endpoints
+  Token token = 2;
+
+  // Временная метка операции (Unix milliseconds)
+  // Используется для синхронизации и логирования
+  int64 timestamp = 3;
+}
+
+/**
+ * ValidateTokenRequest - запрос на валидацию JWT токена.
+ * 
+ * Используется:
+ * - API Gateway: проверка каждого защищенного запроса
+ * - Микросервисы: проверка токена в gRPC metadata
+ * 
+ * Примеры:
+ * {
+ *   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+ * }
+ */
+message ValidateTokenRequest {
+  // JWT access token для валидации
+  string access_token = 1;
+}
+
+/**
+ * GetUserRequest - запрос на получение пользователя по ID.
+ * 
+ * Валидация:
+ * - user_id: UUID v4 format
+ * 
+ * Примеры:
+ * {
+ *   "user_id": "550e8400-e29b-41d4-a716-446655440000"
+ * }
+ */
+message GetUserRequest {
+  // UUID пользователя
+  string user_id = 1;
+}
+
+/**
+ * LogoutRequest - запрос на выход (инвалидация токена).
+ * 
+ * Действия:
+ * - добавление access_token в Redis blacklist
+ * - опционально: инвалидация всех refresh_token пользователя
+ * 
+ * Примеры:
+ * {
+ *   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+ * }
+ */
+message LogoutRequest {
+  // JWT access token для инвалидации
+  string access_token = 1;
+
+  // Инвалидировать ВСЕ сессии пользователя (все refresh tokens)
+  // Если false (default), инвалидируется только текущая сессия
+  bool revoke_all_sessions = 2;
+}
+
+/**
+ * RefreshTokenRequest - запрос на обновление access token.
+ * 
+ * Используется для "silent" обновления токена без повторного логина.
+ * 
+ * Валидация:
+ * - refresh_token: JWT signature, expiration
+ * - refresh_token не в blacklist
+ * 
+ * Примеры:
+ * {
+ *   "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+ * }
+ */
+message RefreshTokenRequest {
+  // JWT refresh token
+  string refresh_token = 1;
+}
+
+/**
+ * UpdateProfileRequest - запрос на обновление профиля пользователя.
+ * 
+ * Позволяет обновить: first_name, last_name
+ * Для смены email/password используйте отдельные методы.
+ * 
+ * Валидация:
+ * - user_id: UUID v4, должен совпадать с токеном (или admin role)
+ * - first_name, last_name: опциональные, если указаны - 1-100 chars
+ * 
+ * Примеры:
+ * {
+ *   "user_id": "550e8400-e29b-41d4-a716-446655440000",
+ *   "first_name": "Новое Имя",
+ *   "last_name": "Новая Фамилия"
+ * }
+ */
+message UpdateProfileRequest {
+  // UUID пользователя (должен совпадать с токеном)
+  string user_id = 1;
+
+  // Новое имя (опционально, если не указано - не меняется)
+  google.protobuf.StringValue first_name = 2;
+
+  // Новая фамилия (опционально, если не указано - не меняется)
+  google.protobuf.StringValue last_name = 3;
+}
+
+/**
+ * ChangePasswordRequest - запрос на смену пароля.
+ * 
+ * Требует знания текущего пароля для безопасности.
+ * 
+ * Валидация:
+ * - user_id: UUID v4, должен совпадать с токеном
+ * - old_password: must match current password
+ * - new_password: min 8 chars, uppercase, lowercase, digit, special char
+ * - new_password != old_password
+ * 
+ * Действия после успешной смены:
+ * - инвалидация всех существующих токенов пользователя
+ * - требуется повторный логин
+ * 
+ * Примеры:
+ * {
+ *   "user_id": "550e8400-e29b-41d4-a716-446655440000",
+ *   "old_password": "OldPass123!",
+ *   "new_password": "NewSecurePass456!"
+ * }
+ */
+message ChangePasswordRequest {
+  // UUID пользователя (должен совпадать с токеном)
+  string user_id = 1;
+
+  // Текущий пароль для проверки
+  string old_password = 2;
+
+  // Новый пароль
+  string new_password = 3;
+}
+
+/**
+ * ListUsersRequest - запрос на получение списка пользователей с пагинацией.
+ * 
+ * Требует роль: admin
+ * 
+ * Валидация:
+ * - page: >= 0 (default: 0)
+ * - size: 1-100 (default: 20)
+ * 
+ * Примеры:
+ * {
+ *   "page": 0,
+ *   "size": 20,
+ *   "status": "active",
+ *   "role": "user"
+ * }
+ */
+message ListUsersRequest {
+  // Номер страницы (с 0)
+  int32 page = 1;
+
+  // Количество элементов на странице (max 100)
+  int32 size = 2;
+
+  // Фильтр по статусу: "active", "inactive", "banned"
+  // Если не указан, возвращаются все
+  google.protobuf.StringValue status = 3;
+
+  // Фильтр по роли: "user", "manager", "admin"
+  // Если не указан, возвращаются все
+  google.protobuf.StringValue role = 4;
+}
+
+/**
+ * ListUsersResponse - ответ со списком пользователей.
+ * 
+ * Содержит:
+ * - список пользователей (без password_hash)
+ * - информацию о пагинации
+ */
+message ListUsersResponse {
+  // Список пользователей (БЕЗ password_hash)
+  repeated User users = 1;
+
+  // Информация о пагинации
+  api.common.PageInfo page_info = 2;
+}
+
+/**
+ * ForgotPasswordRequest - запрос на восстановление пароля.
+ * 
+ * Валидация:
+ * - email: RFC 5322 format, должен существовать в системе
+ * 
+ * Примеры:
+ * {
+ *   "email": "user@example.com"
+ * }
+ */
+message ForgotPasswordRequest {
+  // Email пользователя для отправки инструкций восстановления пароля
+  string email = 1;
+}
+
+/**
+ * ResetPasswordRequest - запрос на сброс пароля с token из email.
+ * 
+ * Валидация:
+ * - reset_token: должен быть корректным и не просроченным (15 минут)
+ * - new_password: min 8 chars, uppercase, lowercase, digit, special char
+ * 
+ * Примеры:
+ * {
+ *   "reset_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+ *   "new_password": "NewSecurePass789!"
+ * }
+ */
+message ResetPasswordRequest {
+ // Reset token отправленный в email (действует 15 минут)
+  string reset_token = 1;
+
+  // Новый пароль
+  string new_password = 2;
+}
+
+/**
+ * AssignRoleRequest - назначение роли пользователю.
+ *
+ * Требует:
+ * - access_token: токен админа
+ * - target_user_id: UUID пользователя, которому назначается роль
+ * - role: допустимые значения: "user", "manager"
+ */
+message AssignRoleRequest {
+  // JWT access token админа, выполняющего операцию
+  string access_token = 1;
+
+  // UUID целевого пользователя
+  string target_user_id = 2;
+
+  // Назначаемая роль: "user" или "manager"
+  string role = 3;
+}
