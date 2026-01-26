@@ -299,27 +299,27 @@ services:
     networks:
       - kkm-network
 
-  # foreign-company-query-server:
-  #   build:
-  #     context: .
-  #     dockerfile: services/foreign-company-query-server/Dockerfile
-  #   container_name: foreign-company-query-server
-  #   restart: unless-stopped
-  #   environment:
-  #     DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
-  #     REDIS_URL: redis://redis:6379/4
-  #     GRPC_PORT: 50066
-  #     METRICS_PORT: 9112
-  #   ports:
-  #     - "50066:50066"
-  #     - "9112:9112"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - kkm-network
+  foreign-company-query-server:
+    build:
+      context: .
+      dockerfile: services/foreign-company-query-server/Dockerfile
+    container_name: foreign-company-query-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      REDIS_URL: redis://redis:6379/4
+      GRPC_PORT: 50066
+      METRICS_PORT: 9112
+    ports:
+      - "50066:50066"
+      - "9112:9112"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kkm-network
 
   document-query-server:
     build:
