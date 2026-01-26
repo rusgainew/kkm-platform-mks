@@ -3,260 +3,257 @@ package integration_test
 import (
 	"context"
 	"testing"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	}		})			}				assert.NotNil(t, resp)			if err == nil {			assert.NoError(t, err)			resp, err := client.ListBankAccountsWithFilter(ctx, req)			}				Size: tt.size,				Page: tt.page,			req := &pb.BankAccountFilterRequest{		t.Run(tt.name, func(t *testing.T) {	for _, tt := range tests {	}		{"Default pagination", 0, 0},		{"Large page number", 500, 10},		{"Page 0, Size 50", 0, 50},		{"Page 0, Size 1", 0, 1},	}{		size int32		page int32		name string	tests := []struct {	client := pb.NewBankAccountQueryServiceClient(conn)	defer conn.Close()	require.NoError(t, err)	)		grpc.WithBlock(),		grpc.WithTransportCredentials(insecure.NewCredentials()),	conn, err := grpc.DialContext(ctx, serverAddr,	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), timeout)func TestBankAccountPaginationEdgeCases(t *testing.T) {// TestBankAccountPaginationEdgeCases tests pagination edge cases}	assert.Equal(t, resp1.GetBankAccountList().GetTotalElements(), resp2.GetBankAccountList().GetTotalElements())	// Responses should match	t.Logf("First request: %v, Second request: %v", duration1, duration2)	assert.NotNil(t, resp2)	require.NoError(t, err)	duration2 := time.Since(start2)	resp2, err := client.ListBankAccountsWithFilter(ctx, req)	start2 := time.Now()	// Second request (cache hit)	assert.NotNil(t, resp1)	require.NoError(t, err)	duration1 := time.Since(start1)	resp1, err := client.ListBankAccountsWithFilter(ctx, req)	start1 := time.Now()	// First request	}		Size:        10,		Page:        0,		AccountName: "CACHE_TEST",	req := &pb.BankAccountFilterRequest{	client := pb.NewBankAccountQueryServiceClient(conn)	defer conn.Close()	require.NoError(t, err)	)		grpc.WithBlock(),		grpc.WithTransportCredentials(insecure.NewCredentials()),	conn, err := grpc.DialContext(ctx, serverAddr,	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), timeout)func TestBankAccountCacheHit(t *testing.T) {// TestBankAccountCacheHit tests cache functionality}	}		})			}				}					tt.validate(t, resp)				if tt.validate != nil && err == nil {				assert.NoError(t, err, "Unexpected error: %v", err)			} else {				assert.Error(t, err, "Expected error but got none")			if tt.expectError {			resp, err := client.ListBankAccountsWithFilter(ctx, tt.request)		t.Run(tt.name, func(t *testing.T) {	for _, tt := range tests {	}		},			},				assert.LessOrEqual(t, len(bankAccountList.BankAccounts), 5)				assert.NotNil(t, bankAccountList)				bankAccountList := resp.GetBankAccountList()				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size: 5,				Page: 0,			request: &pb.BankAccountFilterRequest{			name: "Pagination test",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:        10,				Page:        0,				SearchText:  "account",				SortOrder:   "DESC",				SortField:   "created_at",				IsActive:    true,				AccountName: "Main",			request: &pb.BankAccountFilterRequest{			name: "Complex filter",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:       10,				Page:       0,				SearchText: "test",			request: &pb.BankAccountFilterRequest{			name: "Search with text",		{		},			expectError: true,			},				Size:      10,				Page:      0,				SortOrder: "RANDOM",			request: &pb.BankAccountFilterRequest{			name: "Invalid sort order",		{		},			expectError: true,			},				Size:      10,				Page:      0,				SortField: "invalid_field",			request: &pb.BankAccountFilterRequest{			name: "Invalid sort field",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:      10,				Page:      0,				SortOrder: "DESC",				SortField: "bank_account",			request: &pb.BankAccountFilterRequest{			name: "Sort by bank_account descending",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:      10,				Page:      0,				SortOrder: "ASC",				SortField: "account_name",			request: &pb.BankAccountFilterRequest{			name: "Sort by account_name ascending",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:     10,				Page:     0,				IsActive: true,			request: &pb.BankAccountFilterRequest{			name: "Filter by active status",		{		},			},				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:        10,				Page:        0,				BankAccount: "12345678901234567890",			request: &pb.BankAccountFilterRequest{			name: "Filter by bank account number",		{		},			},				assert.NotNil(t, bankAccountList)				bankAccountList := resp.GetBankAccountList()				assert.NotNil(t, resp)			validate: func(t *testing.T, resp *pb.APIResponse) {			expectError: false,			},				Size:        10,				Page:        0,				AccountName: "Test Account",			request: &pb.BankAccountFilterRequest{			name: "Filter by account name",		{	}{		validate    func(t *testing.T, resp *pb.APIResponse)		expectError bool		request     *pb.BankAccountFilterRequest		name        string	tests := []struct {	client := pb.NewBankAccountQueryServiceClient(conn)	defer conn.Close()	require.NoError(t, err, "Failed to connect to server")	)		grpc.WithBlock(),		grpc.WithTransportCredentials(insecure.NewCredentials()),	conn, err := grpc.DialContext(ctx, serverAddr,	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), timeout)func TestListBankAccountsWithFilter(t *testing.T) {// TestListBankAccountsWithFilter tests bank account filtering)	timeout    = 30 * time.Second	serverAddr = "localhost:50054" // bank-account-query-server portconst ()	"google.golang.org/grpc/credentials/insecure"	"google.golang.org/grpc"	"github.com/stretchr/testify/require"	"github.com/stretchr/testify/assert"	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"	"time"
+	"time"
+
+	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+const (
+	serverAddr = "localhost:50065" // bank-account-query-server port
+	timeout    = 30 * time.Second
+)
+
+// TestListBankAccountsWithFilter tests bank account filtering
+func TestListBankAccountsWithFilter(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, serverAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	require.NoError(t, err, "Failed to connect to server")
+	defer conn.Close()
+
+	client := pb.NewBankAccountQueryServiceClient(conn)
+
+	tests := []struct {
+		name        string
+		request     *pb.BankAccountFilterRequest
+		expectError bool
+		validate    func(t *testing.T, resp *pb.APIResponse)
+	}{
+		{
+			name: "Filter by account name",
+			request: &pb.BankAccountFilterRequest{
+				AccountName: "Test Account",
+				Page:        0,
+				Size:        10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+				bankAccountList := resp.GetBankAccountList()
+				assert.NotNil(t, bankAccountList)
+			},
+		},
+		{
+			name: "Filter by bank account number",
+			request: &pb.BankAccountFilterRequest{
+				BankAccount: "12345678901234567890",
+				Page:        0,
+				Size:        10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Filter by active status",
+			request: &pb.BankAccountFilterRequest{
+				IsActive: true,
+				Page:     0,
+				Size:     10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Sort by account_name ascending",
+			request: &pb.BankAccountFilterRequest{
+				SortField: "account_name",
+				SortOrder: "ASC",
+				Page:      0,
+				Size:      10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Sort by bank_account descending",
+			request: &pb.BankAccountFilterRequest{
+				SortField: "bank_account",
+				SortOrder: "DESC",
+				Page:      0,
+				Size:      10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Invalid sort field",
+			request: &pb.BankAccountFilterRequest{
+				SortField: "invalid_field",
+				Page:      0,
+				Size:      10,
+			},
+			expectError: true,
+		},
+		{
+			name: "Invalid sort order",
+			request: &pb.BankAccountFilterRequest{
+				SortOrder: "RANDOM",
+				Page:      0,
+				Size:      10,
+			},
+			expectError: true,
+		},
+		{
+			name: "Search with text",
+			request: &pb.BankAccountFilterRequest{
+				SearchText: "test",
+				Page:       0,
+				Size:       10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Complex filter",
+			request: &pb.BankAccountFilterRequest{
+				AccountName: "Main",
+				IsActive:    true,
+				SortField:   "created_at",
+				SortOrder:   "DESC",
+				SearchText:  "account",
+				Page:        0,
+				Size:        10,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+			},
+		},
+		{
+			name: "Pagination test",
+			request: &pb.BankAccountFilterRequest{
+				Page: 0,
+				Size: 5,
+			},
+			expectError: false,
+			validate: func(t *testing.T, resp *pb.APIResponse) {
+				assert.NotNil(t, resp)
+				bankAccountList := resp.GetBankAccountList()
+				assert.NotNil(t, bankAccountList)
+				assert.LessOrEqual(t, len(bankAccountList.BankAccounts), 5)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := client.ListBankAccountsWithFilter(ctx, tt.request)
+			if tt.expectError {
+				assert.Error(t, err, "Expected error but got none")
+			} else {
+				assert.NoError(t, err, "Unexpected error: %v", err)
+				if tt.validate != nil && err == nil {
+					tt.validate(t, resp)
+				}
+			}
+		})
+	}
+}
+
+// TestBankAccountCacheHit tests cache functionality
+func TestBankAccountCacheHit(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, serverAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	require.NoError(t, err)
+	defer conn.Close()
+
+	client := pb.NewBankAccountQueryServiceClient(conn)
+
+	req := &pb.BankAccountFilterRequest{
+		AccountName: "CACHE_TEST",
+		Page:        0,
+		Size:        10,
+	}
+
+	// First request
+	start1 := time.Now()
+	resp1, err := client.ListBankAccountsWithFilter(ctx, req)
+	duration1 := time.Since(start1)
+	require.NoError(t, err)
+	assert.NotNil(t, resp1)
+
+	// Second request (cache hit)
+	start2 := time.Now()
+	resp2, err := client.ListBankAccountsWithFilter(ctx, req)
+	duration2 := time.Since(start2)
+	require.NoError(t, err)
+	assert.NotNil(t, resp2)
+
+	t.Logf("First request: %v, Second request: %v", duration1, duration2)
+
+	// Responses should match
+	assert.Equal(t, resp1.GetBankAccountList().GetTotalElements(), resp2.GetBankAccountList().GetTotalElements())
+}
+
+// TestBankAccountPaginationEdgeCases tests pagination edge cases
+func TestBankAccountPaginationEdgeCases(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, serverAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	require.NoError(t, err)
+	defer conn.Close()
+
+	client := pb.NewBankAccountQueryServiceClient(conn)
+
+	tests := []struct {
+		name string
+		page int32
+		size int32
+	}{
+		{"Page 0, Size 1", 0, 1},
+		{"Page 0, Size 50", 0, 50},
+		{"Large page number", 500, 10},
+		{"Default pagination", 0, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &pb.BankAccountFilterRequest{
+				Page: tt.page,
+				Size: tt.size,
+			}
+			resp, err := client.ListBankAccountsWithFilter(ctx, req)
+			assert.NoError(t, err)
+			if err == nil {
+				assert.NotNil(t, resp)
+			}
+		})
+	}
+}

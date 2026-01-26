@@ -10,6 +10,7 @@ use (
 	./services/catalog-server
 	./services/company-server
 	./services/document-server
+	./services/foreign-company-query-server
 	./services/foreign-company-server
 	./services/invoice-query-server
 	./services/invoice-server
