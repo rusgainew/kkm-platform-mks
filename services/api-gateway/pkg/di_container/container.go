@@ -48,6 +48,7 @@ type Container struct {
 	documentQueryService       *services.DocumentQueryService
 	companyQueryService        *services.CompanyQueryService
 	foreignCompanyQueryService *services.ForeignCompanyQueryService
+	analyticsService           *services.AnalyticsService
 
 	// Cleanup functions
 	cleanupFuncs []func() error
@@ -343,6 +344,20 @@ func (c *Container) ForeignCompanyQueryService() *services.ForeignCompanyQuerySe
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.foreignCompanyQueryService
+}
+
+// SetAnalyticsService устанавливает analytics сервис
+func (c *Container) SetAnalyticsService(service *services.AnalyticsService) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.analyticsService = service
+}
+
+// AnalyticsService возвращает analytics сервис
+func (c *Container) AnalyticsService() *services.AnalyticsService {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.analyticsService
 }
 
 // SetRedisCache устанавливает Redis кеш

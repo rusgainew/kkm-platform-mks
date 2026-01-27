@@ -307,7 +307,7 @@ func (rc *RouteConfigurator) configureForeignCompanyQueryRoutes(protected *gin.R
 
 // configureAnalyticsRoutes конфигурирует маршруты аналитики Dashboard
 func (rc *RouteConfigurator) configureAnalyticsRoutes(protected *gin.RouterGroup) {
-	analyticsHandler := NewAnalyticsHandler(rc.container.InvoiceQueryService(), rc.logger)
+	analyticsHandler := NewAnalyticsHandler(rc.container.AnalyticsService(), rc.logger)
 	analytics := protected.Group("/analytics")
 	{
 		analytics.GET("/stats", analyticsHandler.GetDashboardStats)

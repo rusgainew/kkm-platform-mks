@@ -168,6 +168,10 @@ func (i *Initializer) InitializeApplicationServices() error {
 	foreignCompanyQueryService := createForeignCompanyQueryService(cfg, connManager, metrics, tracer, logger)
 	i.container.SetForeignCompanyQueryService(foreignCompanyQueryService)
 
+	// Инициализация Analytics Service
+	analyticsService := createAnalyticsService(cfg, redisCache, metrics, logger)
+	i.container.SetAnalyticsService(analyticsService)
+
 	return nil
 }
 
@@ -259,4 +263,28 @@ func createForeignCompanyQueryService(
 		tracer,
 		logger,
 	)
+}
+
+func createAnalyticsService(
+	cfg *config.Config,
+	redisCache *cache.RedisCache,
+	metrics *observability.Metrics,
+	logger *zap.Logger,
+) *services.AnalyticsService {
+	// TODO: Подключить PostgreSQL для аналитики
+	// Пока создаем сервис с nil repository - это вызовет панику при запросе
+	// Необходимо:
+	// 1. Добавить DB connection в Infrastructure
+	// 2. Создать PostgresAnalyticsRepository
+	// 3. Применить миграции (001_create_analytics_views.up.sql)
+	// 4. Обернуть в metrics wrapper
+	//
+	// Пример полной инициализации:
+	// db := getDBConnection(cfg.Database.InvoiceDB) // Нужно добавить DB connection
+	// repo := repository.NewPostgresAnalyticsRepository(db, logger)
+	// repoWithMetrics := repository.NewAnalyticsRepositoryWithMetrics(repo, metrics, logger)
+	// return services.NewAnalyticsService(repoWithMetrics, redisCache, logger)
+
+	logger.Warn("AnalyticsService created WITHOUT repository - analytics endpoints will fail until DB connection is configured")
+	return services.NewAnalyticsService(nil, redisCache, logger)
 }
