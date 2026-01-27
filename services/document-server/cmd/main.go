@@ -183,6 +183,12 @@ func initDatabase(cfg config.DatabaseConfig, logger *zap.Logger) (*sqlx.DB, erro
 		return nil, err
 	}
 
+	// Configure connection pool
+	db.SetMaxOpenConns(25)                 // Maximum 25 open connections
+	db.SetMaxIdleConns(5)                  // Keep 5 idle connections
+	db.SetConnMaxLifetime(5 * time.Minute) // Reconnect every 5 minutes
+	db.SetConnMaxIdleTime(2 * time.Minute) // Close idle connections after 2 minutes
+
 	// Проверяем подключение
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
