@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rusgainew/kkm-project-mks/bank-account-query-server/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/proto-lib/dictionaries"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -104,7 +105,7 @@ func (r *InMemoryBankAccountRepository) ListBankAccounts(ctx context.Context, pa
 		allBankAccounts = append(allBankAccounts, proto.Clone(entry.data).(*dictionaries.BankAccount))
 	}
 
-	totalCount := int32(len(allBankAccounts))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(allBankAccounts), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -152,7 +153,7 @@ func (r *InMemoryBankAccountRepository) ListBankAccountsWithFilter(ctx context.C
 		filtered = append(filtered, proto.Clone(entry.data).(*dictionaries.BankAccount))
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -205,7 +206,7 @@ func (r *InMemoryBankAccountRepository) SearchBankAccounts(ctx context.Context, 
 		}
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -272,7 +273,7 @@ func (r *InMemoryBankAccountRepository) GetActiveBankAccounts(ctx context.Contex
 		}
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {

@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rusgainew/kkm-project-mks/invoice-query-server/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/proto-lib/entities"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -100,7 +101,7 @@ func (r *InMemoryInvoiceRepository) ListInvoices(ctx context.Context, page, size
 	}
 
 	// Calculate pagination
-	total := int32(len(allInvoices))
+	total := conversion.SafeIntToInt32WithDefault(len(allInvoices), 0)
 	start := (page - 1) * size
 	end := start + size
 
@@ -140,7 +141,7 @@ func (r *InMemoryInvoiceRepository) ListInvoiceDetails(ctx context.Context, page
 	}
 
 	// Calculate pagination
-	total := int32(len(allDetails))
+	total := conversion.SafeIntToInt32WithDefault(len(allDetails), 0)
 	start := (page - 1) * size
 	end := start + size
 
@@ -199,7 +200,7 @@ func (r *InMemoryInvoiceRepository) ListInvoicesWithFilter(ctx context.Context, 
 	}
 
 	// Calculate pagination
-	total := int32(len(filtered))
+	total := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	start := (page - 1) * size
 	end := start + size
 
@@ -246,7 +247,7 @@ func (r *InMemoryInvoiceRepository) SearchInvoices(ctx context.Context, searchTe
 	}
 
 	// Calculate pagination
-	total := int32(len(results))
+	total := conversion.SafeIntToInt32WithDefault(len(results), 0)
 	start := (page - 1) * size
 	end := start + size
 
@@ -314,7 +315,7 @@ func (r *InMemoryInvoiceRepository) GetInvoicesByDateRange(ctx context.Context, 
 	}
 
 	// Calculate pagination
-	total := int32(len(results))
+	total := conversion.SafeIntToInt32WithDefault(len(results), 0)
 	start := (page - 1) * size
 	end := start + size
 

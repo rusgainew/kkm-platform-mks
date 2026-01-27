@@ -259,14 +259,13 @@ func (r *PostgresInvoiceRepository) ListInvoicesWithFilter(ctx context.Context, 
 	}
 
 	// SQL запрос с фильтрацией и сортировкой
-	query := fmt.Sprintf(`
+	query := `
 		SELECT document_uuid, invoice_number, invoice_date, 
 		       total_amount, note, created_date
 		FROM invoices
-		%s
-		ORDER BY %s
-		LIMIT $%d OFFSET $%d
-	`, whereClause, orderBy, argIndex, argIndex+1)
+		` + whereClause + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + fmt.Sprintf("%d", argIndex) + ` OFFSET $` + fmt.Sprintf("%d", argIndex+1)
 
 	args = append(args, size, offset)
 

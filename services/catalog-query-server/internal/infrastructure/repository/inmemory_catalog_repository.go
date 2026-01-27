@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/proto-lib/dictionaries"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -117,7 +118,7 @@ func (r *InMemoryCatalogRepository) ListCatalogs(ctx context.Context, page, size
 		allCatalogs = append(allCatalogs, proto.Clone(entry.data).(*dictionaries.Catalog))
 	}
 
-	totalCount := int32(len(allCatalogs))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(allCatalogs), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -132,8 +133,13 @@ func (r *InMemoryCatalogRepository) ListCatalogs(ctx context.Context, page, size
 	return allCatalogs[offset:end], totalCount, nil
 }
 
-// ListCatalogsWithFilter returns filtered and sorted catalogs
+// ListCatalogsWithFilter returns filtered and sorted list of catalogs
 func (r *InMemoryCatalogRepository) ListCatalogsWithFilter(ctx context.Context, filter *ports.CatalogFilter, sort *ports.CatalogSort, page, size int32) ([]*dictionaries.Catalog, int32, error) {
+	start := time.Now()
+	defer func() {
+		catalogOperationDuration.WithLabelValues("list_with_filter").Observe(time.Since(start).Seconds())
+	}()
+
 	if size <= 0 {
 		size = 10
 	}
@@ -170,7 +176,7 @@ func (r *InMemoryCatalogRepository) ListCatalogsWithFilter(ctx context.Context, 
 		sortCatalogs(filtered, sort)
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -217,7 +223,7 @@ func (r *InMemoryCatalogRepository) SearchCatalogs(ctx context.Context, searchTe
 		}
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -236,7 +242,7 @@ func (r *InMemoryCatalogRepository) SearchCatalogs(ctx context.Context, searchTe
 func (r *InMemoryCatalogRepository) GetCatalogByNumber(ctx context.Context, number string) (*dictionaries.Catalog, error) {
 	start := time.Now()
 	defer func() {
-		catalogOperationDuration.WithLabelValues("get").Observe(time.Since(start).Seconds())
+		catalogOperationDuration.WithLabelValues("get_by_number").Observe(time.Since(start).Seconds())
 	}()
 
 	if number == "" {
@@ -299,7 +305,7 @@ func (r *InMemoryCatalogRepository) GetCatalogsByTnvedCode(ctx context.Context, 
 		}
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {

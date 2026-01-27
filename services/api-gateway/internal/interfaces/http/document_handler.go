@@ -9,6 +9,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/models"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/validation"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 
@@ -332,7 +333,7 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 		return
 	}
 
-	docs, pageInfo, err := h.service.ListDocuments(c.Request.Context(), organizationID, status, createdBy, int32(page), int32(perPage))
+	docs, pageInfo, err := h.service.ListDocuments(c.Request.Context(), organizationID, status, createdBy, conversion.SafeIntToInt32WithDefault(page, 1), conversion.SafeIntToInt32WithDefault(perPage, 20))
 	if err != nil {
 		statusCode, apiErr := errors.MapGRPCErrorToHTTP(err)
 		c.JSON(statusCode, models.APIResponse{Success: false, Error: &models.APIError{Code: apiErr.Code, Message: apiErr.Message, Details: apiErr.Details}})

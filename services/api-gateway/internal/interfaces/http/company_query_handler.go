@@ -8,6 +8,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/errors"
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +59,7 @@ func (h *CompanyQueryHandler) ListCompanies(c *gin.Context) {
 		pageSize = 100
 	}
 
-	resp, err := h.service.ListCompanies(c.Request.Context(), int32(page), int32(pageSize))
+	resp, err := h.service.ListCompanies(c.Request.Context(), conversion.SafeInt64ToInt32WithDefault(page, 0), conversion.SafeInt64ToInt32WithDefault(pageSize, 20))
 	if err != nil {
 		h.logger.Error("Failed to list companies", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, errors.NewInternalServerError())
@@ -140,8 +141,8 @@ func (h *CompanyQueryHandler) FilterCompanies(c *gin.Context) {
 
 	filterReq := &pb.CatalogFilterRequest{
 		Name: c.Query("name"),
-		Page: int32(page),
-		Size: int32(pageSize),
+		Page: conversion.SafeInt64ToInt32WithDefault(page, 0),
+		Size: conversion.SafeInt64ToInt32WithDefault(pageSize, 20),
 	}
 
 	resp, err := h.service.FilterCompanies(c.Request.Context(), filterReq)

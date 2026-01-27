@@ -337,3 +337,189 @@ func (h *CompanyHandler) ListCompanies(c *gin.Context) {
 		},
 	})
 }
+
+// GetOrganizationMembers получает список членов организации
+//
+//	@Summary		Get organization members
+//	@Description	Retrieve all members of a specific organization
+//	@Tags			Companies
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string													true	"Organization ID"
+//	@Param			page		query		int														false	"Page number"	default(1)
+//	@Param			pageSize	query		int														false	"Page size"		default(10)
+//	@Success		200			{object}	models.APIResponse{data=[]models.Employee}
+//	@Failure		404			{object}	models.APIResponse	"Organization not found"
+//	@Failure		500			{object}	models.APIResponse	"Internal server error"
+//	@Router			/companies/{id}/members [get]
+//	@Security		BearerAuth
+func (h *CompanyHandler) GetOrganizationMembers(c *gin.Context) {
+	orgID := c.Param("id")
+	if orgID == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    "INVALID_INPUT",
+				Message: "Organization ID is required",
+			},
+		})
+		return
+	}
+
+	page := 1
+	if p := c.Query("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	pageSize := 10
+	if ps := c.Query("page_size"); ps != "" {
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+
+	members, total, err := h.service.GetOrganizationMembers(c.Request.Context(), orgID, int32(page), int32(pageSize))
+	if err != nil {
+		statusCode, apiErr := errors.MapGRPCErrorToHTTP(err)
+		h.logger.Error("Failed to get organization members", zap.String("org_id", orgID), zap.Error(err))
+		c.JSON(statusCode, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    apiErr.Code,
+				Message: apiErr.Message,
+				Details: apiErr.Details,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    members,
+		Meta: &models.MetaData{
+			Page:       page,
+			PageSize:   pageSize,
+			TotalCount: int(total),
+			TotalPages: (int(total) + pageSize - 1) / pageSize,
+		},
+	})
+}
+
+// AddMember добавляет члена в организацию
+//
+//	@Summary		Add member to organization
+//	@Description	Add a user as a member of an organization
+//	@Tags			Companies
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string											true	"Organization ID"
+//	@Param			member	body		models.AddMemberRequest							true	"Member data"
+//	@Success		201		{object}	models.APIResponse{data=models.Employee}		"Member successfully added"
+//	@Failure		400		{object}	models.APIResponse								"Invalid input"
+//	@Failure		404		{object}	models.APIResponse								"Organization not found"
+//	@Failure		500		{object}	models.APIResponse								"Internal server error"
+//	@Router			/companies/{id}/members [post]
+//	@Security		BearerAuth
+func (h *CompanyHandler) AddMember(c *gin.Context) {
+	orgID := c.Param("id")
+	if orgID == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    "INVALID_INPUT",
+				Message: "Organization ID is required",
+			},
+		})
+		return
+	}
+
+	var req models.AddMemberRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Warn("Invalid request body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    "INVALID_INPUT",
+				Message: "Invalid request body",
+				Details: err.Error(),
+			},
+		})
+		return
+	}
+
+	req.OrganizationID = orgID
+	member, err := h.service.AddMember(c.Request.Context(), &req)
+	if err != nil {
+		statusCode, apiErr := errors.MapGRPCErrorToHTTP(err)
+		h.logger.Error("Failed to add member", zap.String("org_id", orgID), zap.Error(err))
+		c.JSON(statusCode, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    apiErr.Code,
+				Message: apiErr.Message,
+				Details: apiErr.Details,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, models.APIResponse{
+		Success: true,
+		Data:    member,
+	})
+}
+
+// RemoveMember удаляет члена из организации
+//
+//	@Summary		Remove member from organization
+//	@Description	Remove a user from an organization
+//	@Tags			Companies
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string				true	"Organization ID"
+//	@Param			memberId	path		string				true	"Member/Employee ID"
+//	@Success		200			{object}	models.APIResponse	"Member successfully removed"
+//	@Failure		404			{object}	models.APIResponse	"Organization or member not found"
+//	@Failure		500			{object}	models.APIResponse	"Internal server error"
+//	@Router			/companies/{id}/members/{memberId} [delete]
+//	@Security		BearerAuth
+func (h *CompanyHandler) RemoveMember(c *gin.Context) {
+	orgID := c.Param("id")
+	memberID := c.Param("memberId")
+
+	if orgID == "" || memberID == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    "INVALID_INPUT",
+				Message: "Organization ID and Member ID are required",
+			},
+		})
+		return
+	}
+
+	err := h.service.RemoveMember(c.Request.Context(), orgID, memberID)
+	if err != nil {
+		statusCode, apiErr := errors.MapGRPCErrorToHTTP(err)
+		h.logger.Error("Failed to remove member",
+			zap.String("org_id", orgID),
+			zap.String("member_id", memberID),
+			zap.Error(err))
+		c.JSON(statusCode, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    apiErr.Code,
+				Message: apiErr.Message,
+				Details: apiErr.Details,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Message: "Member successfully removed",
+	})
+}

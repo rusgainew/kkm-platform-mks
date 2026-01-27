@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/errors"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 
@@ -102,7 +103,7 @@ func (h *UserQueryHandler) ListUsers(c *gin.Context) {
 		page = 1
 	}
 
-	resp, err := h.service.ListUsers(c.Request.Context(), int32(page), int32(perPage), status, role)
+	resp, err := h.service.ListUsers(c.Request.Context(), conversion.SafeInt64ToInt32WithDefault(page, 1), conversion.SafeInt64ToInt32WithDefault(perPage, 10), status, role)
 	if err != nil {
 		h.logger.Error("Failed to list users",
 			zap.Int64("page", page),
@@ -163,7 +164,7 @@ func (h *UserQueryHandler) SearchUsers(c *gin.Context) {
 		page = 1
 	}
 
-	resp, err := h.service.SearchUsers(c.Request.Context(), query, int32(page), int32(perPage), status)
+	resp, err := h.service.SearchUsers(c.Request.Context(), query, conversion.SafeInt64ToInt32WithDefault(page, 1), conversion.SafeInt64ToInt32WithDefault(perPage, 10), status)
 	if err != nil {
 		h.logger.Error("Failed to search users",
 			zap.String("query", query),

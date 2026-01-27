@@ -93,7 +93,14 @@ func main() {
 		metricsAddr := fmt.Sprintf(":%s", cfg.Server.MetricsPort)
 		logger.Info("starting metrics server", zap.String("address", metricsAddr))
 		http.Handle("/metrics", promhttp.Handler())
-		if err := http.ListenAndServe(metricsAddr, nil); err != nil {
+		server := &http.Server{
+			Addr:              metricsAddr,
+			Handler:           nil,
+			ReadHeaderTimeout: 10 * time.Second,
+			WriteTimeout:      10 * time.Second,
+			IdleTimeout:       60 * time.Second,
+		}
+		if err := server.ListenAndServe(); err != nil {
 			logger.Error("metrics server failed", zap.Error(err))
 		}
 	}()

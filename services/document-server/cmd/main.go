@@ -244,7 +244,15 @@ func startMetricsServer(port string, logger *zap.Logger) {
 	addr := fmt.Sprintf(":%s", port)
 	logger.Info("Metrics server started", zap.String("port", port))
 
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           nil,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
 		logger.Error("Failed to start metrics server", zap.Error(err))
 	}
 }

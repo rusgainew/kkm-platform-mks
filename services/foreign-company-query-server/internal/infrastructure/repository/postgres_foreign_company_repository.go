@@ -141,13 +141,12 @@ func (r *PostgresForeignCompanyRepository) ListForeignCompaniesWithFilter(ctx co
 	}
 
 	// SQL запрос с фильтрацией и сортировкой
-	query := fmt.Sprintf(`
+	query := `
 		SELECT id, pin, full_name
 		FROM foreign_companies
-		%s
-		ORDER BY %s
-		LIMIT $%d OFFSET $%d
-	`, whereClause, orderBy, argIndex, argIndex+1)
+		` + whereClause + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + fmt.Sprintf("%d", argIndex) + ` OFFSET $` + fmt.Sprintf("%d", argIndex+1)
 
 	args = append(args, size, offset)
 

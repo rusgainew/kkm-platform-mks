@@ -113,6 +113,11 @@ func (rc *RouteConfigurator) configureCompanyRoutes(protected *gin.RouterGroup) 
 		companies.GET("/:id", companyHandler.GetCompany)
 		companies.PUT("/:id", companyHandler.UpdateCompany)
 		companies.GET("", companyHandler.ListCompanies)
+
+		// Member management routes
+		companies.GET("/:id/members", companyHandler.GetOrganizationMembers)
+		companies.POST("/:id/members", middleware.RequireAdminOrManager(rc.logger), companyHandler.AddMember)
+		companies.DELETE("/:id/members/:memberId", middleware.RequireAdminOrManager(rc.logger), companyHandler.RemoveMember)
 	}
 }
 
@@ -213,6 +218,8 @@ func (rc *RouteConfigurator) configureInvoiceQueryRoutes(protected *gin.RouterGr
 		invoiceQueries.GET("/search", invoiceQueryHandler.SearchInvoices)
 		invoiceQueries.GET("/filter", invoiceQueryHandler.ListInvoicesWithFilter)
 		invoiceQueries.GET("/by-number/:number", invoiceQueryHandler.GetInvoiceByNumber)
+		invoiceQueries.GET("/details", invoiceQueryHandler.ListInvoiceDetails)
+		invoiceQueries.GET("/by-date-range", invoiceQueryHandler.GetInvoicesByDateRange)
 	}
 }
 

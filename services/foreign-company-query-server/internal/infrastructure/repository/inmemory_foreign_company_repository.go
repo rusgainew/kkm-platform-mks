@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rusgainew/kkm-project-mks/foreign-company-query-server/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/proto-lib/dictionaries"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -104,7 +105,7 @@ func (r *InMemoryForeignCompanyRepository) ListForeignCompanies(ctx context.Cont
 		allForeignCompanies = append(allForeignCompanies, proto.Clone(entry.data).(*dictionaries.ForeignCompany))
 	}
 
-	totalCount := int32(len(allForeignCompanies))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(allForeignCompanies), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -152,7 +153,7 @@ func (r *InMemoryForeignCompanyRepository) ListForeignCompaniesWithFilter(ctx co
 		filtered = append(filtered, proto.Clone(entry.data).(*dictionaries.ForeignCompany))
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {
@@ -205,7 +206,7 @@ func (r *InMemoryForeignCompanyRepository) SearchForeignCompanies(ctx context.Co
 		}
 	}
 
-	totalCount := int32(len(filtered))
+	totalCount := conversion.SafeIntToInt32WithDefault(len(filtered), 0)
 	offset := (page - 1) * size
 
 	if offset >= totalCount {

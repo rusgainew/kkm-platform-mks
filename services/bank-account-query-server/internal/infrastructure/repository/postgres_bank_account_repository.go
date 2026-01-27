@@ -154,13 +154,12 @@ func (r *PostgresBankAccountRepository) ListBankAccountsWithFilter(ctx context.C
 	}
 
 	// SQL запрос с фильтрацией и сортировкой
-	query := fmt.Sprintf(`
+	query := `
 		SELECT id::text, bank_name, account_number, organization_id::text, is_active
 		FROM bank_accounts
-		%s
-		ORDER BY %s
-		LIMIT $%d OFFSET $%d
-	`, whereClause, orderBy, argIndex, argIndex+1)
+		` + whereClause + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + fmt.Sprintf("%d", argIndex) + ` OFFSET $` + fmt.Sprintf("%d", argIndex+1)
 
 	args = append(args, size, offset)
 

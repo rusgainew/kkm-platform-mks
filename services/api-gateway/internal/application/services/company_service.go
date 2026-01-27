@@ -9,6 +9,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/client"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/observability"
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/company"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 
@@ -241,8 +242,8 @@ func (s *CompanyService) ListCompanies(ctx context.Context, page, pageSize int) 
 	}
 
 	req := &pb.ListOrganizationsRequest{
-		Page:    int32(page),
-		PerPage: int32(pageSize),
+		Page:    conversion.SafeIntToInt32WithDefault(page, 0),
+		PerPage: conversion.SafeIntToInt32WithDefault(pageSize, 20),
 	}
 
 	resp, err := client.ListOrganizations(ctx, req)
@@ -269,4 +270,125 @@ func (s *CompanyService) ListCompanies(ctx context.Context, page, pageSize int) 
 	}
 
 	return companies, int(resp.PageInfo.Total), nil
+}
+
+// GetOrganizationMembers получает список членов организации
+func (s *CompanyService) GetOrganizationMembers(ctx context.Context, orgID string, page, pageSize int32) ([]*models.Employee, int32, error) {
+	ctx, endSpan := s.tracer.StartSpan(ctx, "CompanyService.GetOrganizationMembers")
+	defer endSpan()
+
+	client, err := s.getClient(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get company client", zap.Error(err))
+		return nil, 0, err
+	}
+
+	req := &pb.GetOrganizationMembersRequest{
+		OrganizationId: orgID,
+		Page:           page,
+		PerPage:        pageSize,
+	}
+
+	resp, err := client.GetOrganizationMembers(ctx, req)
+	if err != nil {
+		s.logger.Error("Failed to get organization members", zap.String("org_id", orgID), zap.Error(err))
+		s.metrics.IncrementErrorCount("company_service", "get_members")
+		return nil, 0, fmt.Errorf("failed to get organization members: %w", err)
+	}
+
+	s.logger.Info("Organization members retrieved", zap.String("org_id", orgID), zap.Int("count", len(resp.Employees)))
+
+	members := make([]*models.Employee, 0, len(resp.Employees))
+	for _, emp := range resp.Employees {
+		members = append(members, &models.Employee{
+			ID:             emp.Id,
+			UserID:         emp.UserId,
+			OrganizationID: emp.OrganizationId,
+			Role:           emp.Role,
+			Status:         emp.Status,
+			Position:       emp.Position,
+			Department:     emp.Department,
+			JoinedAt:       emp.JoinedAt,
+			LastActiveAt:   emp.LastActiveAt,
+		})
+	}
+
+	return members, conversion.SafeInt64ToInt32WithDefault(resp.PageInfo.Total, 0), nil
+}
+
+// AddMember добавляет члена в организацию
+func (s *CompanyService) AddMember(ctx context.Context, req *models.AddMemberRequest) (*models.Employee, error) {
+	ctx, endSpan := s.tracer.StartSpan(ctx, "CompanyService.AddMember")
+	defer endSpan()
+
+	client, err := s.getClient(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get company client", zap.Error(err))
+		return nil, err
+	}
+
+	grpcReq := &pb.AddMemberRequest{
+		OrganizationId: req.OrganizationID,
+		UserId:         req.UserID,
+		Role:           req.Role,
+	}
+
+	resp, err := client.AddMember(ctx, grpcReq)
+	if err != nil {
+		s.logger.Error("Failed to add member",
+			zap.String("org_id", req.OrganizationID),
+			zap.String("user_id", req.UserID),
+			zap.Error(err))
+		s.metrics.IncrementErrorCount("company_service", "add_member")
+		return nil, fmt.Errorf("failed to add member: %w", err)
+	}
+
+	s.logger.Info("Member added successfully",
+		zap.String("org_id", req.OrganizationID),
+		zap.String("user_id", req.UserID))
+
+	return &models.Employee{
+		ID:             resp.Id,
+		UserID:         resp.UserId,
+		OrganizationID: resp.OrganizationId,
+		Role:           resp.Role,
+		Status:         resp.Status,
+		Position:       resp.Position,
+		Department:     resp.Department,
+		JoinedAt:       resp.JoinedAt,
+		LastActiveAt:   resp.LastActiveAt,
+	}, nil
+}
+
+// RemoveMember удаляет члена из организации
+func (s *CompanyService) RemoveMember(ctx context.Context, orgID, memberID string) error {
+	ctx, endSpan := s.tracer.StartSpan(ctx, "CompanyService.RemoveMember")
+	defer endSpan()
+
+	client, err := s.getClient(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get company client", zap.Error(err))
+		return err
+	}
+
+	req := &pb.RemoveMemberRequest{
+		OrganizationId: orgID,
+		EmployeeId:     memberID,
+	}
+
+	_, err = client.RemoveMember(ctx, req)
+	if err != nil {
+		s.logger.Error("Failed to remove member",
+			zap.String("org_id", orgID),
+			zap.String("member_id", memberID),
+			zap.Error(err))
+		s.metrics.IncrementErrorCount("company_service", "remove_member")
+		return fmt.Errorf("failed to remove member: %w", err)
+	}
+
+	s.logger.Info("Member removed successfully",
+		zap.String("org_id", orgID),
+		zap.String("member_id", memberID))
+
+	return nil
 }

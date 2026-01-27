@@ -157,13 +157,12 @@ func (r *PostgresCatalogRepository) ListCatalogsWithFilter(ctx context.Context, 
 	}
 
 	// Запрос данных
-	query := fmt.Sprintf(`
+	query := `
 		SELECT code, name, tnved, gked
 		FROM catalog_items
-		%s
-		ORDER BY %s
-		LIMIT $%d OFFSET $%d
-	`, whereClause, orderBy, argIndex, argIndex+1)
+		` + whereClause + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + fmt.Sprintf("%d", argIndex) + ` OFFSET $` + fmt.Sprintf("%d", argIndex+1)
 
 	args = append(args, size, offset)
 

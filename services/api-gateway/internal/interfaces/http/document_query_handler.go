@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/errors"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 
@@ -106,7 +107,7 @@ func (h *DocumentQueryHandler) ListDocuments(c *gin.Context) {
 		page = 1
 	}
 
-	resp, err := h.service.ListDocuments(c.Request.Context(), int32(page), int32(perPage), status, docType, companyID, approvalStatus)
+	resp, err := h.service.ListDocuments(c.Request.Context(), conversion.SafeInt64ToInt32WithDefault(page, 1), conversion.SafeInt64ToInt32WithDefault(perPage, 10), status, docType, companyID, approvalStatus)
 	if err != nil {
 		h.logger.Error("Failed to list documents",
 			zap.Int64("page", page),
@@ -171,7 +172,7 @@ func (h *DocumentQueryHandler) SearchDocuments(c *gin.Context) {
 		page = 1
 	}
 
-	resp, err := h.service.SearchDocuments(c.Request.Context(), query, int32(page), int32(perPage), docType, companyID, approvalStatus)
+	resp, err := h.service.SearchDocuments(c.Request.Context(), query, conversion.SafeInt64ToInt32WithDefault(page, 1), conversion.SafeInt64ToInt32WithDefault(perPage, 10), docType, companyID, approvalStatus)
 	if err != nil {
 		h.logger.Error("Failed to search documents",
 			zap.String("query", query),
@@ -230,7 +231,7 @@ func (h *DocumentQueryHandler) GetPendingApprovalDocuments(c *gin.Context) {
 		page = 1
 	}
 
-	resp, err := h.service.GetPendingApprovalDocuments(c.Request.Context(), companyID, int32(page), int32(perPage))
+	resp, err := h.service.GetPendingApprovalDocuments(c.Request.Context(), companyID, conversion.SafeInt64ToInt32WithDefault(page, 1), conversion.SafeInt64ToInt32WithDefault(perPage, 10))
 	if err != nil {
 		h.logger.Error("Failed to get pending approval documents",
 			zap.String("company_id", companyID),

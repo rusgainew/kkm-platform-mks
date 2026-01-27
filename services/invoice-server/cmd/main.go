@@ -150,8 +150,11 @@ func main() {
 
 	// Запуск metrics сервера
 	metricsServer := &http.Server{
-		Addr:    fmt.Sprintf(":%s", cfg.Server.MetricsPort),
-		Handler: promhttp.Handler(),
+		Addr:              fmt.Sprintf(":%s", cfg.Server.MetricsPort),
+		Handler:           promhttp.Handler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {

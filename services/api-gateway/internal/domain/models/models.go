@@ -172,3 +172,40 @@ type PaginationRequest struct {
 	Page     int `json:"page" form:"page"`
 	PageSize int `json:"page_size" form:"page_size"`
 }
+
+// Employee модель сотрудника организации
+type Employee struct {
+	ID             string `json:"id"`
+	UserID         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+	Status         string `json:"status"`
+	Position       string `json:"position,omitempty"`
+	Department     string `json:"department,omitempty"`
+	JoinedAt       int64  `json:"joined_at"`
+	LastActiveAt   int64  `json:"last_active_at,omitempty"`
+}
+
+// AddMemberRequest запрос на добавление члена в организацию
+type AddMemberRequest struct {
+	OrganizationID string `json:"organization_id"`
+	UserID         string `json:"user_id" binding:"required"`
+	Role           string `json:"role" binding:"required"`
+}
+
+// InvoiceDetail модель детализации счета
+type InvoiceDetail struct {
+	ID           string  `json:"id"`
+	InvoiceUUID  string  `json:"invoice_uuid"`
+	CatalogCode  string  `json:"catalog_code"`
+	CatalogName  string  `json:"catalog_name"`
+	Quantity     float64 `json:"quantity"`
+	UnitPrice    float64 `json:"unit_price"`
+	TotalPrice   float64 `json:"total_price"`
+	VATRate      float64 `json:"vat_rate"`
+	VATAmount    float64 `json:"vat_amount"`
+	ExciseRate   float64 `json:"excise_rate,omitempty"`
+	ExciseAmount float64 `json:"excise_amount,omitempty"`
+	TurnoverSize float64 `json:"turnover_size,omitempty"`
+	CreatedAt    int64   `json:"created_at"`
+}

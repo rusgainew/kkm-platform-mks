@@ -8,6 +8,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/errors"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/models"
+	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -499,7 +500,7 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 	statusFilter := c.Query("status")
 	role := c.Query("role")
 
-	resp, err := h.service.ListUsers(c.Request.Context(), int32(page), int32(size), statusFilter, role)
+	resp, err := h.service.ListUsers(c.Request.Context(), conversion.SafeIntToInt32WithDefault(page, 0), conversion.SafeIntToInt32WithDefault(size, 20), statusFilter, role)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok {

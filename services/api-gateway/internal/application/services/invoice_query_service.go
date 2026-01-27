@@ -133,3 +133,25 @@ func (s *InvoiceQueryService) GetInvoiceByNumber(ctx context.Context, invoiceNum
 
 	return resp, nil
 }
+
+// ListInvoiceDetails получает список деталей счета
+// TODO: требует реализации в proto и invoice-query-server
+func (s *InvoiceQueryService) ListInvoiceDetails(ctx context.Context, invoiceUUID string, page, pageSize int32) (*pb.APIResponse, error) {
+	// Временная заглушка - метод требует добавления в proto definitions
+	return &pb.APIResponse{
+		Success: false,
+		Message: "ListInvoiceDetails method is not implemented in backend service",
+		Data:    nil,
+	}, nil
+}
+
+// GetInvoicesByDateRange получает счета по диапазону дат
+// TODO: требует реализации в proto и invoice-query-server
+func (s *InvoiceQueryService) GetInvoicesByDateRange(ctx context.Context, startDate, endDate string, page, pageSize int32) (*pb.APIResponse, error) {
+	// Временная заглушка - метод требует добавления в proto definitions
+	return &pb.APIResponse{
+		Success: false,
+		Message: "GetInvoicesByDateRange method is not implemented in backend service",
+		Data:    nil,
+	}, nil
+}
