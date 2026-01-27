@@ -8,10 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -50,28 +47,15 @@ func main() {
 		zap.Int("metrics_port", cfg.MetricsPort),
 	)
 
-	// Connect to database
-	db, err := sqlx.Connect(cfg.DatabaseDriver, cfg.DatabaseURL)
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer db.Close()
-
-	// Verify connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	if err = db.PingContext(ctx); err != nil {
-		cancel()
-		logger.Fatal("Failed to ping database", zap.Error(err))
-	}
-	cancel()
-
-	logger.Info("Database connection established")
+	// Initialize in-memory repository (data will come from RabbitMQ events)
+	userRepo := repository.NewInMemoryUserRepository(logger)
+	logger.Info("In-memory user repository initialized")
 
 	// Initialize Redis cache (optional)
 	var redisCache *cache.RedisCache
-	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+	if cfg.RedisURL != "" {
 		redisClient := redis.NewClient(&redis.Options{
-			Addr: redisURL,
+			Addr: cfg.RedisURL,
 		})
 
 		if err := redisClient.Ping(context.Background()).Err(); err == nil {
@@ -82,23 +66,19 @@ func main() {
 		}
 	}
 
-	// Initialize repository
-	userRepo := repository.NewUserQueryRepository(db, logger)
-
 	// Initialize gRPC handler
 	userQueryHandler := grpchandlers.NewUserQueryHandler(logger, userRepo, redisCache)
 
 	// Initialize RabbitMQ consumer for event-driven updates
 	var consumer *messaging.RabbitMQConsumer
 	if cfg.RabbitMQEnabled {
-		eventHandler := handlers.NewUserEventHandler(db, logger)
+		eventHandler := handlers.NewUserEventHandler(userRepo, logger)
 		consumer, err = messaging.NewRabbitMQConsumer(
 			cfg.RabbitMQURL,
 			"user-query-server",
 			cfg.RabbitMQExchange,
 			logger,
 			eventHandler,
-			db.DB, // Use the underlying sql.DB
 		)
 		if err != nil {
 			logger.Error("Failed to create RabbitMQ consumer", zap.Error(err))
@@ -172,7 +152,7 @@ func main() {
 	grpcServer.GracefulStop()
 
 	// Shutdown metrics server
-	ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	if err := metricsServer.Shutdown(ctx); err != nil {
 		logger.Error("Error shutting down metrics server", zap.Error(err))
 	}

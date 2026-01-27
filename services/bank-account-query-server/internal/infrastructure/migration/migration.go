@@ -39,7 +39,9 @@ func (m *Migrator) Run() error {
 	}
 
 	// Create database driver
-	dbDriver, err := postgres.WithInstance(m.db, &postgres.Config{})
+	dbDriver, err := postgres.WithInstance(m.db, &postgres.Config{
+		SchemaName: "bank_accounts",
+	})
 	if err != nil {
 		return err
 	}

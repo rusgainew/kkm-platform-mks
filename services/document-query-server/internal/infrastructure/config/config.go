@@ -11,8 +11,6 @@ import (
 type Config struct {
 	GRPCPort         int
 	MetricsPort      int
-	DatabaseURL      string
-	DatabaseDriver   string
 	LogLevel         string
 	ShutdownTimeout  time.Duration
 	JaegerEndpoint   string
@@ -27,8 +25,6 @@ func Load() *Config {
 	cfg := &Config{
 		GRPCPort:         loadPortEnv("DOCUMENT_QUERY_GRPC_PORT", 50062),
 		MetricsPort:      loadPortEnv("DOCUMENT_QUERY_METRICS_PORT", 9103),
-		DatabaseDriver:   getEnv("DOCUMENT_QUERY_DB_DRIVER", "postgres"),
-		DatabaseURL:      getEnv("DOCUMENT_QUERY_DB_URL", ""),
 		LogLevel:         getEnv("LOG_LEVEL", "info"),
 		ShutdownTimeout:  getEnvDuration("SHUTDOWN_TIMEOUT", 30*time.Second),
 		JaegerEndpoint:   getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
@@ -60,11 +56,11 @@ func (c *Config) Validate() error {
 	if c.GRPCPort == c.MetricsPort {
 		return fmt.Errorf("GRPC port (%d) cannot be same as Metrics port", c.GRPCPort)
 	}
-	if c.DatabaseURL == "" {
-		return errors.New("DOCUMENT_QUERY_DB_URL is required")
+	if c.RedisURL == "" {
+		return errors.New("DOCUMENT_QUERY_REDIS_URL is required")
 	}
-	if c.DatabaseDriver == "" {
-		return errors.New("DOCUMENT_QUERY_DB_DRIVER is required")
+	if c.RabbitMQURL == "" {
+		return errors.New("DOCUMENT_QUERY_RABBITMQ_URL is required")
 	}
 	return nil
 }

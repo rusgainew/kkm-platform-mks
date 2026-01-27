@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -12,12 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/cache"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/config"
+	apphealth "github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/health"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/middleware"
-	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/migration"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/observability"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/infrastructure/repository"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/interfaces/grpc/handlers"
@@ -54,27 +52,8 @@ func main() {
 		logger.Info("OpenTelemetry tracer initialized", zap.String("jaeger_endpoint", cfg.JaegerEndpoint))
 	}
 
-	// Connect to database
-	db, err := sql.Open(cfg.DatabaseDriver, cfg.DatabaseURL)
-	if err != nil {
-		logger.Fatal("Failed to open database", zap.Error(err))
-	}
-	defer db.Close()
-
-	// Test database connection
-	if err := db.Ping(); err != nil {
-		logger.Fatal("Failed to ping database", zap.Error(err))
-	}
-	logger.Info("Database connected successfully")
-
-	// Выполнение автоматических миграций
-	migrator := migration.NewMigrator(db, logger)
-	if err := migrator.Run(); err != nil {
-		logger.Fatal("Failed to run database migrations", zap.Error(err))
-	}
-
-	// Create repository
-	repo := repository.NewPostgresCatalogRepository(db)
+	// Create in-memory repository (data will come from RabbitMQ events)
+	repo := repository.NewInMemoryCatalogRepository(logger)
 
 	// Initialize metrics
 	metrics := observability.NewMetricsCollector("catalog_query", "service")
@@ -110,15 +89,32 @@ func main() {
 	handler := handlers.NewCatalogQueryHandler(logger, repo, metrics, redisCache)
 	pb.RegisterCatalogQueryServiceServer(grpcServer, handler)
 
+	// Initialize health check manager
+	healthManager := apphealth.NewManager(logger)
+
+	// Get the concrete repository type for health checks
+	inMemoryRepo, ok := repo.(*repository.InMemoryCatalogRepository)
+	if ok {
+		// Register cache staleness check (consider stale if no updates in 1 hour)
+		healthManager.RegisterCheck("cache_staleness",
+			apphealth.CacheStalenessChecker(inMemoryRepo.GetLastUpdate, 1*time.Hour))
+
+		// Register cache size check (expect at least 10 items, max 100000)
+		healthManager.RegisterCheck("cache_size",
+			apphealth.CacheSizeChecker(inMemoryRepo.GetCacheSize, 10, 100000))
+	}
+
 	// Listen on gRPC port
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	// Health check endpoint for Docker
+	// Health check endpoints
 	healthMux := http.NewServeMux()
-	healthMux.HandleFunc("/health", healthCheckHandler)
+	healthMux.HandleFunc("/health", healthManager.HealthHandler())
+	healthMux.HandleFunc("/health/live", healthManager.LivenessHandler())
+	healthMux.HandleFunc("/health/ready", healthManager.ReadinessHandler())
 	// Metrics endpoint
 	healthMux.Handle("/metrics", promhttp.Handler())
 
@@ -181,10 +177,4 @@ func main() {
 	}
 
 	logger.Info("Catalog Query Server stopped")
-}
-
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, `{"status":"ok","service":"catalog-query-server"}`)
 }

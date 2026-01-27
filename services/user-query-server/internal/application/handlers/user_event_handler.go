@@ -3,23 +3,25 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
+	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/messaging"
+	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/repository"
 )
 
 // UserEventHandler implements messaging.EventHandler for user events
 type UserEventHandler struct {
-	db     *sqlx.DB
+	repo   *repository.InMemoryUserRepository
 	logger *zap.Logger
 }
 
 // NewUserEventHandler creates a new user event handler
-func NewUserEventHandler(db *sqlx.DB, logger *zap.Logger) *UserEventHandler {
+func NewUserEventHandler(repo *repository.InMemoryUserRepository, logger *zap.Logger) *UserEventHandler {
 	return &UserEventHandler{
-		db:     db,
+		repo:   repo,
 		logger: logger,
 	}
 }
@@ -39,23 +41,32 @@ func (h *UserEventHandler) HandleUserRegistered(ctx context.Context, event messa
 
 	firstName, _ := event.Data["first_name"].(string)
 	lastName, _ := event.Data["last_name"].(string)
+	phone, _ := event.Data["phone"].(string)
+	role, _ := event.Data["role"].(string)
+	if role == "" {
+		role = "user"
+	}
 
-	// Insert into read-model
-	query := `
-		INSERT INTO user_read_model (id, email, first_name, last_name, status, role, created_at)
-		VALUES ($1, $2, $3, $4, 'active', 'user', NOW())
-		ON CONFLICT (id) DO UPDATE SET
-			email = EXCLUDED.email,
-			first_name = EXCLUDED.first_name,
-			last_name = EXCLUDED.last_name
-	`
+	// Create user read model
+	user := &pb.UserReadModel{
+		Id:        userID,
+		Email:     email,
+		FirstName: firstName,
+		LastName:  lastName,
+		Phone:     phone,
+		Status:    "active",
+		Role:      role,
+		CreatedAt: time.Now().Format(time.RFC3339),
+		UpdatedAt: time.Now().Format(time.RFC3339),
+	}
 
-	if _, err := h.db.ExecContext(ctx, query, userID, email, firstName, lastName); err != nil {
-		h.logger.Error("Failed to insert user",
+	// Upsert into in-memory repository
+	if err := h.repo.UpsertUser(ctx, user); err != nil {
+		h.logger.Error("Failed to upsert user",
 			zap.String("user_id", userID),
 			zap.String("email", email),
 			zap.Error(err))
-		return fmt.Errorf("failed to insert user: %w", err)
+		return fmt.Errorf("failed to upsert user: %w", err)
 	}
 
 	h.logger.Info("User registered event processed",
@@ -72,31 +83,32 @@ func (h *UserEventHandler) HandleUserLoggedIn(ctx context.Context, event messagi
 		return fmt.Errorf("invalid user_id in event")
 	}
 
-	// Update last login timestamp
-	query := `
-		UPDATE user_read_model 
-		SET last_login_at = NOW()
-		WHERE id = $1
-	`
-
-	result, err := h.db.ExecContext(ctx, query, userID)
+	// Get existing user from repository
+	user, err := h.repo.GetUser(ctx, userID)
 	if err != nil {
-		h.logger.Error("Failed to update last login",
+		h.logger.Error("Failed to get user",
 			zap.String("user_id", userID),
 			zap.Error(err))
-		return fmt.Errorf("failed to update last login: %w", err)
+		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
+	if user == nil {
 		h.logger.Warn("User not found for login update",
 			zap.String("user_id", userID))
 		// Still return nil to not requeue the message
 		return nil
+	}
+
+	// Update last login timestamp
+	user.LastLoginAt = time.Now().Format(time.RFC3339)
+	user.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertUser(ctx, user); err != nil {
+		h.logger.Error("Failed to update last login",
+			zap.String("user_id", userID),
+			zap.Error(err))
+		return fmt.Errorf("failed to update last login: %w", err)
 	}
 
 	h.logger.Info("User login event processed",
@@ -112,14 +124,26 @@ func (h *UserEventHandler) HandleTokenRefreshed(ctx context.Context, event messa
 		return fmt.Errorf("invalid user_id in event")
 	}
 
-	// This is just for tracking, update status if needed
-	query := `
-		UPDATE user_read_model 
-		SET updated_at = NOW()
-		WHERE id = $1
-	`
+	// Get existing user from repository
+	user, err := h.repo.GetUser(ctx, userID)
+	if err != nil {
+		h.logger.Error("Failed to get user",
+			zap.String("user_id", userID),
+			zap.Error(err))
+		return fmt.Errorf("failed to get user: %w", err)
+	}
 
-	if _, err := h.db.ExecContext(ctx, query, userID); err != nil {
+	if user == nil {
+		h.logger.Warn("User not found for token refresh update",
+			zap.String("user_id", userID))
+		return nil
+	}
+
+	// Update timestamp
+	user.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertUser(ctx, user); err != nil {
 		h.logger.Error("Failed to update token refresh",
 			zap.String("user_id", userID),
 			zap.Error(err))

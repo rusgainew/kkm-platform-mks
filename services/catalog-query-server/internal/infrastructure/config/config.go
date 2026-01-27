@@ -11,25 +11,25 @@ import (
 type Config struct {
 	GRPCPort        int
 	HealthPort      int
-	DatabaseURL     string
-	DatabaseDriver  string
 	LogLevel        string
 	ShutdownTimeout time.Duration
 	JaegerEndpoint  string
 	RedisURL        string
 	CacheTTL        time.Duration
+	RabbitMQURL     string
 }
 
 func Load() *Config {
 	cfg := &Config{
-		GRPCPort:        loadPortEnv("CATALOG_QUERY_GRPC_PORT", 50053),
-		HealthPort:      loadPortEnv("CATALOG_QUERY_HEALTH_PORT", 8053),
-		DatabaseDriver:  getEnv("CATALOG_QUERY_DB_DRIVER", "postgres"),
-		DatabaseURL:     getEnv("CATALOG_QUERY_DB_URL", ""),
+		GRPCPort:        loadPortEnv("GRPC_PORT", 50063),
+		HealthPort:      loadPortEnv("METRICS_PORT", 9106),
 		LogLevel:        getEnv("LOG_LEVEL", "info"),
 		ShutdownTimeout: getEnvDuration("SHUTDOWN_TIMEOUT", 30*time.Second),
-		JaegerEndpoint:  getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"), RedisURL: getEnv("REDIS_URL", "redis://localhost:6379/2"),
-		CacheTTL: getEnvDuration("CACHE_TTL", 10*time.Minute)}
+		JaegerEndpoint:  getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
+		RedisURL:        getEnv("REDIS_URL", "redis://localhost:6379/2"),
+		CacheTTL:        getEnvDuration("CACHE_TTL", 10*time.Minute),
+		RabbitMQURL:     getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+	}
 
 	return cfg
 }
@@ -52,14 +52,11 @@ func (c *Config) Validate() error {
 	if c.GRPCPort == c.HealthPort {
 		return fmt.Errorf("GRPC port (%d) cannot be same as Health port", c.GRPCPort)
 	}
-	if c.DatabaseURL == "" {
-		return errors.New("CATALOG_QUERY_DB_URL is required")
+	if c.RedisURL == "" {
+		return errors.New("REDIS_URL is required")
 	}
-	if c.DatabaseDriver == "" {
-		return errors.New("CATALOG_QUERY_DB_DRIVER is required")
-	}
-	if c.DatabaseDriver != "postgres" && c.DatabaseDriver != "memory" {
-		return fmt.Errorf("unsupported database driver: %s (must be postgres or memory)", c.DatabaseDriver)
+	if c.RabbitMQURL == "" {
+		return errors.New("RABBITMQ_URL is required")
 	}
 	return nil
 }

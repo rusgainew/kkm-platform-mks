@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -45,10 +44,11 @@ type RabbitMQDocumentConsumer struct {
 	exchange  string
 	logger    *zap.Logger
 	handler   DocumentEventHandler
-	db        *sql.DB
 	validator *DocumentEventValidator
 	closeMu   sync.Mutex
 	closed    bool
+	processed map[string]bool // In-memory tracking of processed events
+	procMu    sync.RWMutex
 }
 
 // NewRabbitMQDocumentConsumer creates a new RabbitMQ consumer for document events
@@ -56,7 +56,6 @@ func NewRabbitMQDocumentConsumer(
 	url, queueName, exchange string,
 	logger *zap.Logger,
 	handler DocumentEventHandler,
-	db *sql.DB,
 ) (*RabbitMQDocumentConsumer, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
@@ -234,8 +233,8 @@ func NewRabbitMQDocumentConsumer(
 		exchange:  exchange,
 		logger:    logger,
 		handler:   handler,
-		db:        db,
 		validator: NewDocumentEventValidator(logger),
+		processed: make(map[string]bool),
 	}
 
 	logger.Info("RabbitMQ document consumer initialized",
@@ -531,44 +530,29 @@ func (c *RabbitMQDocumentConsumer) sendToDLQ(msg amqp.Delivery, retryCount int) 
 
 // isEventProcessed checks if event has already been processed (idempotency)
 func (c *RabbitMQDocumentConsumer) isEventProcessed(ctx context.Context, eventID string) (bool, error) {
-	if c.db == nil {
-		// If no DB, skip idempotency check
-		return false, nil
-	}
+	c.procMu.RLock()
+	defer c.procMu.RUnlock()
 
-	var count int
-	err := c.db.QueryRowContext(
-		ctx,
-		"SELECT COUNT(*) FROM event_log WHERE event_id = $1",
-		eventID,
-	).Scan(&count)
-
-	if err != nil {
-		c.logger.Error("Failed to check event idempotency", zap.Error(err), zap.String("event_id", eventID))
-		// On error, allow processing (prefer false negatives to false positives)
-		return false, err
-	}
-
-	return count > 0, nil
+	return c.processed[eventID], nil
 }
 
 // markEventProcessed marks event as processed for idempotency
 func (c *RabbitMQDocumentConsumer) markEventProcessed(ctx context.Context, eventID, eventType string) error {
-	if c.db == nil {
-		// If no DB, skip marking
-		return nil
-	}
+	c.procMu.Lock()
+	defer c.procMu.Unlock()
 
-	_, err := c.db.ExecContext(
-		ctx,
-		"INSERT INTO event_log (event_id, event_type) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-		eventID,
-		eventType,
-	)
+	c.processed[eventID] = true
 
-	if err != nil {
-		c.logger.Error("Failed to mark event as processed", zap.Error(err), zap.String("event_id", eventID))
-		return fmt.Errorf("failed to mark event processed: %w", err)
+	// Cleanup old entries if map gets too large (keep last 10000)
+	if len(c.processed) > 10000 {
+		// Simple cleanup: clear half of entries
+		// In production, use LRU cache or time-based expiration
+		for k := range c.processed {
+			delete(c.processed, k)
+			if len(c.processed) <= 5000 {
+				break
+			}
+		}
 	}
 
 	return nil

@@ -3,23 +3,25 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	"github.com/rusgainew/kkm-project-mks/document-query-server/internal/infrastructure/messaging"
+	"github.com/rusgainew/kkm-project-mks/document-query-server/internal/infrastructure/repository"
+	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
 )
 
 // DocumentEventHandler implements messaging.DocumentEventHandler for document events
 type DocumentEventHandler struct {
-	db     *sqlx.DB
+	repo   *repository.InMemoryDocumentRepository
 	logger *zap.Logger
 }
 
 // NewDocumentEventHandler creates a new document event handler
-func NewDocumentEventHandler(db *sqlx.DB, logger *zap.Logger) *DocumentEventHandler {
+func NewDocumentEventHandler(repo *repository.InMemoryDocumentRepository, logger *zap.Logger) *DocumentEventHandler {
 	return &DocumentEventHandler{
-		db:     db,
+		repo:   repo,
 		logger: logger,
 	}
 }
@@ -34,30 +36,37 @@ func (h *DocumentEventHandler) HandleDocumentCreated(ctx context.Context, event 
 
 	documentNumber, _ := event.Data["document_number"].(string)
 	title, _ := event.Data["title"].(string)
+	description, _ := event.Data["description"].(string)
 	documentType, _ := event.Data["document_type"].(string)
 	companyID, _ := event.Data["company_id"].(string)
+	companyName, _ := event.Data["company_name"].(string)
+	createdByUserID, _ := event.Data["created_by_user_id"].(string)
+	createdByUserName, _ := event.Data["created_by_user_name"].(string)
 
-	// Insert into read-model
-	query := `
-		INSERT INTO document_read_model (
-			id, document_number, title, document_type, status, company_id, 
-			approval_status, created_at
-		)
-		VALUES ($1, $2, $3, $4, 'draft', $5, 'pending', NOW())
-		ON CONFLICT (id) DO UPDATE SET
-			document_number = EXCLUDED.document_number,
-			title = EXCLUDED.title,
-			document_type = EXCLUDED.document_type,
-			company_id = EXCLUDED.company_id
-	`
+	// Create document read model
+	doc := &pb.DocumentReadModel{
+		Id:                documentID,
+		DocumentNumber:    documentNumber,
+		Title:             title,
+		Description:       description,
+		DocumentType:      documentType,
+		Status:            "draft",
+		CompanyId:         companyID,
+		CompanyName:       companyName,
+		CreatedByUserId:   createdByUserID,
+		CreatedByUserName: createdByUserName,
+		ApprovalStatus:    "pending",
+		CreatedAt:         time.Now().Format(time.RFC3339),
+		UpdatedAt:         time.Now().Format(time.RFC3339),
+	}
 
-	if _, err := h.db.ExecContext(ctx, query,
-		documentID, documentNumber, title, documentType, companyID); err != nil {
-		h.logger.Error("Failed to insert document",
+	// Upsert into in-memory repository
+	if err := h.repo.UpsertDocument(ctx, doc); err != nil {
+		h.logger.Error("Failed to upsert document",
 			zap.String("document_id", documentID),
 			zap.String("title", title),
 			zap.Error(err))
-		return fmt.Errorf("failed to insert document: %w", err)
+		return fmt.Errorf("failed to upsert document: %w", err)
 	}
 
 	h.logger.Info("Document created event processed",
@@ -74,29 +83,32 @@ func (h *DocumentEventHandler) HandleDocumentSent(ctx context.Context, event mes
 		return fmt.Errorf("invalid document_id in event")
 	}
 
-	// Update status to sent
-	query := `
-		UPDATE document_read_model 
-		SET status = 'sent', sent_at = NOW()
-		WHERE id = $1
-	`
-
-	result, err := h.db.ExecContext(ctx, query, documentID)
+	// Get existing document
+	doc, err := h.repo.GetDocument(ctx, documentID)
 	if err != nil {
+		h.logger.Error("Failed to get document",
+			zap.String("document_id", documentID),
+			zap.Error(err))
+		return fmt.Errorf("failed to get document: %w", err)
+	}
+
+	if doc == nil {
+		h.logger.Warn("Document not found for sent update",
+			zap.String("document_id", documentID))
+		return nil
+	}
+
+	// Update status
+	doc.Status = "sent"
+	doc.SentAt = time.Now().Format(time.RFC3339)
+	doc.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertDocument(ctx, doc); err != nil {
 		h.logger.Error("Failed to update document sent status",
 			zap.String("document_id", documentID),
 			zap.Error(err))
 		return fmt.Errorf("failed to update document: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		h.logger.Warn("Document not found for sent update",
-			zap.String("document_id", documentID))
 	}
 
 	h.logger.Info("Document sent event processed",
@@ -114,14 +126,29 @@ func (h *DocumentEventHandler) HandleDocumentApproved(ctx context.Context, event
 
 	approvedBy, _ := event.Data["approved_by"].(string)
 
-	// Update approval status
-	query := `
-		UPDATE document_read_model 
-		SET approval_status = 'approved', approved_at = NOW(), approved_by = $2
-		WHERE id = $1
-	`
+	// Get existing document
+	doc, err := h.repo.GetDocument(ctx, documentID)
+	if err != nil {
+		h.logger.Error("Failed to get document",
+			zap.String("document_id", documentID),
+			zap.Error(err))
+		return fmt.Errorf("failed to get document: %w", err)
+	}
 
-	if _, err := h.db.ExecContext(ctx, query, documentID, approvedBy); err != nil {
+	if doc == nil {
+		h.logger.Warn("Document not found for approval update",
+			zap.String("document_id", documentID))
+		return nil
+	}
+
+	// Update approval status
+	doc.ApprovalStatus = "approved"
+	doc.ApprovedBy = approvedBy
+	doc.ApprovedAt = time.Now().Format(time.RFC3339)
+	doc.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertDocument(ctx, doc); err != nil {
 		h.logger.Error("Failed to update document approval status",
 			zap.String("document_id", documentID),
 			zap.Error(err))
@@ -145,15 +172,30 @@ func (h *DocumentEventHandler) HandleDocumentRejected(ctx context.Context, event
 	rejectedBy, _ := event.Data["rejected_by"].(string)
 	rejectionReason, _ := event.Data["rejection_reason"].(string)
 
-	// Update rejection status
-	query := `
-		UPDATE document_read_model 
-		SET approval_status = 'rejected', rejected_at = NOW(), 
-		    rejected_by = $2, rejection_reason = $3
-		WHERE id = $1
-	`
+	// Get existing document
+	doc, err := h.repo.GetDocument(ctx, documentID)
+	if err != nil {
+		h.logger.Error("Failed to get document",
+			zap.String("document_id", documentID),
+			zap.Error(err))
+		return fmt.Errorf("failed to get document: %w", err)
+	}
 
-	if _, err := h.db.ExecContext(ctx, query, documentID, rejectedBy, rejectionReason); err != nil {
+	if doc == nil {
+		h.logger.Warn("Document not found for rejection update",
+			zap.String("document_id", documentID))
+		return nil
+	}
+
+	// Update rejection status
+	doc.ApprovalStatus = "rejected"
+	doc.RejectedBy = rejectedBy
+	doc.RejectionReason = rejectionReason
+	doc.RejectedAt = time.Now().Format(time.RFC3339)
+	doc.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertDocument(ctx, doc); err != nil {
 		h.logger.Error("Failed to update document rejection status",
 			zap.String("document_id", documentID),
 			zap.Error(err))
@@ -174,14 +216,27 @@ func (h *DocumentEventHandler) HandleDocumentArchived(ctx context.Context, event
 		return fmt.Errorf("invalid document_id in event")
 	}
 
-	// Update archived status
-	query := `
-		UPDATE document_read_model 
-		SET archived_at = NOW()
-		WHERE id = $1
-	`
+	// Get existing document
+	doc, err := h.repo.GetDocument(ctx, documentID)
+	if err != nil {
+		h.logger.Error("Failed to get document",
+			zap.String("document_id", documentID),
+			zap.Error(err))
+		return fmt.Errorf("failed to get document: %w", err)
+	}
 
-	if _, err := h.db.ExecContext(ctx, query, documentID); err != nil {
+	if doc == nil {
+		h.logger.Warn("Document not found for archive update",
+			zap.String("document_id", documentID))
+		return nil
+	}
+
+	// Update archived status
+	doc.ArchivedAt = time.Now().Format(time.RFC3339)
+	doc.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Update in repository
+	if err := h.repo.UpsertDocument(ctx, doc); err != nil {
 		h.logger.Error("Failed to update document archived status",
 			zap.String("document_id", documentID),
 			zap.Error(err))

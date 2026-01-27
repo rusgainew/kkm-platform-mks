@@ -3,21 +3,142 @@ services:
   # Infrastructure Services
   # ===================================
 
-  postgres:
+  # PostgreSQL databases - one per command service (database per service pattern)
+  
+  postgres-user:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: postgres-user
     restart: unless-stopped
     environment:
-      POSTGRES_USER: kkm_user
-      POSTGRES_PASSWORD: kkm_password
-      POSTGRES_DB: kkm_db
+      POSTGRES_USER: user_svc
+      POSTGRES_PASSWORD: user_pass_2026
+      POSTGRES_DB: user_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_user_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kkm_user -d kkm_db"]
+      test: ["CMD-SHELL", "pg_isready -U user_svc -d user_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-company:
+    image: postgres:15-alpine
+    container_name: postgres-company
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: company_svc
+      POSTGRES_PASSWORD: company_pass_2026
+      POSTGRES_DB: company_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_company_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U company_svc -d company_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-catalog:
+    image: postgres:15-alpine
+    container_name: postgres-catalog
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: catalog_svc
+      POSTGRES_PASSWORD: catalog_pass_2026
+      POSTGRES_DB: catalog_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_catalog_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog_svc -d catalog_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-invoice:
+    image: postgres:15-alpine
+    container_name: postgres-invoice
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: invoice_svc
+      POSTGRES_PASSWORD: invoice_pass_2026
+      POSTGRES_DB: invoice_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_invoice_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invoice_svc -d invoice_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-bank-account:
+    image: postgres:15-alpine
+    container_name: postgres-bank-account
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bank_svc
+      POSTGRES_PASSWORD: bank_pass_2026
+      POSTGRES_DB: bank_account_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_bank_account_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank_svc -d bank_account_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-foreign-company:
+    image: postgres:15-alpine
+    container_name: postgres-foreign-company
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: foreign_svc
+      POSTGRES_PASSWORD: foreign_pass_2026
+      POSTGRES_DB: foreign_company_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_foreign_company_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foreign_svc -d foreign_company_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kkm-network
+
+  postgres-document:
+    image: postgres:15-alpine
+    container_name: postgres-document
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: document_svc
+      POSTGRES_PASSWORD: document_pass_2026
+      POSTGRES_DB: document_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_document_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U document_svc -d document_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,7 +193,7 @@ services:
     container_name: user-server
     restart: unless-stopped
     environment:
-      USER_SERVER_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      USER_SERVER_DB_URL: postgres://user_svc:user_pass_2026@postgres-user:5432/user_db?sslmode=disable
       USER_SERVER_JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       USER_SERVER_PORT: 50051
       USER_SERVER_METRICS_PORT: 9101
@@ -80,7 +201,7 @@ services:
       - "50051:50051"
       - "9101:9101"
     depends_on:
-      postgres:
+      postgres-user:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -99,11 +220,11 @@ services:
     container_name: company-server
     restart: unless-stopped
     environment:
-      DB_HOST: postgres
+      DB_HOST: postgres-company
       DB_PORT: 5432
-      DB_USER: kkm_user
-      DB_PASSWORD: kkm_password
-      DB_NAME: kkm_db
+      DB_USER: company_svc
+      DB_PASSWORD: company_pass_2026
+      DB_NAME: company_db
       DB_SSLMODE: disable
       GRPC_PORT: 50052
       METRICS_PORT: 9103
@@ -112,7 +233,7 @@ services:
       - "50052:50052"
       - "9103:9103"
     depends_on:
-      postgres:
+      postgres-company:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -126,7 +247,7 @@ services:
     container_name: catalog-server
     restart: unless-stopped
     environment:
-      CATALOG_SERVER_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      CATALOG_SERVER_DB_URL: postgres://catalog_svc:catalog_pass_2026@postgres-catalog:5432/catalog_db?sslmode=disable
       CATALOG_SERVER_PORT: 50053
       CATALOG_SERVER_METRICS_PORT: 9105
       CATALOG_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
@@ -134,7 +255,7 @@ services:
       - "50053:50053"
       - "9105:9105"
     depends_on:
-      postgres:
+      postgres-catalog:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -154,11 +275,11 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     environment:
-      DB_HOST: postgres
+      DB_HOST: postgres-invoice
       DB_PORT: 5432
-      DB_USER: kkm_user
-      DB_PASSWORD: kkm_password
-      DB_NAME: kkm_db
+      DB_USER: invoice_svc
+      DB_PASSWORD: invoice_pass_2026
+      DB_NAME: invoice_db
       DB_SSLMODE: disable
       GRPC_PORT: 50054
       METRICS_PORT: 9107
@@ -167,7 +288,7 @@ services:
       - "50054:50054"
       - "9107:9107"
     depends_on:
-      postgres:
+      postgres-invoice:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -181,7 +302,7 @@ services:
     container_name: bank-account-server
     restart: unless-stopped
     environment:
-      BANK_ACCOUNT_SERVER_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      BANK_ACCOUNT_SERVER_DB_URL: postgres://bank_svc:bank_pass_2026@postgres-bank-account:5432/bank_account_db?sslmode=disable
       BANK_ACCOUNT_SERVER_PORT: 50055
       BANK_ACCOUNT_SERVER_METRICS_PORT: 9109
       BANK_ACCOUNT_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
@@ -189,7 +310,7 @@ services:
       - "50055:50055"
       - "9109:9109"
     depends_on:
-      postgres:
+      postgres-bank-account:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -203,7 +324,7 @@ services:
     container_name: foreign-company-server
     restart: unless-stopped
     environment:
-      FOREIGN_COMPANY_SERVER_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
+      FOREIGN_COMPANY_SERVER_DB_URL: postgres://foreign_svc:foreign_pass_2026@postgres-foreign-company:5432/foreign_company_db?sslmode=disable
       FOREIGN_COMPANY_SERVER_PORT: 50056
       FOREIGN_COMPANY_SERVER_METRICS_PORT: 9111
       FOREIGN_COMPANY_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
@@ -211,7 +332,7 @@ services:
       - "50056:50056"
       - "9111:9111"
     depends_on:
-      postgres:
+      postgres-foreign-company:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -225,11 +346,11 @@ services:
     container_name: document-server
     restart: unless-stopped
     environment:
-      DB_HOST: postgres
+      DB_HOST: postgres-document
       DB_PORT: 5432
-      DB_USER: kkm_user
-      DB_PASSWORD: kkm_password
-      DB_NAME: kkm_db
+      DB_USER: document_svc
+      DB_PASSWORD: document_pass_2026
+      DB_NAME: document_db
       DB_SSLMODE: disable
       SERVER_PORT: 50057
       METRICS_PORT: 9113
@@ -238,7 +359,7 @@ services:
       - "50057:50057"
       - "9113:9113"
     depends_on:
-      postgres:
+      postgres-document:
         condition: service_healthy
     networks:
       - kkm-network
@@ -254,7 +375,6 @@ services:
     container_name: user-query-server
     restart: unless-stopped
     environment:
-      USER_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       USER_QUERY_REDIS_URL: redis://redis:6379/0
       USER_QUERY_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50061
@@ -264,6 +384,8 @@ services:
       - "9102:9102"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -275,8 +397,8 @@ services:
     container_name: catalog-query-server
     restart: unless-stopped
     environment:
-      CATALOG_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/2
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50063
       METRICS_PORT: 9106
     ports:
@@ -284,6 +406,8 @@ services:
       - "9106:9106"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -295,8 +419,8 @@ services:
     container_name: invoice-query-server
     restart: unless-stopped
     environment:
-      INVOICE_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/3
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50064
       METRICS_PORT: 9108
     ports:
@@ -304,6 +428,8 @@ services:
       - "9108:9108"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -315,8 +441,8 @@ services:
     container_name: bank-account-query-server
     restart: unless-stopped
     environment:
-      BANK_ACCOUNT_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/1
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50065
       METRICS_PORT: 9110
     ports:
@@ -324,6 +450,8 @@ services:
       - "9110:9110"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -333,19 +461,18 @@ services:
       context: .
       dockerfile: services/foreign-company-query-server/Dockerfile
     container_name: foreign-company-query-server
-    restart: unless-stopped
     environment:
-      FOREIGN_COMPANY_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
       REDIS_URL: redis://redis:6379/4
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50066
       METRICS_PORT: 9112
     ports:
       - "50066:50066"
       - "9112:9112"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmqres:
         condition: service_healthy
     networks:
       - kkm-network
@@ -357,9 +484,8 @@ services:
     container_name: document-query-server
     restart: unless-stopped
     environment:
-      DOCUMENT_QUERY_DB_URL: postgres://kkm_user:kkm_password@postgres:5432/kkm_db?sslmode=disable
-      DOCUMENT_QUERY_REDIS_URL: redis://redis:6379/3
       REDIS_URL: redis://redis:6379/5
+      RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50067
       METRICS_PORT: 9114
     ports:
@@ -367,6 +493,8 @@ services:
       - "9114:9114"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -604,8 +732,23 @@ networks:
 # ===================================
 # Volumes
 # ===================================
-
-volumes:
+# PostgreSQL volumes - one per command service
+  postgres_user_data:
+    driver: local
+  postgres_company_data:
+    driver: local
+  postgres_catalog_data:
+    driver: local
+  postgres_invoice_data:
+    driver: local
+  postgres_bank_account_data:
+    driver: local
+  postgres_foreign_company_data:
+    driver: local
+  postgres_document_data:
+    driver: local
+  
+  # Other infrastructure volumes
   postgres_data:
     driver: local
   redis_data:

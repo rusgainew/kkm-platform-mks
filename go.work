@@ -9,10 +9,12 @@ use (
 	./services/catalog-query-server
 	./services/catalog-server
 	./services/company-server
+	./services/document-query-server
 	./services/document-server
 	./services/foreign-company-query-server
 	./services/foreign-company-server
 	./services/invoice-query-server
 	./services/invoice-server
+	./services/user-query-server
 	./services/user-server
 )
