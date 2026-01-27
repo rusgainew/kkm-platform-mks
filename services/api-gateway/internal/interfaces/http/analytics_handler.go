@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,18 +12,18 @@ import (
 
 // AnalyticsHandler обработчик для аналитики Dashboard
 type AnalyticsHandler struct {
-	invoiceQueryService *services.InvoiceQueryService
-	logger              *zap.Logger
+	analyticsService *services.AnalyticsService
+	logger           *zap.Logger
 }
 
 // NewAnalyticsHandler создает новый AnalyticsHandler
 func NewAnalyticsHandler(
-	invoiceQueryService *services.InvoiceQueryService,
+	analyticsService *services.AnalyticsService,
 	logger *zap.Logger,
 ) *AnalyticsHandler {
 	return &AnalyticsHandler{
-		invoiceQueryService: invoiceQueryService,
-		logger:              logger,
+		analyticsService: analyticsService,
+		logger:           logger,
 	}
 }
 
@@ -110,20 +111,30 @@ func (h *AnalyticsHandler) GetDashboardStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	// For now, return mock data
+	// Получаем реальные данные из базы через сервис
+	analyticsStats, err := h.analyticsService.GetStats(c.Request.Context(), start, end)
+	if err != nil {
+		h.logger.Error("Failed to get analytics stats", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve analytics data",
+		})
+		return
+	}
+
+	// TODO: Вычислить изменения относительно предыдущего периода
 	stats := DashboardStats{
-		TotalRevenue:         1500000.50,
-		TotalInvoices:        245,
-		AverageInvoiceAmount: 6122.45,
-		ActiveContractors:    38,
-		PendingInvoices:      12,
-		ApprovedInvoices:     220,
-		RejectedInvoices:     13,
-		RevenueChange:        15.7,
-		InvoiceCountChange:   8.3,
-		AverageAmountChange:  3.2,
-		ContractorsChange:    5.5,
+		TotalRevenue:         analyticsStats.TotalRevenue,
+		TotalInvoices:        analyticsStats.TotalInvoices,
+		AverageInvoiceAmount: analyticsStats.AverageAmount,
+		ActiveContractors:    analyticsStats.ActiveContractors,
+		PendingInvoices:      analyticsStats.PendingInvoices,
+		ApprovedInvoices:     analyticsStats.ApprovedInvoices,
+		RejectedInvoices:     analyticsStats.RejectedInvoices,
+		RevenueChange:        0,
+		InvoiceCountChange:   0,
+		AverageAmountChange:  0,
+		ContractorsChange:    0,
 		Period: Period{
 			StartDate: start.Format("2006-01-02"),
 			EndDate:   end.Format("2006-01-02"),
@@ -157,22 +168,34 @@ func (h *AnalyticsHandler) GetSalesChart(c *gin.Context) {
 
 	start, end := h.calculateDateRange(period, startDate, endDate)
 
+	// Определяем гранулярность на основе периода
+	granularity := h.determineGranularity(start, end)
+
 	h.logger.Info("Getting sales chart",
 		zap.String("period", period),
+		zap.String("granularity", granularity),
 		zap.Time("start", start),
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	// Generate mock data points
-	data := []ChartDataPoint{}
-	days := int(end.Sub(start).Hours() / 24)
-	for i := 0; i <= days; i++ {
-		date := start.AddDate(0, 0, i)
-		data = append(data, ChartDataPoint{
-			Date:  date.Format("2006-01-02"),
-			Value: 45000 + float64(i)*1500,
+	// Получаем реальные данные из базы
+	salesData, err := h.analyticsService.GetSalesData(c.Request.Context(), start, end, granularity)
+	if err != nil {
+		h.logger.Error("Failed to get sales data", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve sales data",
 		})
+		return
+	}
+
+	// Конвертируем в формат ответа
+	data := make([]ChartDataPoint, len(salesData))
+	for i, point := range salesData {
+		data[i] = ChartDataPoint{
+			Date:  point.Date.Format("2006-01-02"),
+			Value: point.Amount,
+		}
 	}
 
 	response := SalesChartData{
@@ -216,18 +239,70 @@ func (h *AnalyticsHandler) GetStatusStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	data := PieChartData{
-		Data: []PieChartDataPoint{
-			{Name: "Утверждено", Value: 220, Percentage: 89.8, Color: "#10b981"},
-			{Name: "На рассмотрении", Value: 12, Percentage: 4.9, Color: "#f59e0b"},
-			{Name: "Отклонено", Value: 13, Percentage: 5.3, Color: "#ef4444"},
-		},
+	// Получаем реальные данные из базы
+	statusDist, err := h.analyticsService.GetStatusDistribution(c.Request.Context(), start, end)
+	if err != nil {
+		h.logger.Error("Failed to get status distribution", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve status statistics",
+		})
+		return
+	}
+
+	// Вычисляем общее количество для процентов
+	var total float64
+	for _, dist := range statusDist {
+		total += float64(dist.Count)
+	}
+
+	// Мапа для дружественных имен и цветов
+	statusNames := map[string]string{
+		"draft":    "Черновик",
+		"sent":     "Отправлено",
+		"signed":   "Подписано",
+		"accepted": "Утверждено",
+		"rejected": "Отклонено",
+		"revoked":  "Аннулировано",
+	}
+
+	statusColors := map[string]string{
+		"draft":    "#94a3b8",
+		"sent":     "#f59e0b",
+		"signed":   "#3b82f6",
+		"accepted": "#10b981",
+		"rejected": "#ef4444",
+		"revoked":  "#6b7280",
+	}
+
+	// Конвертируем в формат ответа
+	data := make([]PieChartDataPoint, len(statusDist))
+	for i, dist := range statusDist {
+		percentage := 0.0
+		if total > 0 {
+			percentage = (float64(dist.Count) / total) * 100
+		}
+
+		name := statusNames[dist.Status]
+		if name == "" {
+			name = dist.Status
+		}
+
+		color := statusColors[dist.Status]
+
+		data[i] = PieChartDataPoint{
+			Name:       name,
+			Value:      float64(dist.Count),
+			Percentage: percentage,
+			Color:      color,
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    data,
+		"data": PieChartData{
+			Data: data,
+		},
 	})
 }
 
@@ -258,18 +333,62 @@ func (h *AnalyticsHandler) GetOperationTypeStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	data := PieChartData{
-		Data: []PieChartDataPoint{
-			{Name: "Продажа", Value: 180, Percentage: 73.5, Color: "#3b82f6"},
-			{Name: "Возврат", Value: 45, Percentage: 18.4, Color: "#8b5cf6"},
-			{Name: "Корректировка", Value: 20, Percentage: 8.1, Color: "#ec4899"},
-		},
+	// Получаем реальные данные из базы
+	opTypeDist, err := h.analyticsService.GetOperationTypeDistribution(c.Request.Context(), start, end)
+	if err != nil {
+		h.logger.Error("Failed to get operation type distribution", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve operation type statistics",
+		})
+		return
+	}
+
+	// Вычисляем общее количество для процентов
+	var total float64
+	for _, dist := range opTypeDist {
+		total += float64(dist.Count)
+	}
+
+	// Мапа для дружественных имен и цветов
+	opTypeNames := map[string]string{
+		"local":  "Местные операции",
+		"import": "Импортные операции",
+	}
+
+	opTypeColors := map[string]string{
+		"local":  "#3b82f6",
+		"import": "#8b5cf6",
+	}
+
+	// Конвертируем в формат ответа
+	data := make([]PieChartDataPoint, len(opTypeDist))
+	for i, dist := range opTypeDist {
+		percentage := 0.0
+		if total > 0 {
+			percentage = (float64(dist.Count) / total) * 100
+		}
+
+		name := opTypeNames[dist.OperationType]
+		if name == "" {
+			name = dist.OperationType
+		}
+
+		color := opTypeColors[dist.OperationType]
+
+		data[i] = PieChartDataPoint{
+			Name:       name,
+			Value:      float64(dist.Count),
+			Percentage: percentage,
+			Color:      color,
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    data,
+		"data": PieChartData{
+			Data: data,
+		},
 	})
 }
 
@@ -292,24 +411,42 @@ func (h *AnalyticsHandler) GetTopContractors(c *gin.Context) {
 	period := c.DefaultQuery("period", "month")
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
-	limit := c.DefaultQuery("limit", "10")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
 
 	start, end := h.calculateDateRange(period, startDate, endDate)
 
 	h.logger.Info("Getting top contractors",
 		zap.String("period", period),
-		zap.String("limit", limit),
+		zap.Int64("limit", limit),
 		zap.Time("start", start),
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	contractors := []TopContractor{
-		{ContractorID: "1", ContractorName: "ТОО \"Рога и копыта\"", TotalAmount: 450000, InvoiceCount: 45},
-		{ContractorID: "2", ContractorName: "АО \"Тех-Снаб\"", TotalAmount: 380000, InvoiceCount: 38},
-		{ContractorID: "3", ContractorName: "ИП Иванов И.И.", TotalAmount: 290000, InvoiceCount: 29},
-		{ContractorID: "4", ContractorName: "ТОО \"СтройМастер\"", TotalAmount: 215000, InvoiceCount: 22},
-		{ContractorID: "5", ContractorName: "ООО \"Альфа-Трейд\"", TotalAmount: 165000, InvoiceCount: 16},
+	// Получаем реальные данные из базы
+	contractorsData, err := h.analyticsService.GetTopContractors(c.Request.Context(), start, end, int32(limit))
+	if err != nil {
+		h.logger.Error("Failed to get top contractors", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve top contractors",
+		})
+		return
+	}
+
+	// Конвертируем в формат ответа
+	contractors := make([]TopContractor, len(contractorsData))
+	for i, data := range contractorsData {
+		contractors[i] = TopContractor{
+			ContractorID:   data.ContractorID,
+			ContractorName: data.ContractorName,
+			TotalAmount:    data.TotalAmount,
+			InvoiceCount:   data.InvoiceCount,
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -345,14 +482,31 @@ func (h *AnalyticsHandler) GetRevenueByMonth(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// TODO: Implement actual database queries
-	data := []ChartDataPoint{
-		{Date: "Январь", Value: 120000},
-		{Date: "Февраль", Value: 135000},
-		{Date: "Март", Value: 142000},
-		{Date: "Апрель", Value: 128000},
-		{Date: "Май", Value: 155000},
-		{Date: "Июнь", Value: 148000},
+	// Получаем реальные данные из базы
+	monthlyData, err := h.analyticsService.GetMonthlyRevenue(c.Request.Context(), start, end)
+	if err != nil {
+		h.logger.Error("Failed to get monthly revenue", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve monthly revenue",
+		})
+		return
+	}
+
+	// Мапа для названий месяцев на русском
+	monthNames := []string{
+		"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+		"Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+	}
+
+	// Конвертируем в формат ответа
+	data := make([]ChartDataPoint, len(monthlyData))
+	for i, month := range monthlyData {
+		monthName := monthNames[month.Month.Month()-1]
+		data[i] = ChartDataPoint{
+			Date:  monthName,
+			Value: month.Amount,
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -420,4 +574,18 @@ func (h *AnalyticsHandler) calculateDateRange(period, startDate, endDate string)
 	}
 
 	return start, end
+}
+
+// determineGranularity определяет гранулярность данных на основе диапазона дат
+func (h *AnalyticsHandler) determineGranularity(start, end time.Time) string {
+	days := int(end.Sub(start).Hours() / 24)
+
+	switch {
+	case days <= 7:
+		return "day"
+	case days <= 90:
+		return "week"
+	default:
+		return "month"
+	}
 }
