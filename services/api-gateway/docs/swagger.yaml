@@ -25,6 +25,13 @@ definitions:
     - old_password
     - user_id
     type: object
+  http.ChartDataPoint:
+    properties:
+      date:
+        type: string
+      value:
+        type: number
+    type: object
   http.CreateForeignCompanyRequest:
     properties:
       address:
@@ -39,6 +46,33 @@ definitions:
     - country_code
     - full_name
     - pin
+    type: object
+  http.DashboardStats:
+    properties:
+      activeContractors:
+        type: integer
+      approvedInvoices:
+        type: integer
+      averageAmountChange:
+        type: number
+      averageInvoiceAmount:
+        type: number
+      contractorsChange:
+        type: number
+      invoiceCountChange:
+        type: number
+      pendingInvoices:
+        type: integer
+      period:
+        $ref: '#/definitions/http.Period'
+      rejectedInvoices:
+        type: integer
+      revenueChange:
+        type: number
+      totalInvoices:
+        type: integer
+      totalRevenue:
+        type: number
     type: object
   http.ForgotPasswordRequest:
     properties:
@@ -61,6 +95,31 @@ definitions:
     properties:
       revoke_all_sessions:
         type: boolean
+    type: object
+  http.Period:
+    properties:
+      endDate:
+        type: string
+      startDate:
+        type: string
+    type: object
+  http.PieChartData:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/http.PieChartDataPoint'
+        type: array
+    type: object
+  http.PieChartDataPoint:
+    properties:
+      color:
+        type: string
+      name:
+        type: string
+      percentage:
+        type: number
+      value:
+        type: number
     type: object
   http.RefreshTokenRequest:
     properties:
@@ -96,6 +155,26 @@ definitions:
     required:
     - new_password
     - reset_token
+    type: object
+  http.SalesChartData:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/http.ChartDataPoint'
+        type: array
+      period:
+        $ref: '#/definitions/http.Period'
+    type: object
+  http.TopContractor:
+    properties:
+      contractorId:
+        type: string
+      contractorName:
+        type: string
+      invoiceCount:
+        type: integer
+      totalAmount:
+        type: number
     type: object
   http.UpdateForeignCompanyRequest:
     properties:
@@ -146,6 +225,18 @@ definitions:
       success:
         type: boolean
     type: object
+  models.AddMemberRequest:
+    properties:
+      organization_id:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: string
+    required:
+    - role
+    - user_id
+    type: object
   models.AuthResponse:
     properties:
       access_token:
@@ -187,19 +278,27 @@ definitions:
   models.Catalog:
     properties:
       category:
+        description: Категория (deprecated, использовать TnvedCode)
         type: string
       created_at:
         type: integer
       currency:
         type: string
       description:
+        description: Описание (опционально)
         type: string
       id:
         type: string
       name:
         type: string
+      number:
+        description: Номер по каталогу
+        type: string
       price:
         type: number
+      tnved_code:
+        description: Код ТНВЭД
+        type: string
       unit:
         type: string
       updated_at:
@@ -277,6 +376,27 @@ definitions:
       page_info:
         $ref: '#/definitions/models.PageInfo'
     type: object
+  models.Employee:
+    properties:
+      department:
+        type: string
+      id:
+        type: string
+      joined_at:
+        type: integer
+      last_active_at:
+        type: integer
+      organization_id:
+        type: string
+      position:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+    type: object
   models.ForeignCompany:
     properties:
       address:
@@ -316,6 +436,35 @@ definitions:
         type: number
       updated_at:
         type: integer
+    type: object
+  models.InvoiceDetail:
+    properties:
+      catalog_code:
+        type: string
+      catalog_name:
+        type: string
+      created_at:
+        type: integer
+      excise_amount:
+        type: number
+      excise_rate:
+        type: number
+      id:
+        type: string
+      invoice_uuid:
+        type: string
+      quantity:
+        type: number
+      total_price:
+        type: number
+      turnover_size:
+        type: number
+      unit_price:
+        type: number
+      vat_amount:
+        type: number
+      vat_rate:
+        type: number
     type: object
   models.ListUsersResponse:
     properties:
@@ -397,6 +546,236 @@ info:
   title: KKM API Gateway
   version: "1.0"
 paths:
+  /api/analytics/operation-stats:
+    get:
+      consumes:
+      - application/json
+      description: Get distribution of invoices by operation type
+      parameters:
+      - description: Time period
+        in: query
+        name: period
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.PieChartData'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get operation type statistics
+      tags:
+      - Analytics
+  /api/analytics/revenue-by-month:
+    get:
+      consumes:
+      - application/json
+      description: Get monthly revenue data
+      parameters:
+      - description: Time period
+        in: query
+        name: period
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get revenue by month
+      tags:
+      - Analytics
+  /api/analytics/sales-chart:
+    get:
+      consumes:
+      - application/json
+      description: Get time series data for sales chart
+      parameters:
+      - description: Time period
+        in: query
+        name: period
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.SalesChartData'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get sales chart data
+      tags:
+      - Analytics
+  /api/analytics/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated statistics for dashboard
+      parameters:
+      - description: 'Time period: today, week, month, quarter, year, custom'
+        in: query
+        name: period
+        type: string
+      - description: Start date for custom period (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date for custom period (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.DashboardStats'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get dashboard statistics
+      tags:
+      - Analytics
+  /api/analytics/status-stats:
+    get:
+      consumes:
+      - application/json
+      description: Get distribution of invoices by status
+      parameters:
+      - description: Time period
+        in: query
+        name: period
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.PieChartData'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get invoice status statistics
+      tags:
+      - Analytics
+  /api/analytics/top-contractors:
+    get:
+      consumes:
+      - application/json
+      description: Get list of top contractors by revenue
+      parameters:
+      - description: Time period
+        in: query
+        name: period
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      - default: 10
+        description: Number of contractors to return
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.TopContractor'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get top contractors
+      tags:
+      - Analytics
   /api/v1/foreign-companies/{id}:
     delete:
       parameters:
@@ -1093,6 +1472,138 @@ paths:
       summary: Create a new company
       tags:
       - Companies
+  /companies-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of companies
+      parameters:
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Company'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List companies
+      tags:
+      - Companies
+  /companies-query/filter:
+    get:
+      consumes:
+      - application/json
+      description: Filter companies with multiple criteria
+      parameters:
+      - description: Company name
+        in: query
+        name: name
+        type: string
+      - description: Country
+        in: query
+        name: country
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Company'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Filter companies
+      tags:
+      - Companies
+  /companies-query/search:
+    get:
+      consumes:
+      - application/json
+      description: Search companies by query
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Company'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search companies
+      tags:
+      - Companies
   /companies/{id}:
     delete:
       consumes:
@@ -1200,6 +1711,135 @@ paths:
       summary: Update company
       tags:
       - Companies
+  /companies/{id}/members:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all members of a specific organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Employee'
+                  type: array
+              type: object
+        "404":
+          description: Organization not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get organization members
+      tags:
+      - Companies
+    post:
+      consumes:
+      - application/json
+      description: Add a user as a member of an organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member data
+        in: body
+        name: member
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Member successfully added
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Employee'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Organization not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add member to organization
+      tags:
+      - Companies
+  /companies/{id}/members/{memberId}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a user from an organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member/Employee ID
+        in: path
+        name: memberId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member successfully removed
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Organization or member not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove member from organization
+      tags:
+      - Companies
   /documents:
     get:
       description: List documents with pagination
@@ -1282,6 +1922,183 @@ paths:
       summary: Create document
       tags:
       - Documents
+  /documents-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of documents with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Document status filter
+        in: query
+        name: status
+        type: string
+      - description: Document type filter
+        in: query
+        name: type
+        type: string
+      - description: Company ID filter
+        in: query
+        name: company_id
+        type: string
+      - description: Approval status filter
+        in: query
+        name: approval_status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentListResponse'
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List documents
+      tags:
+      - Documents Query
+  /documents-query/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single document by its ID
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Document'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get document by ID
+      tags:
+      - Documents Query
+  /documents-query/pending-approval:
+    get:
+      consumes:
+      - application/json
+      description: Get documents pending approval for a company
+      parameters:
+      - description: Company ID
+        in: query
+        name: company_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentListResponse'
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get pending approval documents
+      tags:
+      - Documents Query
+  /documents-query/search:
+    get:
+      consumes:
+      - application/json
+      description: Search documents by query with optional filters
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Document type filter
+        in: query
+        name: type
+        type: string
+      - description: Company ID filter
+        in: query
+        name: company_id
+        type: string
+      - description: Approval status filter
+        in: query
+        name: approval_status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentListResponse'
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search documents
+      tags:
+      - Documents Query
   /documents/{id}:
     get:
       description: Get document by ID
@@ -1562,6 +2379,138 @@ paths:
       summary: Create foreign company
       tags:
       - Foreign Companies
+  /foreign-companies-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of foreign companies
+      parameters:
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.ForeignCompany'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List foreign companies
+      tags:
+      - ForeignCompanies
+  /foreign-companies-query/filter:
+    get:
+      consumes:
+      - application/json
+      description: Filter foreign companies with multiple criteria
+      parameters:
+      - description: Company name
+        in: query
+        name: name
+        type: string
+      - description: Country
+        in: query
+        name: country
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.ForeignCompany'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Filter foreign companies
+      tags:
+      - ForeignCompanies
+  /foreign-companies-query/search:
+    get:
+      consumes:
+      - application/json
+      description: Search foreign companies by query
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.ForeignCompany'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search foreign companies
+      tags:
+      - ForeignCompanies
   /foreign-companies/{id}:
     get:
       consumes:
@@ -1708,6 +2657,59 @@ paths:
       summary: List invoices
       tags:
       - Invoices
+  /invoices-query/by-date-range:
+    get:
+      consumes:
+      - application/json
+      description: Get invoices within a specific date range
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        required: true
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Invoice'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get invoices by date range
+      tags:
+      - Invoices
   /invoices-query/by-number/{number}:
     get:
       consumes:
@@ -1746,6 +2748,53 @@ paths:
       security:
       - BearerAuth: []
       summary: Get invoice by number
+      tags:
+      - Invoices
+  /invoices-query/details:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of invoice details/line items
+      parameters:
+      - description: Filter by invoice UUID
+        in: query
+        name: invoice_uuid
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.InvoiceDetail'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List invoice details
       tags:
       - Invoices
   /invoices-query/filter:
@@ -2118,6 +3167,131 @@ paths:
       summary: List users
       tags:
       - Users
+  /users-query:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: User status filter
+        in: query
+        name: status
+        type: string
+      - description: User role filter
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ListUsersResponse'
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - Users Query
+  /users-query/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users Query
+  /users-query/search:
+    get:
+      consumes:
+      - application/json
+      description: Search users by query
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: User status filter
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListUsersResponse'
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search users
+      tags:
+      - Users Query
   /users/{id}:
     get:
       consumes:
