@@ -415,7 +415,7 @@ func (c *RabbitMQDocumentConsumer) processMessages(ctx context.Context, msgs <-c
 						zap.String("routing_key", msg.RoutingKey))
 
 					// Send to DLQ by republishing with DLQ exchange
-					if dlqErr := c.sendToDLQ(msg, retryCount); dlqErr != nil {
+					if dlqErr := c.sendToDLQ(ctx, msg, retryCount); dlqErr != nil {
 						c.logger.Error("Failed to send message to DLQ", zap.Error(dlqErr))
 					} else {
 						MessagesSentToDLQ.WithLabelValues(msg.RoutingKey).Inc()
@@ -426,7 +426,7 @@ func (c *RabbitMQDocumentConsumer) processMessages(ctx context.Context, msgs <-c
 				} else {
 					// Increment retry count and requeue with exponential backoff
 					delay := c.calculateBackoff(retryCount)
-					c.republishWithRetry(msg, retryCount+1, delay)
+					c.republishWithRetry(ctx, msg, retryCount+1, delay)
 					MessagesRetried.WithLabelValues(strconv.Itoa(retryCount + 1)).Inc()
 					msg.Ack(false)
 				}
@@ -453,7 +453,7 @@ func (c *RabbitMQDocumentConsumer) calculateBackoff(retryCount int) time.Duratio
 }
 
 // republishWithRetry republishes message with incremented retry count and backoff
-func (c *RabbitMQDocumentConsumer) republishWithRetry(msg amqp.Delivery, retryCount int, delay time.Duration) {
+func (c *RabbitMQDocumentConsumer) republishWithRetry(ctx context.Context, msg amqp.Delivery, retryCount int, delay time.Duration) {
 	// Create new publishing with updated headers
 	headers := amqp.Table{}
 	if msg.Headers != nil {
@@ -471,12 +471,12 @@ func (c *RabbitMQDocumentConsumer) republishWithRetry(msg amqp.Delivery, retryCo
 		DeliveryMode: amqp.Persistent,
 	}
 
-	// Republish with delay via Expiration header
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Use context with timeout from parent context
+	publishCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	err := c.channel.PublishWithContext(
-		ctx,
+		publishCtx,
 		c.exchange,     // exchange
 		msg.RoutingKey, // routing key
 		false,          // mandatory
@@ -497,7 +497,7 @@ func (c *RabbitMQDocumentConsumer) republishWithRetry(msg amqp.Delivery, retryCo
 }
 
 // sendToDLQ sends message to Dead Letter Queue
-func (c *RabbitMQDocumentConsumer) sendToDLQ(msg amqp.Delivery, retryCount int) error {
+func (c *RabbitMQDocumentConsumer) sendToDLQ(ctx context.Context, msg amqp.Delivery, retryCount int) error {
 	headers := amqp.Table{}
 	if msg.Headers != nil {
 		for k, v := range msg.Headers {
@@ -514,12 +514,13 @@ func (c *RabbitMQDocumentConsumer) sendToDLQ(msg amqp.Delivery, retryCount int) 
 		DeliveryMode: amqp.Persistent,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Use context with timeout from parent context
+	publishCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	dlqExchange := c.exchange + dlqExchangeSuffix
 	return c.channel.PublishWithContext(
-		ctx,
+		publishCtx,
 		dlqExchange,    // DLQ exchange
 		msg.RoutingKey, // same routing key
 		false,
