@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -33,7 +34,7 @@ func main() {
 	// Создание логгера
 	logger, err := zap.NewProduction()
 	if err != nil {
-		panic(fmt.Sprintf("failed to create logger: %v", err))
+		log.Fatalf("failed to create logger: %v", err)
 	}
 	defer logger.Sync()
 

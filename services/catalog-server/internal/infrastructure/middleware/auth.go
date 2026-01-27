@@ -142,15 +142,6 @@ func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	return userID, nil
 }
 
-// MustGetUserIDFromContext извлекает user_id из контекста или паникует
-func MustGetUserIDFromContext(ctx context.Context) uuid.UUID {
-	userID, err := GetUserIDFromContext(ctx)
-	if err != nil {
-		panic("user_id not found in context")
-	}
-	return userID
-}
-
 // GetUserEmailFromContext извлекает email из контекста
 func GetUserEmailFromContext(ctx context.Context) string {
 	email, _ := ctx.Value(userEmailKey).(string)

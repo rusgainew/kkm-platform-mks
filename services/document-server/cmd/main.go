@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -34,13 +35,13 @@ func main() {
 	// Загрузка конфигурации
 	cfg, err := config.Load()
 	if err != nil {
-		panic(fmt.Sprintf("Failed to load config: %v", err))
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Инициализация логгера
 	logger, err := initLogger(cfg.Observability.LogLevel)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize logger: %v", err))
+		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
 
