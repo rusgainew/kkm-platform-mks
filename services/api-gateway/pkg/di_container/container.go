@@ -8,6 +8,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/cache"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/client"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/config"
+
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/observability"
 	"go.uber.org/zap"
 )
@@ -48,7 +49,7 @@ type Container struct {
 	documentQueryService       *services.DocumentQueryService
 	companyQueryService        *services.CompanyQueryService
 	foreignCompanyQueryService *services.ForeignCompanyQueryService
-	analyticsService           *services.AnalyticsService
+	analyticsClient            *client.AnalyticsClient
 
 	// Cleanup functions
 	cleanupFuncs []func() error
@@ -346,18 +347,18 @@ func (c *Container) ForeignCompanyQueryService() *services.ForeignCompanyQuerySe
 	return c.foreignCompanyQueryService
 }
 
-// SetAnalyticsService устанавливает analytics сервис
-func (c *Container) SetAnalyticsService(service *services.AnalyticsService) {
+// SetAnalyticsClient устанавливает analytics gRPC клиент
+func (c *Container) SetAnalyticsClient(cl *client.AnalyticsClient) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.analyticsService = service
+	c.analyticsClient = cl
 }
 
-// AnalyticsService возвращает analytics сервис
-func (c *Container) AnalyticsService() *services.AnalyticsService {
+// AnalyticsClient возвращает analytics gRPC клиент
+func (c *Container) AnalyticsClient() *client.AnalyticsClient {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.analyticsService
+	return c.analyticsClient
 }
 
 // SetRedisCache устанавливает Redis кеш

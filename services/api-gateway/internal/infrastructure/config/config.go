@@ -11,15 +11,16 @@ import (
 
 // Config содержит конфигурацию приложения
 type Config struct {
-	Server        ServerConfig
-	JWT           JWTConfig
-	Services      ServicesConfig
-	Observability ObservabilityConfig
-	RateLimit     RateLimitConfig
-	CORS          CORSConfig
-	Timeouts      TimeoutsConfig
-	Redis         *RedisConfig
-	TLS           TLSConfig
+	Server              ServerConfig
+	JWT                 JWTConfig
+	Services            ServicesConfig
+	Observability       ObservabilityConfig
+	RateLimit           RateLimitConfig
+	CORS                CORSConfig
+	Timeouts            TimeoutsConfig
+	Redis               *RedisConfig
+	TLS                 TLSConfig
+	AnalyticsServiceURL string
 }
 
 // ServerConfig конфигурация HTTP сервера
@@ -160,6 +161,7 @@ func Load() (*Config, error) {
 			CAFile:             getEnv("TLS_CA_FILE", ""),
 			InsecureSkipVerify: getEnvAsBool("TLS_INSECURE_SKIP_VERIFY", false),
 		},
+		AnalyticsServiceURL: getEnv("ANALYTICS_SERVICE_URL", "analytics-server:50070"),
 	}
 
 	// Если Redis адрес пуст, устанавливаем Redis в nil (кеш отключен)

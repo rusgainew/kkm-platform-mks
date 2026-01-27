@@ -307,15 +307,15 @@ func (rc *RouteConfigurator) configureForeignCompanyQueryRoutes(protected *gin.R
 
 // configureAnalyticsRoutes конфигурирует маршруты аналитики Dashboard
 func (rc *RouteConfigurator) configureAnalyticsRoutes(protected *gin.RouterGroup) {
-	analyticsHandler := NewAnalyticsHandler(rc.container.AnalyticsService(), rc.logger)
+	analyticsHandler := NewAnalyticsHandler(rc.container.AnalyticsClient(), rc.logger)
 	analytics := protected.Group("/analytics")
 	{
-		analytics.GET("/stats", analyticsHandler.GetDashboardStats)
-		analytics.GET("/sales-chart", analyticsHandler.GetSalesChart)
-		analytics.GET("/status-stats", analyticsHandler.GetStatusStats)
-		analytics.GET("/operation-stats", analyticsHandler.GetOperationTypeStats)
-		analytics.GET("/top-contractors", analyticsHandler.GetTopContractors)
-		analytics.GET("/revenue-by-month", analyticsHandler.GetRevenueByMonth)
+		analytics.GET("/dashboard/stats", analyticsHandler.GetDashboardStats)
+		analytics.GET("/sales/chart", analyticsHandler.GetSalesChart)
+		analytics.GET("/status/stats", analyticsHandler.GetStatusStats)
+		analytics.GET("/operation-type/stats", analyticsHandler.GetOperationTypeStats)
+		analytics.GET("/contractors/top", analyticsHandler.GetTopContractors)
+		analytics.GET("/revenue/monthly", analyticsHandler.GetRevenueByMonth)
 	}
 }
 

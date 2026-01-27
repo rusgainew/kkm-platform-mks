@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/repository"
+	"github.com/rusgainew/kkm-project-mks/analytics-server/internal/domain/repository"
 	"go.uber.org/zap"
 )
 

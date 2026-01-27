@@ -4,7 +4,7 @@ services:
   # ===================================
 
   # PostgreSQL databases - one per command service (database per service pattern)
-  
+
   postgres-user:
     image: postgres:15-alpine
     container_name: postgres-user
@@ -472,7 +472,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      rabbitmqres:
+      rabbitmq:
         condition: service_healthy
     networks:
       - kkm-network
@@ -495,6 +495,37 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+    networks:
+      - kkm-network
+
+  analytics-server:
+    build:
+      context: .
+      dockerfile: services/analytics-server/Dockerfile
+    container_name: analytics-server
+    restart: unless-stopped
+    environment:
+      GRPC_PORT: 50070
+      METRICS_PORT: 9115
+      DB_HOST: postgres-invoice
+      DB_PORT: 5432
+      DB_USER: invoice_svc
+      DB_PASSWORD: invoice_pass_2026
+      DB_NAME: invoice_db
+      DB_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      REDIS_DB: 6
+      REDIS_TTL: 300
+      LOG_LEVEL: info
+      ENABLE_METRICS: "true"
+    ports:
+      - "50070:50070"
+      - "9115:9115"
+    depends_on:
+      postgres-invoice:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - kkm-network
@@ -526,6 +557,7 @@ services:
       # FOREIGN_COMPANY_QUERY_SERVICE_URL: foreign-company-query-server:50066
       DOCUMENT_SERVICE_URL: document-server:50057
       DOCUMENT_QUERY_SERVICE_URL: document-query-server:50067
+      ANALYTICS_SERVICE_URL: analytics-server:50070
     ports:
       - "8080:8080"
       - "9090:9090"
@@ -543,6 +575,7 @@ services:
       # - foreign-company-query-server
       - document-server
       - document-query-server
+      - analytics-server
     networks:
       - kkm-network
     healthcheck:
@@ -732,7 +765,8 @@ networks:
 # ===================================
 # Volumes
 # ===================================
-# PostgreSQL volumes - one per command service
+volumes:
+  # PostgreSQL volumes - one per command service
   postgres_user_data:
     driver: local
   postgres_company_data:
@@ -747,7 +781,7 @@ networks:
     driver: local
   postgres_document_data:
     driver: local
-  
+
   # Other infrastructure volumes
   postgres_data:
     driver: local

@@ -6,24 +6,24 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
+	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/client"
 	"go.uber.org/zap"
 )
 
 // AnalyticsHandler обработчик для аналитики Dashboard
 type AnalyticsHandler struct {
-	analyticsService *services.AnalyticsService
-	logger           *zap.Logger
+	analyticsClient *client.AnalyticsClient
+	logger          *zap.Logger
 }
 
 // NewAnalyticsHandler создает новый AnalyticsHandler
 func NewAnalyticsHandler(
-	analyticsService *services.AnalyticsService,
+	analyticsClient *client.AnalyticsClient,
 	logger *zap.Logger,
 ) *AnalyticsHandler {
 	return &AnalyticsHandler{
-		analyticsService: analyticsService,
-		logger:           logger,
+		analyticsClient: analyticsClient,
+		logger:          logger,
 	}
 }
 
@@ -111,8 +111,8 @@ func (h *AnalyticsHandler) GetDashboardStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы через сервис
-	analyticsStats, err := h.analyticsService.GetStats(c.Request.Context(), start, end)
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetDashboardStats(c.Request.Context(), start, end)
 	if err != nil {
 		h.logger.Error("Failed to get analytics stats", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -124,13 +124,13 @@ func (h *AnalyticsHandler) GetDashboardStats(c *gin.Context) {
 
 	// TODO: Вычислить изменения относительно предыдущего периода
 	stats := DashboardStats{
-		TotalRevenue:         analyticsStats.TotalRevenue,
-		TotalInvoices:        analyticsStats.TotalInvoices,
-		AverageInvoiceAmount: analyticsStats.AverageAmount,
-		ActiveContractors:    analyticsStats.ActiveContractors,
-		PendingInvoices:      analyticsStats.PendingInvoices,
-		ApprovedInvoices:     analyticsStats.ApprovedInvoices,
-		RejectedInvoices:     analyticsStats.RejectedInvoices,
+		TotalRevenue:         resp.TotalRevenue,
+		TotalInvoices:        int32(resp.TotalInvoices),
+		AverageInvoiceAmount: resp.AverageAmount,
+		ActiveContractors:    int32(resp.UniqueContractors),
+		PendingInvoices:      int32(resp.PendingCount),
+		ApprovedInvoices:     int32(resp.ApprovedCount),
+		RejectedInvoices:     int32(resp.RejectedCount),
 		RevenueChange:        0,
 		InvoiceCountChange:   0,
 		AverageAmountChange:  0,
@@ -178,8 +178,8 @@ func (h *AnalyticsHandler) GetSalesChart(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы
-	salesData, err := h.analyticsService.GetSalesData(c.Request.Context(), start, end, granularity)
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetSalesChart(c.Request.Context(), start, end, granularity)
 	if err != nil {
 		h.logger.Error("Failed to get sales data", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -190,10 +190,10 @@ func (h *AnalyticsHandler) GetSalesChart(c *gin.Context) {
 	}
 
 	// Конвертируем в формат ответа
-	data := make([]ChartDataPoint, len(salesData))
-	for i, point := range salesData {
+	data := make([]ChartDataPoint, len(resp.DataPoints))
+	for i, point := range resp.DataPoints {
 		data[i] = ChartDataPoint{
-			Date:  point.Date.Format("2006-01-02"),
+			Date:  point.Date,
 			Value: point.Amount,
 		}
 	}
@@ -239,8 +239,8 @@ func (h *AnalyticsHandler) GetStatusStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы
-	statusDist, err := h.analyticsService.GetStatusDistribution(c.Request.Context(), start, end)
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetStatusDistribution(c.Request.Context(), start, end)
 	if err != nil {
 		h.logger.Error("Failed to get status distribution", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -252,7 +252,7 @@ func (h *AnalyticsHandler) GetStatusStats(c *gin.Context) {
 
 	// Вычисляем общее количество для процентов
 	var total float64
-	for _, dist := range statusDist {
+	for _, dist := range resp.Items {
 		total += float64(dist.Count)
 	}
 
@@ -276,10 +276,10 @@ func (h *AnalyticsHandler) GetStatusStats(c *gin.Context) {
 	}
 
 	// Конвертируем в формат ответа
-	data := make([]PieChartDataPoint, len(statusDist))
-	for i, dist := range statusDist {
-		percentage := 0.0
-		if total > 0 {
+	data := make([]PieChartDataPoint, len(resp.Items))
+	for i, dist := range resp.Items {
+		percentage := dist.Percentage
+		if percentage == 0 && total > 0 {
 			percentage = (float64(dist.Count) / total) * 100
 		}
 
@@ -333,8 +333,8 @@ func (h *AnalyticsHandler) GetOperationTypeStats(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы
-	opTypeDist, err := h.analyticsService.GetOperationTypeDistribution(c.Request.Context(), start, end)
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetOperationTypeDistribution(c.Request.Context(), start, end)
 	if err != nil {
 		h.logger.Error("Failed to get operation type distribution", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -346,7 +346,7 @@ func (h *AnalyticsHandler) GetOperationTypeStats(c *gin.Context) {
 
 	// Вычисляем общее количество для процентов
 	var total float64
-	for _, dist := range opTypeDist {
+	for _, dist := range resp.Items {
 		total += float64(dist.Count)
 	}
 
@@ -362,10 +362,10 @@ func (h *AnalyticsHandler) GetOperationTypeStats(c *gin.Context) {
 	}
 
 	// Конвертируем в формат ответа
-	data := make([]PieChartDataPoint, len(opTypeDist))
-	for i, dist := range opTypeDist {
-		percentage := 0.0
-		if total > 0 {
+	data := make([]PieChartDataPoint, len(resp.Items))
+	for i, dist := range resp.Items {
+		percentage := dist.Percentage
+		if percentage == 0 && total > 0 {
 			percentage = (float64(dist.Count) / total) * 100
 		}
 
@@ -427,8 +427,8 @@ func (h *AnalyticsHandler) GetTopContractors(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы
-	contractorsData, err := h.analyticsService.GetTopContractors(c.Request.Context(), start, end, int32(limit))
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetTopContractors(c.Request.Context(), start, end, int32(limit))
 	if err != nil {
 		h.logger.Error("Failed to get top contractors", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -439,13 +439,13 @@ func (h *AnalyticsHandler) GetTopContractors(c *gin.Context) {
 	}
 
 	// Конвертируем в формат ответа
-	contractors := make([]TopContractor, len(contractorsData))
-	for i, data := range contractorsData {
+	contractors := make([]TopContractor, len(resp.Contractors))
+	for i, data := range resp.Contractors {
 		contractors[i] = TopContractor{
-			ContractorID:   data.ContractorID,
+			ContractorID:   data.ContractorId,
 			ContractorName: data.ContractorName,
 			TotalAmount:    data.TotalAmount,
-			InvoiceCount:   data.InvoiceCount,
+			InvoiceCount:   int32(data.InvoiceCount),
 		}
 	}
 
@@ -482,8 +482,8 @@ func (h *AnalyticsHandler) GetRevenueByMonth(c *gin.Context) {
 		zap.Time("end", end),
 	)
 
-	// Получаем реальные данные из базы
-	monthlyData, err := h.analyticsService.GetMonthlyRevenue(c.Request.Context(), start, end)
+	// Получаем данные из analytics-server через gRPC
+	resp, err := h.analyticsClient.GetMonthlyRevenue(c.Request.Context(), start, end)
 	if err != nil {
 		h.logger.Error("Failed to get monthly revenue", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -500,12 +500,21 @@ func (h *AnalyticsHandler) GetRevenueByMonth(c *gin.Context) {
 	}
 
 	// Конвертируем в формат ответа
-	data := make([]ChartDataPoint, len(monthlyData))
-	for i, month := range monthlyData {
-		monthName := monthNames[month.Month.Month()-1]
-		data[i] = ChartDataPoint{
-			Date:  monthName,
-			Value: month.Amount,
+	data := make([]ChartDataPoint, len(resp.Months))
+	for i, month := range resp.Months {
+		// Парсим месяц из формата "2006-01"
+		monthTime, err := time.Parse("2006-01", month.Month)
+		if err == nil {
+			monthName := monthNames[monthTime.Month()-1]
+			data[i] = ChartDataPoint{
+				Date:  monthName,
+				Value: month.Revenue,
+			}
+		} else {
+			data[i] = ChartDataPoint{
+				Date:  month.Month,
+				Value: month.Revenue,
+			}
 		}
 	}
 

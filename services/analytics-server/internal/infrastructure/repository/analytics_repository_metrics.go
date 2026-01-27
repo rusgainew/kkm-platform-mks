@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/repository"
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/observability"
+	"github.com/rusgainew/kkm-project-mks/analytics-server/internal/domain/repository"
+	"github.com/rusgainew/kkm-project-mks/analytics-server/internal/infrastructure/observability"
 	"go.uber.org/zap"
 )
 
@@ -34,12 +34,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetStats(ctx context.Context, startDate
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_stats", duration)
+		r.metrics.RecordQueryLatency("get_stats", duration)
 	}()
 
 	stats, err := r.repo.GetStats(ctx, startDate, endDate)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_stats")
+		r.metrics.RecordAnalyticsError("get_stats", "database_error")
 		return nil, err
 	}
 
@@ -51,12 +51,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetSalesData(ctx context.Context, start
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_sales_data", duration)
+		r.metrics.RecordQueryLatency("get_sales_data", duration)
 	}()
 
 	data, err := r.repo.GetSalesData(ctx, startDate, endDate, granularity)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_sales_data")
+		r.metrics.RecordAnalyticsError("get_sales_data", "database_error")
 		return nil, err
 	}
 
@@ -68,12 +68,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetStatusDistribution(ctx context.Conte
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_status_distribution", duration)
+		r.metrics.RecordQueryLatency("get_status_distribution", duration)
 	}()
 
 	data, err := r.repo.GetStatusDistribution(ctx, startDate, endDate)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_status_distribution")
+		r.metrics.RecordAnalyticsError("get_status_distribution", "database_error")
 		return nil, err
 	}
 
@@ -85,12 +85,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetOperationTypeDistribution(ctx contex
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_operation_type_distribution", duration)
+		r.metrics.RecordQueryLatency("get_operation_type_distribution", duration)
 	}()
 
 	data, err := r.repo.GetOperationTypeDistribution(ctx, startDate, endDate)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_operation_type_distribution")
+		r.metrics.RecordAnalyticsError("get_operation_type_distribution", "database_error")
 		return nil, err
 	}
 
@@ -102,12 +102,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetTopContractors(ctx context.Context, 
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_top_contractors", duration)
+		r.metrics.RecordQueryLatency("get_top_contractors", duration)
 	}()
 
 	data, err := r.repo.GetTopContractors(ctx, startDate, endDate, limit)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_top_contractors")
+		r.metrics.RecordAnalyticsError("get_top_contractors", "database_error")
 		return nil, err
 	}
 
@@ -119,12 +119,12 @@ func (r *AnalyticsRepositoryWithMetrics) GetMonthlyRevenue(ctx context.Context, 
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start).Seconds()
-		r.metrics.RecordQueryLatency("analytics", "get_monthly_revenue", duration)
+		r.metrics.RecordQueryLatency("get_monthly_revenue", duration)
 	}()
 
 	data, err := r.repo.GetMonthlyRevenue(ctx, startDate, endDate)
 	if err != nil {
-		r.metrics.IncrementErrorCount("analytics", "get_monthly_revenue")
+		r.metrics.RecordAnalyticsError("get_monthly_revenue", "database_error")
 		return nil, err
 	}
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/repository"
-	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/cache"
+	"github.com/rusgainew/kkm-project-mks/analytics-server/internal/domain/repository"
+	"github.com/rusgainew/kkm-project-mks/analytics-server/internal/infrastructure/cache"
 	"go.uber.org/zap"
 )
 
@@ -220,7 +220,7 @@ func (s *AnalyticsService) InvalidateCache(ctx context.Context) error {
 	}
 
 	pattern := "analytics:*"
-	if err := s.cache.DeletePattern(ctx, pattern); err != nil {
+	if err := s.cache.DeleteByPattern(ctx, pattern); err != nil {
 		s.logger.Error("Failed to invalidate analytics cache", zap.Error(err))
 		return fmt.Errorf("invalidate cache: %w", err)
 	}

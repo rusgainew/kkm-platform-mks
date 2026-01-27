@@ -168,9 +168,9 @@ func (i *Initializer) InitializeApplicationServices() error {
 	foreignCompanyQueryService := createForeignCompanyQueryService(cfg, connManager, metrics, tracer, logger)
 	i.container.SetForeignCompanyQueryService(foreignCompanyQueryService)
 
-	// Инициализация Analytics Service
-	analyticsService := createAnalyticsService(cfg, redisCache, metrics, logger)
-	i.container.SetAnalyticsService(analyticsService)
+	// Инициализация Analytics gRPC Client
+	analyticsClient := createAnalyticsClient(cfg, logger)
+	i.container.SetAnalyticsClient(analyticsClient)
 
 	return nil
 }
@@ -265,26 +265,25 @@ func createForeignCompanyQueryService(
 	)
 }
 
-func createAnalyticsService(
+func createAnalyticsClient(
 	cfg *config.Config,
-	redisCache *cache.RedisCache,
-	metrics *observability.Metrics,
 	logger *zap.Logger,
-) *services.AnalyticsService {
-	// TODO: Подключить PostgreSQL для аналитики
-	// Пока создаем сервис с nil repository - это вызовет панику при запросе
-	// Необходимо:
-	// 1. Добавить DB connection в Infrastructure
-	// 2. Создать PostgresAnalyticsRepository
-	// 3. Применить миграции (001_create_analytics_views.up.sql)
-	// 4. Обернуть в metrics wrapper
-	//
-	// Пример полной инициализации:
-	// db := getDBConnection(cfg.Database.InvoiceDB) // Нужно добавить DB connection
-	// repo := repository.NewPostgresAnalyticsRepository(db, logger)
-	// repoWithMetrics := repository.NewAnalyticsRepositoryWithMetrics(repo, metrics, logger)
-	// return services.NewAnalyticsService(repoWithMetrics, redisCache, logger)
+) *client.AnalyticsClient {
+	// Получаем адрес analytics-server из конфигурации
+	analyticsAddr := cfg.AnalyticsServiceURL
+	if analyticsAddr == "" {
+		logger.Warn("Analytics service URL is not set - analytics endpoints will fail")
+		return nil
+	}
 
-	logger.Warn("AnalyticsService created WITHOUT repository - analytics endpoints will fail until DB connection is configured")
-	return services.NewAnalyticsService(nil, redisCache, logger)
+	// Создаем gRPC клиент
+	analyticsClient, err := client.NewAnalyticsClient(analyticsAddr, logger)
+	if err != nil {
+		logger.Error("Failed to connect to analytics-server", zap.Error(err), zap.String("address", analyticsAddr))
+		logger.Warn("Analytics client creation failed - analytics endpoints will fail")
+		return nil
+	}
+
+	logger.Info("Analytics gRPC client created successfully", zap.String("address", analyticsAddr))
+	return analyticsClient
 }
