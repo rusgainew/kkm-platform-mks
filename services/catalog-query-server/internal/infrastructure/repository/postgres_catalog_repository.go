@@ -82,12 +82,21 @@ func (r *PostgresCatalogRepository) ListCatalogs(ctx context.Context, page, size
 
 // ListCatalogsWithFilter возвращает список элементов каталога с фильтрацией и сортировкой
 func (r *PostgresCatalogRepository) ListCatalogsWithFilter(ctx context.Context, filter *ports.CatalogFilter, sort *ports.CatalogSort, page, size int32) ([]*dictionaries.Catalog, int32, error) {
-	if page < 1 {
-		page = 1
+	// Validate input parameters
+	if err := ports.ValidateCatalogFilter(filter); err != nil {
+		return nil, 0, fmt.Errorf("invalid filter: %w", err)
 	}
-	if size < 1 || size > 100 {
-		size = 10
+
+	if err := ports.ValidateCatalogSort(sort); err != nil {
+		return nil, 0, fmt.Errorf("invalid sort: %w", err)
 	}
+
+	var err error
+	page, size, err = ports.ValidatePagination(page, size)
+	if err != nil {
+		return nil, 0, fmt.Errorf("invalid pagination: %w", err)
+	}
+
 	offset := (page - 1) * size
 
 	// Построение WHERE clause

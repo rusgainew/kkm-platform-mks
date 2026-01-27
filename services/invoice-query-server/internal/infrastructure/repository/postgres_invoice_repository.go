@@ -172,10 +172,21 @@ func (r *PostgresInvoiceRepository) ListInvoiceDetails(ctx context.Context, page
 
 // ListInvoicesWithFilter возвращает список счетов-фактур с фильтрацией, сортировкой и пагинацией
 func (r *PostgresInvoiceRepository) ListInvoicesWithFilter(ctx context.Context, filter *ports.InvoiceFilter, sort *ports.InvoiceSort, page, size int32) ([]*entities.Invoice, int32, error) {
-	// Исправлена пагинация
-	if page < 1 {
-		page = 1
+	// Validate input parameters
+	if err := ports.ValidateInvoiceFilter(filter); err != nil {
+		return nil, 0, fmt.Errorf("invalid filter: %w", err)
 	}
+
+	if err := ports.ValidateInvoiceSort(sort); err != nil {
+		return nil, 0, fmt.Errorf("invalid sort: %w", err)
+	}
+
+	var err error
+	page, size, err = ports.ValidatePagination(page, size)
+	if err != nil {
+		return nil, 0, fmt.Errorf("invalid pagination: %w", err)
+	}
+
 	offset := (page - 1) * size
 
 	// Строим WHERE clause динамически
