@@ -119,13 +119,13 @@ func main() {
 	docHandler := grpchandler.NewDocumentHandlerWithTracing(docService, logger, metrics)
 	healthHandler := grpchandler.NewHealthHandler()
 
-	// Инициализация JWT middleware (секрет из окружения)
+	// Инициализация JWT middleware (секрет из окружения, required)
 	jwtSecret := os.Getenv("DOCUMENT_SERVER_JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = os.Getenv("JWT_SECRET")
 	}
 	if jwtSecret == "" {
-		jwtSecret = "test-jwt-secret-key-12345"
+		logger.Fatal("Переменная DOCUMENT_SERVER_JWT_SECRET или JWT_SECRET должна быть установлена")
 	}
 	authMiddleware := middleware.NewAuthMiddleware(jwtSecret, logger)
 

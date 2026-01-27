@@ -109,13 +109,13 @@ func main() {
 	companyHandler := grpchandler.NewCompanyHandler(companyService, logger)
 	healthHandler := grpchandler.NewHealthHandlerWithDeps(db, logger)
 
-	// Инициализация JWT middleware (секрет из окружения)
+	// Инициализация JWT middleware (секрет из окружения, required)
 	jwtSecret := os.Getenv("COMPANY_SERVER_JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = os.Getenv("JWT_SECRET")
 	}
 	if jwtSecret == "" {
-		jwtSecret = "test-jwt-secret-key-12345"
+		logger.Fatal("Переменная COMPANY_SERVER_JWT_SECRET или JWT_SECRET должна быть установлена")
 	}
 	authMiddleware := middleware.NewAuthMiddleware(jwtSecret, logger)
 

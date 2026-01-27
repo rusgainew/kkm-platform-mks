@@ -74,7 +74,7 @@ func Load() (*Config, error) {
 			URL: getEnv("FOREIGN_COMPANY_SERVER_RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
 		},
 		Auth: AuthConfig{
-			JWTSecret: getEnv("FOREIGN_COMPANY_SERVER_JWT_SECRET", getEnv("JWT_SECRET", "your-secret-key-change-in-production")),
+			JWTSecret: getEnv("FOREIGN_COMPANY_SERVER_JWT_SECRET", getEnv("JWT_SECRET", "")),
 		},
 		Observability: ObservabilityConfig{
 			JaegerURL:   getEnv("FOREIGN_COMPANY_SERVER_JAEGER_URL", "http://localhost:14268/api/traces"),
@@ -86,6 +86,9 @@ func Load() (*Config, error) {
 	// Валидация обязательных параметров
 	if cfg.Database.URL == "" {
 		return nil, fmt.Errorf("FOREIGN_COMPANY_SERVER_DB_URL is required")
+	}
+	if cfg.Auth.JWTSecret == "" {
+		return nil, fmt.Errorf("JWT_SECRET environment variable is required")
 	}
 
 	return cfg, nil

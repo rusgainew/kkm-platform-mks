@@ -86,7 +86,7 @@ func Load() (*Config, error) {
 			Enabled:      getEnvAsBool("ENABLE_EVENTS", true),
 		},
 		Auth: AuthConfig{
-			JWTSecret: getEnv("INVOICE_SERVER_JWT_SECRET", getEnv("JWT_SECRET", "your-secret-key-change-in-production")),
+			JWTSecret: getEnv("INVOICE_SERVER_JWT_SECRET", getEnv("JWT_SECRET", "")),
 		},
 		Observability: ObservabilityConfig{
 			JaegerEndpoint: getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
@@ -97,7 +97,25 @@ func Load() (*Config, error) {
 		},
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
+}
+
+// Validate проверяет корректность конфигурации
+func (c *Config) Validate() error {
+	if c.Database.Host == "" {
+		return fmt.Errorf("database host is required")
+	}
+	if c.Database.DBName == "" {
+		return fmt.Errorf("database name is required")
+	}
+	if c.Auth.JWTSecret == "" {
+		return fmt.Errorf("JWT_SECRET environment variable is required")
+	}
+	return nil
 }
 
 // GetDSN возвращает строку подключения к базе данных

@@ -69,10 +69,10 @@ func main() {
 		logger.Info("Redis cache initialized", zap.String("url", cfg.RedisURL), zap.Duration("ttl", cfg.CacheTTL))
 	}
 
-	// JWT secret from environment
+	// JWT secret from environment (required)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "test-jwt-secret-key-12345"
+		logger.Fatal("JWT_SECRET environment variable is required")
 	}
 	authMiddleware := middleware.NewAuthMiddleware(jwtSecret, logger)
 
