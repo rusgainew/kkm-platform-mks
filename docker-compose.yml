@@ -472,7 +472,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost/api/v1
+      NEXT_PUBLIC_API_URL: /api/v1
     depends_on:
       api-gateway:
         condition: service_healthy
