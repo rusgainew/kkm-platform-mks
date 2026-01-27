@@ -52,6 +52,11 @@ export default function UserRoleForm({ user }: UserRoleFormProps) {
       return;
     }
 
+    if (!user.id) {
+      setErrors({ submit: 'ID пользователя отсутствует' });
+      return;
+    }
+
     setIsLoading(true);
     setErrors({});
     setSuccessMessage('');

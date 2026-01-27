@@ -25,7 +25,7 @@ export default function ChangeRoleModal({ user, isOpen, onClose, onSuccess }: Ch
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !user.id) return;
 
     setError(null);
     setIsLoading(true);

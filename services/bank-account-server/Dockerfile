@@ -1,13 +1,27 @@
 FROM golang:1.24-alpine AS builder
 
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
+RUN apk add --no-cache git ca-certificates
+
 WORKDIR /build
 
-# Copy proto-lib and service
+# Copy proto-lib go.mod first
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
+# Copy only go.mod and go.sum
+COPY services/bank-account-server/go.mod services/bank-account-server/go.sum ./bank-account-server/
+
+WORKDIR /build/bank-account-server
+RUN go mod download
+
+# Copy rest of the code
+WORKDIR /build
 COPY proto-lib/ ../proto-lib/
 COPY services/bank-account-server/ ./bank-account-server/
 
 WORKDIR /build/bank-account-server
-RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bank-account-server ./cmd/main.go
 
 # Runtime

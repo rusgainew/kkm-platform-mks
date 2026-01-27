@@ -1,19 +1,25 @@
 # Stage 1: Build
 FROM golang:1.24-alpine AS builder
 
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
 # Install dependencies
 RUN apk add --no-cache git make
 
 WORKDIR /app
 
+# Copy proto-lib go.mod first
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
 # Copy go mod files
 COPY services/company-server/go.* ./
-COPY proto-lib/ ../proto-lib/
 
 # Download dependencies
 RUN go mod download
 
-# Copy source code
+# Copy proto-lib and source code
+COPY proto-lib/ ../proto-lib/
 COPY services/company-server/ ./
 WORKDIR /app
 RUN go mod tidy

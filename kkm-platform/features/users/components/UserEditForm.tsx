@@ -104,6 +104,12 @@ export default function UserEditForm({ user }: UserEditFormProps) {
         return;
       }
 
+      if (!user.id) {
+        setErrors({ submit: 'ID пользователя отсутствует' });
+        setIsLoading(false);
+        return;
+      }
+
       await updateUser(user.id, updateData);
 
       setSuccessMessage('Пользователь успешно обновлён');

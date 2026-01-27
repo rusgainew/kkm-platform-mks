@@ -2,15 +2,27 @@ FROM golang:1.24-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates
 
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
 WORKDIR /build
 
-# Copy proto-lib and service sources from repo root
+# Copy proto-lib go.mod first
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
+# Copy only go.mod and go.sum for caching
+COPY services/catalog-server/go.mod services/catalog-server/go.sum ./catalog-server/
+
+WORKDIR /build/catalog-server
+RUN go mod download
+
+# Copy rest of code
+WORKDIR /build
 COPY proto-lib/ ../proto-lib/
 COPY services/catalog-server/ ./catalog-server/
 
 # Build
 WORKDIR /build/catalog-server
-RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o catalog-server ./cmd/main.go
 
 # Runtime image

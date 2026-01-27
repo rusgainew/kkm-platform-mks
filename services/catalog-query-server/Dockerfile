@@ -1,12 +1,27 @@
 FROM golang:1.24-alpine AS builder
 
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
+RUN apk add --no-cache git ca-certificates
+
 WORKDIR /build
-# Copy proto-lib and service sources
+
+# Copy proto-lib go.mod first
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
+# Copy only go.mod and go.sum
+COPY services/catalog-query-server/go.mod services/catalog-query-server/go.sum ./catalog-query-server/
+
+WORKDIR /build/catalog-query-server
+RUN go mod download
+
+# Copy rest of code
+WORKDIR /build
 COPY proto-lib/ ../proto-lib/
 COPY services/catalog-query-server/ ./catalog-query-server/
 
 WORKDIR /build/catalog-query-server
-RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o catalog-query-server ./cmd
 
 FROM alpine:3.18

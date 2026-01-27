@@ -16,13 +16,15 @@ var migrationFS embed.FS
 
 type Migrator struct {
 	db     *sql.DB
+	dsn    string
 	logger *zap.Logger
 }
 
 // NewMigrator создает новый миграционный объект
-func NewMigrator(db *sql.DB, logger *zap.Logger) *Migrator {
+func NewMigrator(db *sql.DB, dsn string, logger *zap.Logger) *Migrator {
 	return &Migrator{
 		db:     db,
+		dsn:    dsn,
 		logger: logger,
 	}
 }
@@ -35,7 +37,7 @@ func (m *Migrator) Run() error {
 		return err
 	}
 
-	migrator, err := migrate.NewWithSourceInstance("iofs", d, "postgres://")
+	migrator, err := migrate.NewWithSourceInstance("iofs", d, m.dsn)
 	if err != nil {
 		m.logger.Error("Failed to create migrator", zap.Error(err))
 		return err

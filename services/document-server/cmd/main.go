@@ -79,7 +79,10 @@ func main() {
 	defer db.Close()
 
 	// Выполнение автоматических миграций
-	migrator := migration.NewMigrator(db.DB, logger)
+	migrationDSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		cfg.Database.User, cfg.Database.Password, cfg.Database.Host,
+		cfg.Database.Port, cfg.Database.DBName, cfg.Database.SSLMode)
+	migrator := migration.NewMigrator(db.DB, migrationDSN, logger)
 	if err := migrator.Run(); err != nil {
 		logger.Fatal("Failed to run database migrations", zap.Error(err))
 	}

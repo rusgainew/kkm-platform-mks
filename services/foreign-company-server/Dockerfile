@@ -1,21 +1,26 @@
 # Build stage
 FROM golang:1.24-alpine AS builder
 
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
 WORKDIR /app
 
 # Установка зависимостей сборки
 RUN apk add --no-cache git
 
+# Copy proto-lib go.mod first
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
 # Копирование go.mod и go.sum
 COPY services/foreign-company-server/go.mod services/foreign-company-server/go.sum ./
-COPY proto-lib ../proto-lib/
 
 # Загрузка зависимостей
 RUN go mod download
 
-# Копирование исходного кода
+# Копирование proto-lib и исходного кода
+COPY proto-lib/ ../proto-lib/
 COPY services/foreign-company-server/ ./
-RUN go mod tidy
 
 # Сборка приложения
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o foreign-company-server ./cmd/main.go

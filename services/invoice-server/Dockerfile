@@ -4,15 +4,28 @@ FROM golang:1.24-alpine AS builder
 # Install build dependencies
 RUN apk add --no-cache git make ca-certificates
 
+# Set Go proxy to direct mode to avoid DNS issues
+ENV GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+ENV GOSUMDB=off
+
 WORKDIR /build
 
-# Copy proto-lib and service sources
+# Copy proto-lib go.mod first for better caching
+COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
+
+# Copy only go.mod and go.sum for dependency caching
+COPY services/invoice-server/go.mod services/invoice-server/go.sum ./invoice-server/
+
+WORKDIR /build/invoice-server
+RUN go mod download
+
+# Now copy the rest of proto-lib and service code
+WORKDIR /build
 COPY proto-lib/ ../proto-lib/
 COPY services/invoice-server/ ./invoice-server/
 
 # Build the application
 WORKDIR /build/invoice-server
-RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o invoice-server ./cmd/main.go
 
 # Final stage

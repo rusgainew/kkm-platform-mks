@@ -118,7 +118,7 @@ export default function AuthPage() {
         last_name: regForm.lastName,
       });
       // Reset form and switch to login
-      setRegForm({ email: '', password: '', firstName: '', lastName: '' });
+      setRegForm({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
       setLoginForm({ email: regForm.email, password: '' });
       setMode('login');
       setMessage('✓ Аккаунт создан! Войдите в систему.');

@@ -4,7 +4,7 @@ go.work.sum
 .gitignore
 *.md
 test-*.sh
-test-*.go
+*_test.go
 load-tests/
 monitoring/
 k8s/
@@ -13,3 +13,29 @@ scripts/
 .env.*
 *.log
 node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+dist/
+*.exe
+
+# Frontend build artifacts
+kkm-platform/.next/
+kkm-platform/out/
+kkm-platform/.turbo/
+kkm-platform/node_modules/
+
+# Test data
+testdata/
+coverage.txt
+*.test
+
+# Temp files
+tmp/
+temp/

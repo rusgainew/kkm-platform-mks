@@ -25,6 +25,11 @@ export default function UserDeleteForm({ user }: UserDeleteFormProps) {
       return;
     }
 
+    if (!user.id) {
+      setError('ID пользователя отсутствует');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setSuccessMessage('');
