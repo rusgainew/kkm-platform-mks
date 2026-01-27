@@ -89,6 +89,7 @@ func (rc *RouteConfigurator) Configure(router *gin.Engine) error {
 		rc.configureBankAccountQueryRoutes(protected)
 		rc.configureDocumentRoutes(protected)
 		rc.configureDocumentQueryRoutes(protected)
+		rc.configureAnalyticsRoutes(protected)
 	}
 
 	return nil
@@ -301,6 +302,20 @@ func (rc *RouteConfigurator) configureForeignCompanyQueryRoutes(protected *gin.R
 		foreignCompanyQueries.GET("", foreignCompanyQueryHandler.ListForeignCompanies)
 		foreignCompanyQueries.GET("/search", foreignCompanyQueryHandler.SearchForeignCompanies)
 		foreignCompanyQueries.GET("/filter", foreignCompanyQueryHandler.FilterForeignCompanies)
+	}
+}
+
+// configureAnalyticsRoutes конфигурирует маршруты аналитики Dashboard
+func (rc *RouteConfigurator) configureAnalyticsRoutes(protected *gin.RouterGroup) {
+	analyticsHandler := NewAnalyticsHandler(rc.container.InvoiceQueryService(), rc.logger)
+	analytics := protected.Group("/analytics")
+	{
+		analytics.GET("/stats", analyticsHandler.GetDashboardStats)
+		analytics.GET("/sales-chart", analyticsHandler.GetSalesChart)
+		analytics.GET("/status-stats", analyticsHandler.GetStatusStats)
+		analytics.GET("/operation-stats", analyticsHandler.GetOperationTypeStats)
+		analytics.GET("/top-contractors", analyticsHandler.GetTopContractors)
+		analytics.GET("/revenue-by-month", analyticsHandler.GetRevenueByMonth)
 	}
 }
 
