@@ -131,7 +131,12 @@ func (r *PostgresForeignCompanyRepository) ListForeignCompaniesWithFilter(ctx co
 			"country_code": "country_code",
 		}
 		if mappedField, ok := validFields[sort.Field]; ok {
-			orderBy = mappedField + " " + string(sort.Order)
+			// Валидация sort.Order для предотвращения SQL injection
+			sortOrder := "ASC"
+			if sort.Order == "DESC" || sort.Order == "desc" {
+				sortOrder = "DESC"
+			}
+			orderBy = mappedField + " " + sortOrder
 		}
 	}
 

@@ -138,7 +138,12 @@ func (r *PostgresCatalogRepository) ListCatalogsWithFilter(ctx context.Context, 
 			"gked_code":  "gked",
 		}
 		if mappedField, ok := validFields[sort.Field]; ok {
-			orderBy = mappedField + " " + string(sort.Order)
+			// Валидация sort.Order для предотвращения SQL injection
+			sortOrder := "ASC"
+			if sort.Order == "DESC" || sort.Order == "desc" {
+				sortOrder = "DESC"
+			}
+			orderBy = mappedField + " " + sortOrder
 		}
 	}
 

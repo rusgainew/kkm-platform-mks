@@ -238,7 +238,12 @@ func (r *PostgresInvoiceRepository) ListInvoicesWithFilter(ctx context.Context, 
 			"created_date":   true,
 		}
 		if validFields[sort.Field] {
-			orderBy = sort.Field + " " + string(sort.Order)
+			// Валидация sort.Order для предотвращения SQL injection
+			sortOrder := "ASC"
+			if sort.Order == "DESC" || sort.Order == "desc" {
+				sortOrder = "DESC"
+			}
+			orderBy = sort.Field + " " + sortOrder
 		}
 	}
 

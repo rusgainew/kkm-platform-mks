@@ -144,7 +144,12 @@ func (r *PostgresBankAccountRepository) ListBankAccountsWithFilter(ctx context.C
 			"is_active":      "is_active",
 		}
 		if mappedField, ok := validFields[sort.Field]; ok {
-			orderBy = mappedField + " " + string(sort.Order)
+			// Валидация sort.Order для предотвращения SQL injection
+			sortOrder := "ASC"
+			if sort.Order == "DESC" || sort.Order == "desc" {
+				sortOrder = "DESC"
+			}
+			orderBy = mappedField + " " + sortOrder
 		}
 	}
 
