@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -52,18 +53,25 @@ func main() {
 	logger.Info("In-memory document repository initialized")
 
 	// Initialize Redis cache (optional)
+	// Create application lifecycle context
+	appCtx, appCancel := context.WithCancel(context.Background())
+	defer appCancel()
+
 	var redisCache *cache.RedisCache
 	if cfg.RedisURL != "" {
 		redisClient := redis.NewClient(&redis.Options{
 			Addr: cfg.RedisURL,
 		})
 
-		if err := redisClient.Ping(context.Background()).Err(); err == nil {
+		// Use context with timeout for ping
+		pingCtx, pingCancel := context.WithTimeout(appCtx, 5*time.Second)
+		if err := redisClient.Ping(pingCtx).Err(); err == nil {
 			redisCache = cache.NewRedisCache(redisClient, logger)
 			logger.Info("Redis cache initialized")
 		} else {
 			logger.Warn("Failed to connect to Redis, continuing without caching", zap.Error(err))
 		}
+		pingCancel()
 	}
 
 	// Initialize gRPC handler
@@ -85,9 +93,9 @@ func main() {
 			logger.Info("Continuing without event consumer")
 		} else {
 			defer consumer.Close()
-			// Start listening for events in background
+			// Start listening for events in background with app context
 			go func() {
-				if err := consumer.Start(context.Background()); err != nil {
+				if err := consumer.Start(appCtx); err != nil && err != context.Canceled {
 					logger.Error("Failed to start RabbitMQ consumer", zap.Error(err))
 				}
 			}()
@@ -149,6 +157,9 @@ func main() {
 	<-sigChan
 
 	logger.Info("Shutdown signal received, gracefully stopping servers...")
+
+	// Cancel application context to stop consumers
+	appCancel()
 
 	// Shutdown gRPC server
 	grpcServer.GracefulStop()
