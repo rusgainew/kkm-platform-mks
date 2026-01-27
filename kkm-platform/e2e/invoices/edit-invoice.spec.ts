@@ -65,9 +65,6 @@ test.describe("Edit Invoice", () => {
   test("should cancel edit without saving", async ({ page }) => {
     await page.click('button[aria-label="Редактировать"]');
 
-    // Get original value
-    const originalNumber = await page.inputValue('input[name="invoiceNumber"]');
-
     // Modify data
     await page.fill('input[name="invoiceNumber"]', "TEMP-999");
 
