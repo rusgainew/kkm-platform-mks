@@ -1,3 +1,7 @@
+// Централизованные типы сущностей (новые)
+export * from "./entities";
+
+// Existing types (для обратной совместимости)
 export * from "./product";
 export * from "./cart";
 export * from "./dashboard";
@@ -10,3 +14,4 @@ export * from "./api-response";
 export * from "./reference";
 export * from "./party";
 export * from "./invoice";
+export * from "./catalog";

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import { Plus, X, Loader2 } from 'lucide-react';
+import { useState, useMemo } from "react";
+import { Plus, X, Loader2 } from "lucide-react";
 
 interface InvoiceItem {
   id: string;
@@ -10,9 +10,19 @@ interface InvoiceItem {
   price: number;
 }
 
+interface InvoiceData {
+  id?: string;
+  number: string;
+  date: string;
+  company_id: string;
+  description: string;
+  items: InvoiceItem[];
+  notes: string;
+}
+
 interface InvoiceFormProps {
-  initialData?: any;
-  onSubmit?: (data: any) => Promise<void>;
+  initialData?: InvoiceData;
+  onSubmit?: (data: InvoiceData) => Promise<void>;
 }
 
 export default function InvoiceForm({ initialData, onSubmit }: InvoiceFormProps) {
@@ -90,7 +100,7 @@ export default function InvoiceForm({ initialData, onSubmit }: InvoiceFormProps)
   const removeItem = (id: string) => {
     setFormData({
       ...formData,
-      items: formData.items.filter((item: any) => item.id !== id),
+      items: formData.items.filter((item: InvoiceItem) => item.id !== id),
     });
   };
 
@@ -208,7 +218,7 @@ export default function InvoiceForm({ initialData, onSubmit }: InvoiceFormProps)
         </div>
 
         <div className="space-y-2">
-          {formData.items.map((item: any) => (
+          {formData.items.map((item: InvoiceItem) => (
             <div key={item.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
               <div className="flex-1">
                 <p className="text-white font-medium">{item.name}</p>

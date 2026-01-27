@@ -1,197 +1,374 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createBankAccount, updateBankAccount } from '@/lib/api/bank-accounts';
+import type {
+  BankAccount,
+  CreateBankAccountRequest,
+  UpdateBankAccountRequest,
+} from '@/types/entities';
 
 interface BankAccountFormProps {
-  initialData?: any;
-  onSubmit?: (data: any) => Promise<void>;
+  initialData?: BankAccount | null;
+  ownerId?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export default function BankAccountForm({ initialData, onSubmit }: BankAccountFormProps) {
-  const [formData, setFormData] = useState({
-    bank_name: initialData?.bank_name || '',
-    bik: initialData?.bik || '',
+interface FormData {
+  account_number: string;
+  bank_name: string;
+  bank_code: string;
+  currency: string;
+  owner_id: string;
+  is_active: boolean;
+}
+
+// Валидация номера счета (20 цифр для КР)
+function isValidAccountNumber(number: string): boolean {
+  return /^\d{20}$/.test(number);
+}
+
+// Валидация БИК/bank_code (обычно 9 цифр для РФ, но может варьироваться)
+function isValidBankCode(code: string): boolean {
+  return /^\d{6,9}$/.test(code);
+}
+
+export default function BankAccountForm({
+  initialData,
+  ownerId,
+  onSuccess,
+  onCancel,
+}: BankAccountFormProps) {
+  const queryClient = useQueryClient();
+  const isEditMode = !!initialData?.id;
+
+  const [formData, setFormData] = useState<FormData>({
     account_number: initialData?.account_number || '',
-    correspondent_account: initialData?.correspondent_account || '',
-    company_id: initialData?.company_id || '',
-    is_primary: initialData?.is_primary || false,
+    bank_name: initialData?.bank_name || '',
+    bank_code: initialData?.bank_code || '',
+    currency: initialData?.currency || 'KGS',
+    owner_id: initialData?.owner_id || ownerId || '',
+    is_active: initialData?.is_active ?? true,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const validateForm = () => {
+  // Валидация формы
+  const validateForm = React.useCallback((): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.bank_name.trim()) newErrors.bank_name = 'Название банка обязательно';
-    if (!formData.bik.trim() || formData.bik.length !== 9) {
-      newErrors.bik = 'БИК должен содержать 9 цифр';
+    if (!formData.account_number.trim()) {
+      newErrors.account_number = 'Номер счета обязателен';
+    } else if (!isValidAccountNumber(formData.account_number)) {
+      newErrors.account_number = 'Номер счета должен содержать ровно 20 цифр';
     }
-    if (!formData.account_number.trim() || formData.account_number.length !== 20) {
-      newErrors.account_number = 'Номер счета должен содержать 20 цифр';
+
+    if (!formData.bank_name.trim()) {
+      newErrors.bank_name = 'Название банка обязательно';
+    } else if (formData.bank_name.length < 3) {
+      newErrors.bank_name = 'Название банка должно содержать минимум 3 символа';
     }
-    if (!formData.correspondent_account.trim() || formData.correspondent_account.length !== 20) {
-      newErrors.correspondent_account = 'Коррсчет должен содержать 20 цифр';
+
+    if (!formData.bank_code.trim()) {
+      newErrors.bank_code = 'БИК банка обязателен';
+    } else if (!isValidBankCode(formData.bank_code)) {
+      newErrors.bank_code = 'БИК должен содержать от 6 до 9 цифр';
+    }
+
+    if (!formData.currency) {
+      newErrors.currency = 'Валюта обязательна';
+    }
+
+    if (!formData.owner_id) {
+      newErrors.owner_id = 'Необходимо указать владельца счета';
     }
 
     return newErrors;
-  };
+  }, [formData]);
+
+  // Мутация создания
+  const createMutation = useMutation({
+    mutationFn: (data: CreateBankAccountRequest) => createBankAccount(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      onSuccess?.();
+    },
+  });
+
+  // Мутация обновления
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateBankAccountRequest) =>
+      updateBankAccount(initialData!.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({
+        queryKey: ['bank-account', initialData!.id],
+      });
+      onSuccess?.();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors = validateForm();
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    // Отметить все поля как touched
+    const allFields = Object.keys(formData).reduce(
+      (acc, key) => ({ ...acc, [key]: true }),
+      {}
+    );
+    setTouched(allFields);
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    setIsLoading(true);
-    setErrors({});
-
     try {
-      if (onSubmit) {
-        await onSubmit(formData);
+      if (isEditMode) {
+        // Обновление - отправляем только измененные поля
+        const updateData: UpdateBankAccountRequest = {};
+        if (formData.account_number !== initialData.account_number) {
+          updateData.account_number = formData.account_number;
+        }
+        if (formData.bank_name !== initialData.bank_name) {
+          updateData.bank_name = formData.bank_name;
+        }
+        if (formData.bank_code !== initialData.bank_code) {
+          updateData.bank_code = formData.bank_code;
+        }
+        if (formData.currency !== initialData.currency) {
+          updateData.currency = formData.currency;
+        }
+        if (formData.is_active !== initialData.is_active) {
+          updateData.is_active = formData.is_active;
+        }
+
+        await updateMutation.mutateAsync(updateData);
+      } else {
+        // Создание
+        const createData: CreateBankAccountRequest = {
+          account_number: formData.account_number,
+          bank_name: formData.bank_name,
+          bank_code: formData.bank_code,
+          currency: formData.currency,
+          owner_id: formData.owner_id,
+        };
+        await createMutation.mutateAsync(createData);
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Ошибка отправки формы:', error);
       setErrors({
-        submit: err instanceof Error ? err.message : 'Ошибка отправки',
+        submit:
+          error instanceof Error ? error.message : 'Ошибка сохранения данных',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg border border-gray-800 p-6 space-y-6">
-      <h2 className="text-2xl font-bold text-white">
-        {initialData?.id ? 'Редактировать банковский счет' : 'Добавить банковский счет'}
-      </h2>
+  const handleBlur = (field: keyof FormData) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    // Validate only the touched field
+    const validationErrors = validateForm();
+    setErrors((prev) => ({
+      ...prev,
+      [field]: validationErrors[field] || '',
+    }));
+  };
 
-      {errors.submit && (
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const submitError = createMutation.error || updateMutation.error;
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-gray-900 rounded-lg border border-gray-800 p-6 space-y-6"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">
+          {isEditMode ? 'Редактировать банковский счет' : 'Добавить банковский счет'}
+        </h2>
+      </div>
+
+      {/* Error messages */}
+      {(errors.submit || submitError) && (
         <div className="p-4 bg-red-900/20 border border-red-800 text-red-300 rounded-lg">
-          {errors.submit}
+          {errors.submit || (submitError instanceof Error ? submitError.message : 'Ошибка сохранения')}
         </div>
       )}
 
-      {/* Банковские данные */}
+      {/* Основные реквизиты */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-300">Банковские реквизиты</h3>
-        
+
+        {/* Номер счета */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Название банка *
-          </label>
-          <input
-            type="text"
-            value={formData.bank_name}
-            onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 outline-none"
-            placeholder="ПАО Сбербанк"
-          />
-          {errors.bank_name && <p className="text-red-400 text-sm mt-1">{errors.bank_name}</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              БИК *
-            </label>
-            <input
-              type="text"
-              value={formData.bik}
-              onChange={(e) => setFormData({ ...formData, bik: e.target.value.replace(/\D/g, '').slice(0, 9) })}
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 outline-none font-mono"
-              placeholder="044525225"
-              maxLength={9}
-            />
-            {errors.bik && <p className="text-red-400 text-sm mt-1">{errors.bik}</p>}
-            <p className="text-gray-400 text-xs mt-1">Требуется 9 цифр</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Коррсчет *
-            </label>
-            <input
-              type="text"
-              value={formData.correspondent_account}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                correspondent_account: e.target.value.replace(/\D/g, '').slice(0, 20) 
-              })}
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 outline-none font-mono"
-              placeholder="30101810400000000225"
-              maxLength={20}
-            />
-            {errors.correspondent_account && <p className="text-red-400 text-sm mt-1">{errors.correspondent_account}</p>}
-            <p className="text-gray-400 text-xs mt-1">Требуется 20 цифр</p>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Расчетный счет *
+            Номер счета <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             value={formData.account_number}
-            onChange={(e) => setFormData({ 
-              ...formData, 
-              account_number: e.target.value.replace(/\D/g, '').slice(0, 20) 
-            })}
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 outline-none font-mono"
-            placeholder="40702810800003000002"
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/\D/g, '').slice(0, 20);
+              setFormData({ ...formData, account_number: cleaned });
+            }}
+            onBlur={() => handleBlur('account_number')}
+            className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
+              touched.account_number && errors.account_number
+                ? 'border-red-500'
+                : 'border-gray-700'
+            } text-white focus:border-green-500 outline-none font-mono`}
+            placeholder="12345678901234567890"
             maxLength={20}
           />
-          {errors.account_number && <p className="text-red-400 text-sm mt-1">{errors.account_number}</p>}
-          <p className="text-gray-400 text-xs mt-1">Требуется 20 цифр</p>
+          {touched.account_number && errors.account_number && (
+            <p className="text-red-400 text-sm mt-1">{errors.account_number}</p>
+          )}
+          <p className="text-gray-400 text-xs mt-1">
+            Требуется 20 цифр. Текущая длина: {formData.account_number.length}
+          </p>
+        </div>
+
+        {/* Название банка */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Название банка <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.bank_name}
+            onChange={(e) =>
+              setFormData({ ...formData, bank_name: e.target.value })
+            }
+            onBlur={() => handleBlur('bank_name')}
+            className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
+              touched.bank_name && errors.bank_name
+                ? 'border-red-500'
+                : 'border-gray-700'
+            } text-white focus:border-green-500 outline-none`}
+            placeholder="ПАО Сбербанк"
+          />
+          {touched.bank_name && errors.bank_name && (
+            <p className="text-red-400 text-sm mt-1">{errors.bank_name}</p>
+          )}
+        </div>
+
+        {/* БИК банка */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            БИК банка <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.bank_code}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/\D/g, '').slice(0, 9);
+              setFormData({ ...formData, bank_code: cleaned });
+            }}
+            onBlur={() => handleBlur('bank_code')}
+            className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
+              touched.bank_code && errors.bank_code
+                ? 'border-red-500'
+                : 'border-gray-700'
+            } text-white focus:border-green-500 outline-none font-mono`}
+            placeholder="044525225"
+            maxLength={9}
+          />
+          {touched.bank_code && errors.bank_code && (
+            <p className="text-red-400 text-sm mt-1">{errors.bank_code}</p>
+          )}
+          <p className="text-gray-400 text-xs mt-1">
+            Обычно 9 цифр для РФ, 6-9 цифр для других стран
+          </p>
+        </div>
+
+        {/* Валюта */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Валюта счета <span className="text-red-400">*</span>
+          </label>
+          <select
+            value={formData.currency}
+            onChange={(e) =>
+              setFormData({ ...formData, currency: e.target.value })
+            }
+            onBlur={() => handleBlur('currency')}
+            className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
+              touched.currency && errors.currency
+                ? 'border-red-500'
+                : 'border-gray-700'
+            } text-white focus:border-green-500 outline-none`}
+          >
+            <option value="KGS">🇰🇬 KGS - Кыргызский сом (с)</option>
+            <option value="USD">🇺🇸 USD - Доллар США ($)</option>
+            <option value="RUB">🇷🇺 RUB - Российский рубль (₽)</option>
+            <option value="EUR">🇪🇺 EUR - Евро (€)</option>
+            <option value="CNY">🇨🇳 CNY - Китайский юань (¥)</option>
+          </select>
+          {touched.currency && errors.currency && (
+            <p className="text-red-400 text-sm mt-1">{errors.currency}</p>
+          )}
         </div>
       </div>
 
-      {/* Компания и статус */}
+      {/* Статус счета */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-300">Настройки</h3>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Компания
-          </label>
-          <select
-            value={formData.company_id}
-            onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 outline-none"
-          >
-            <option value="">Выберите компанию</option>
-          </select>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-300">Статус</h3>
 
         <label className="flex items-center gap-3 p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
           <input
             type="checkbox"
-            checked={formData.is_primary}
-            onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-            className="w-5 h-5"
+            checked={formData.is_active}
+            onChange={(e) =>
+              setFormData({ ...formData, is_active: e.target.checked })
+            }
+            className="w-5 h-5 rounded border-gray-600 text-green-600 focus:ring-green-500"
           />
-          <span className="text-gray-300 font-medium">
-            Основной счет для платежей по умолчанию
-          </span>
+          <div>
+            <span className="text-gray-300 font-medium block">
+              Активный счет
+            </span>
+            <span className="text-gray-400 text-sm">
+              Счет доступен для проведения операций
+            </span>
+          </div>
         </label>
       </div>
 
-      {/* Информация */}
-      <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
-        <p className="text-blue-300 text-sm">
-          <strong>Важно:</strong> Все реквизиты должны быть заполнены корректно. Убедитесь в правильности БИК и номера счета перед сохранением.
-        </p>
+      {/* Info box */}
+      <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg flex gap-3">
+        <Info className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
+        <div className="text-blue-300 text-sm space-y-1">
+          <p className="font-medium">Важная информация:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2">
+            <li>Номер счета должен содержать ровно 20 цифр (стандарт КР)</li>
+            <li>БИК банка обычно содержит 9 цифр для российских банков</li>
+            <li>Все реквизиты должны быть проверены перед сохранением</li>
+            <li>Неактивные счета не будут доступны для операций</li>
+          </ul>
+        </div>
       </div>
 
-      {/* Кнопки */}
+      {/* Buttons */}
       <div className="flex gap-3">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="px-6 py-2 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Отмена
+          </button>
+        )}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || Object.keys(errors).length > 0}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {isLoading ? (
@@ -200,10 +377,11 @@ export default function BankAccountForm({ initialData, onSubmit }: BankAccountFo
               Сохранение...
             </>
           ) : (
-            'Сохранить счет'
+            <>{isEditMode ? 'Обновить счет' : 'Создать счет'}</>
           )}
         </button>
       </div>
     </form>
   );
 }
+
