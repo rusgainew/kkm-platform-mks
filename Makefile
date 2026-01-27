@@ -334,3 +334,56 @@ test-integration: dev-up ## Run integration tests with docker infrastructure
 	@sleep 5
 	go test -v -tags=integration ./internal/interfaces/grpc/
 	$(MAKE) dev-down
+# ===================================
+# Security & Code Quality
+# ===================================
+
+security-check: ## Run security audit
+	@echo "Running security audit..."
+	@command -v gosec >/dev/null 2>&1 || { echo "Installing gosec..."; go install github.com/securego/gosec/v2/cmd/gosec@latest; }
+	gosec -exclude=G104 ./...
+
+lint: ## Run linter
+	@echo "Running linter..."
+	@command -v golangci-lint >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; }
+	golangci-lint run ./...
+
+fmt: ## Format all Go files
+	@echo "Formatting code..."
+	gofmt -s -w .
+	goimports -w .
+
+test-coverage: ## Run tests with coverage
+	@echo "Running tests with coverage..."
+	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
+
+validate-env: ## Validate environment configuration
+	@echo "Validating environment configuration..."
+	@if [ -z "$$JWT_SECRET" ]; then echo "❌ JWT_SECRET is not set"; exit 1; else echo "✅ JWT_SECRET is set"; fi
+	@if [ -z "$$DB_HOST" ]; then echo "⚠️  DB_HOST is not set (using default)"; else echo "✅ DB_HOST is set"; fi
+	@echo "Environment validation complete!"
+
+generate-jwt-secret: ## Generate a secure JWT secret
+	@echo "Generated JWT secret:"
+	@openssl rand -base64 32
+
+setup-dev: ## Setup development environment
+	@echo "Setting up development environment..."
+	@if [ ! -f .env ]; then cp .env.example .env; echo "Created .env from .env.example"; fi
+	@echo "Please update .env with your configuration"
+	@echo "Generate JWT secret with: make generate-jwt-secret"
+
+# ===================================
+# Code Analysis
+# ===================================
+
+analyze: ## Run full code analysis
+	@echo "=== Running Security Audit ==="
+	@$(MAKE) security-check
+	@echo "\n=== Running Linter ==="
+	@$(MAKE) lint
+	@echo "\n=== Running Tests with Coverage ==="
+	@$(MAKE) test-coverage
+	@echo "\n✅ Analysis complete!"
