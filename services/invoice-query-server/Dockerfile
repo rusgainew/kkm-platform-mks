@@ -10,6 +10,9 @@ WORKDIR /build
 # Copy proto-lib go.mod first
 COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
 
+# Copy lib/conversion package go.mod
+COPY lib/go.mod ../../lib/
+
 # Copy only go.mod and go.sum
 COPY services/invoice-query-server/go.mod services/invoice-query-server/go.sum ./invoice-query-server/
 
@@ -19,6 +22,7 @@ RUN go mod download
 # Copy rest of code
 WORKDIR /build
 COPY proto-lib/ ../proto-lib/
+COPY lib/ ../../lib/
 COPY services/invoice-query-server/ ./invoice-query-server/
 
 WORKDIR /build/invoice-query-server

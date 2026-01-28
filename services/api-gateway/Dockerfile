@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy local module proto-lib (used via replace ../../proto-lib)
 COPY proto-lib/ ./proto-lib
 
-# Copy local module pkg (used via replace ../pkg)
-COPY services/pkg/ ./services/pkg
+# Copy local module lib (used via replace ../../lib)
+COPY lib/ ./lib
 
 # Copy go.mod/go.sum for api-gateway
 COPY services/api-gateway/go.mod services/api-gateway/go.sum ./services/api-gateway/

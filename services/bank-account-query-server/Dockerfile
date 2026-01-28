@@ -10,6 +10,9 @@ WORKDIR /build
 # Copy proto-lib go.mod first
 COPY proto-lib/go.mod proto-lib/go.sum ../proto-lib/
 
+# Copy lib/conversion package go.mod
+COPY lib/go.mod ../../lib/
+
 # Copy only go.mod and go.sum
 COPY services/bank-account-query-server/go.mod services/bank-account-query-server/go.sum ./bank-account-query-server/
 
@@ -19,6 +22,7 @@ RUN go mod download
 # Copy rest of code
 WORKDIR /build
 COPY proto-lib/ ../proto-lib/
+COPY lib/ ../../lib/
 COPY services/bank-account-query-server/ ./bank-account-query-server/
 
 WORKDIR /build/bank-account-query-server

@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rusgainew/kkm-project-mks/catalog-query-server/internal/domain/ports"
+	"github.com/rusgainew/kkm-project-mks/lib/conversion"
 	"github.com/rusgainew/kkm-project-mks/proto-lib/dictionaries"
-	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )

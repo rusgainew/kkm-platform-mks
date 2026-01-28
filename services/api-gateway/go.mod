@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/rusgainew/kkm-project-mks/proto-lib v0.0.0-00010101000000-000000000000
-	github.com/rusgainew/kkm-project-mks/services/pkg v0.0.0-00010101000000-000000000000
+	github.com/rusgainew/kkm-project-mks/lib v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
@@ -93,4 +93,4 @@ require (
 
 replace github.com/rusgainew/kkm-project-mks/proto-lib => ../../proto-lib
 
-replace github.com/rusgainew/kkm-project-mks/services/pkg => ../pkg
+replace github.com/rusgainew/kkm-project-mks/lib => ../../lib
