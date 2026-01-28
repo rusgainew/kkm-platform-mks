@@ -25,10 +25,10 @@ export default function CompaniesDashboard() {
 
   // Calculate stats
   const totalCompanies = companies.length;
-  const activeCompanies = companies.filter((c) => c.status === 'active').length;
-  const inactiveCompanies = companies.filter((c) => c.status === 'inactive').length;
-  const suspendedCompanies = companies.filter((c) => c.status === 'suspended').length;
-  const totalMembers = companies.reduce((sum, c) => sum + (c.member_count || 0), 0);
+  const activeCompanies = companies.filter((c: { status: string }) => c.status === 'active').length;
+  const inactiveCompanies = companies.filter((c: { status: string }) => c.status === 'inactive').length;
+  const suspendedCompanies = companies.filter((c: { status: string }) => c.status === 'suspended').length;
+  const totalMembers = companies.reduce((sum: number, c: { member_count?: number }) => sum + (c.member_count || 0), 0);
 
   if (isLoading) {
     return (

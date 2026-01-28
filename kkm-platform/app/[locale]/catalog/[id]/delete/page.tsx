@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApiToken } from '@/lib/hooks/useApiToken';
-import { getProductById, deleteProduct } from '@/lib/api/catalog';
+import { getCatalogItem, deleteCatalogItem } from '@/lib/api/catalog';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 interface Product {
@@ -35,7 +35,7 @@ export default function DeleteProductPage() {
 
       try {
         setIsLoading(true);
-        const data = await getProductById(productId, token);
+        const data = await getCatalogItem(productId);
         setProduct(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки');
@@ -53,7 +53,7 @@ export default function DeleteProductPage() {
     try {
       setIsDeleting(true);
       setError(null);
-      await deleteProduct(productId, token);
+      await deleteCatalogItem(productId);
       setTimeout(() => router.push('/catalog'), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка удаления');

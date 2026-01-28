@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import BankAccountForm from '@/features/bank-accounts/components/BankAccountForm';
 import { useApiToken } from '@/lib/hooks/useApiToken';
-import { getBankAccountById } from '@/lib/api/bank-accounts';
+import { getBankAccount } from '@/lib/api/bank-accounts';
 import { Loader2 } from 'lucide-react';
 
 export default function EditBankAccountPage() {
@@ -25,7 +25,7 @@ export default function EditBankAccountPage() {
 
       try {
         setIsLoading(true);
-        const data = await getBankAccountById(accountId, token);
+        const data = await getBankAccount(accountId);
         setAccount(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки');
