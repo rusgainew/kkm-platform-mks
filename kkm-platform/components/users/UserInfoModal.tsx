@@ -1,7 +1,8 @@
 'use client';
 
-import { X, Mail, User, Shield, Clock, LockKeyhole, CheckCircle2 } from 'lucide-react';
+import { Mail, User, Shield, Clock, LockKeyhole, CheckCircle2 } from 'lucide-react';
 import type { ApiUser } from '@/lib/api/users';
+import { Modal, ModalButton } from '@/components/ui';
 
 interface UserInfoModalProps {
   user: ApiUser | null;
@@ -92,21 +93,18 @@ export default function UserInfoModal({ user, isOpen, onClose }: UserInfoModalPr
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Информация о пользователе</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-8 space-y-8">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Информация о пользователе"
+      size="xl"
+      footer={
+        <ModalButton onClick={onClose} variant="primary" className="w-full">
+          Закрыть
+        </ModalButton>
+      }
+    >
+      <div className="space-y-8 max-h-[60vh] overflow-y-auto">
           {/* Avatar and Basic Info */}
           <div className="flex items-start gap-6">
             <div className="w-24 h-24 rounded-full bg-linear-to-br from-blue-500 to-emerald-500 flex items-center justify-center shrink-0">
@@ -240,17 +238,6 @@ export default function UserInfoModal({ user, isOpen, onClose }: UserInfoModalPr
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-800/50 border-t border-gray-800 p-6">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
-          >
-            Закрыть
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

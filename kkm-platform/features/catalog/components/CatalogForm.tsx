@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle, Package, DollarSign } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Package, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import type { CatalogItem, CreateCatalogItemRequest, UpdateCatalogItemRequest } from '@/types/entities';
 import { isValidTnvedCode, UNITS_OF_MEASURE, CURRENCIES } from '@/types/entities';
 
@@ -435,32 +436,23 @@ export default function CatalogForm({ initialData, onSubmit, mode = 'create' }: 
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-4">
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-                isLoading
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              loading={isLoading}
+              variant="primary"
+              className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Сохранение...
-                </>
-              ) : (
-                mode === 'create' ? 'Добавить в каталог' : 'Сохранить изменения'
-              )}
-            </button>
-            <button
+              {mode === 'create' ? 'Добавить в каталог' : 'Сохранить изменения'}
+            </Button>
+            <Button
               type="button"
               onClick={() => router.push('/catalog')}
               disabled={isLoading}
-              className="px-6 py-3 rounded-lg bg-gray-700 text-gray-200 hover:bg-gray-600 font-medium transition-colors disabled:opacity-50"
+              variant="secondary"
             >
               Отмена
-            </button>
+            </Button>
           </div>
         </form>
       </div>

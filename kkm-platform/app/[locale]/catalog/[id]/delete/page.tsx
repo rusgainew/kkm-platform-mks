@@ -4,21 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApiToken } from '@/lib/hooks/useApiToken';
 import { getCatalogItem, deleteCatalogItem } from '@/lib/api/catalog';
+import type { CatalogItem } from '@/types/entities';
 import { Loader2, AlertTriangle } from 'lucide-react';
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  price: number;
-  quantity: number;
-}
 
 export default function DeleteProductPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<CatalogItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +28,13 @@ export default function DeleteProductPage() {
 
       try {
         setIsLoading(true);
-        const data = await getCatalogItem(productId);
-        setProduct(data);
+        const response = await getCatalogItem(productId);
+        // Извлекаем данные из APIResponse
+        if (response.data) {
+          setProduct(response.data);
+        } else {
+          throw new Error('Товар не найден');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки');
       } finally {
@@ -98,18 +96,24 @@ export default function DeleteProductPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 bg-gray-800 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1">Артикул</p>
-                  <p className="text-white font-medium">{product.sku}</p>
+                  <p className="text-gray-400 text-sm mb-1">Номер</p>
+                  <p className="text-white font-medium">{product.number}</p>
                 </div>
                 <div className="p-4 bg-gray-800 rounded-lg">
                   <p className="text-gray-400 text-sm mb-1">Цена</p>
-                  <p className="text-white font-medium">{product.price.toLocaleString('ru-RU')} ₽</p>
+                  <p className="text-white font-medium">{product.price.toLocaleString('ru-RU')} {product.currency}</p>
                 </div>
                 <div className="p-4 bg-gray-800 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1">Остаток</p>
-                  <p className="text-white font-medium">{product.quantity}</p>
+                  <p className="text-gray-400 text-sm mb-1">Единица</p>
+                  <p className="text-white font-medium">{product.unit}</p>
                 </div>
               </div>
+              {product.description && (
+                <div className="p-4 bg-gray-800 rounded-lg">
+                  <p className="text-gray-400 text-sm mb-1">Описание</p>
+                  <p className="text-white font-medium">{product.description}</p>
+                </div>
+              )}
             </div>
           )}
 

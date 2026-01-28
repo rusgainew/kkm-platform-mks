@@ -5,9 +5,10 @@
 'use client';
 
 import React, { memo } from 'react';
-import { Company } from '@/types/company';
+import type { Company } from '@/types/entities';
 import { Building2, Calendar, Users, Tag } from 'lucide-react';
 import { formatDate } from '@/lib/utils/dateFormatter';
+import { Modal, ModalButton } from '@/components/ui';
 
 interface CompanyInfoModalProps {
   isOpen: boolean;
@@ -19,17 +20,20 @@ const CompanyInfoModal = memo(function CompanyInfoModal({ isOpen, company, onClo
   if (!isOpen || !company) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg border border-gray-700 max-w-md w-full mx-4">
-        {/* Header */}
-        <div className="border-b border-gray-700 px-6 py-4">
-          <h2 className="text-lg font-bold text-white">Информация о компании</h2>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Company Name */}
-          <div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Информация о компании"
+      size="md"
+      footer={
+        <ModalButton onClick={onClose} variant="primary" className="w-full">
+          Закрыть
+        </ModalButton>
+      }
+    >
+      <div className="space-y-6">
+        {/* Company Name */}
+        <div>
             <div className="flex items-center gap-2 text-gray-400 text-sm font-medium mb-2">
               <Building2 size={16} />
               Название
@@ -96,18 +100,7 @@ const CompanyInfoModal = memo(function CompanyInfoModal({ isOpen, company, onClo
             <p className="text-gray-300 text-sm">{formatDate(company.updated_at)}</p>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-700 px-6 py-4">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
-          >
-            Закрыть
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 });
 

@@ -3,16 +3,8 @@ import type { UserRole } from "./enums";
 // Re-export UserRole for convenience
 export type { UserRole };
 
-export interface User {
-  id: string;
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  role: UserRole | string;
-  storeId?: string; // Для store_manager - ID конкретного магазина
-  permissions: Permission[];
-}
+// Note: User interface is now defined in entities.ts to avoid duplication
+// Import from entities.ts instead of auth.ts
 
 export interface AuthTokens {
   accessToken: string;

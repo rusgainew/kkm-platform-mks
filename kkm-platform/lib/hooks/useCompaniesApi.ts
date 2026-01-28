@@ -12,7 +12,11 @@ import {
   listCompanies,
   updateCompany,
 } from "@/lib/api/companies";
-import { CreateCompanyRequest, UpdateCompanyRequest } from "@/types/company";
+import type {
+  CreateCompanyRequest,
+  UpdateCompanyRequest,
+  Company,
+} from "@/types/entities";
 import { useAuthStore } from "@/store/authStore";
 import { useRefreshTokensMutation } from "./useAuthApi";
 
@@ -44,7 +48,7 @@ export function useListCompaniesQuery() {
 
       if (!isAuthenticated) {
         console.warn(
-          "[useListCompaniesQuery] Не аутентифицирован, возвращаем пустой массив"
+          "[useListCompaniesQuery] Не аутентифицирован, возвращаем пустой массив",
         );
         return [];
       }
@@ -54,33 +58,33 @@ export function useListCompaniesQuery() {
         const response = await listCompanies();
 
         // Extract data from response
-        if (response && response.data && Array.isArray(response.data)) {
-          return response.data;
+        if (response && response.items && Array.isArray(response.items)) {
+          return response.items;
         }
         return [];
       } catch (error) {
         // Если получили 401, пытаемся обновить токен и повторить запрос
         if (error instanceof Error && error.message.includes("Unauthorized")) {
           console.warn(
-            "[useListCompaniesQuery] Получена ошибка 401, пытаемся обновить токен..."
+            "[useListCompaniesQuery] Получена ошибка 401, пытаемся обновить токен...",
           );
           try {
             if (tokens?.refreshToken) {
               await refreshTokensMutation.mutateAsync(tokens.refreshToken);
               console.log(
-                "[useListCompaniesQuery] Токен обновлен, повторяем запрос..."
+                "[useListCompaniesQuery] Токен обновлен, повторяем запрос...",
               );
               // Повторяем с новым токеном
               const response = await listCompanies();
-              if (response && response.data && Array.isArray(response.data)) {
-                return response.data;
+              if (response && response.items && Array.isArray(response.items)) {
+                return response.items;
               }
               return [];
             }
           } catch (refreshError) {
             console.error(
               "[useListCompaniesQuery] Ошибка обновления токена:",
-              refreshError
+              refreshError,
             );
           }
         }

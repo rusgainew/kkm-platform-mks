@@ -15,7 +15,7 @@ import type {
  * Детальная строка в счете-фактуре
  * Представляет один товар или услугу в документе
  */
-export interface InvoiceDetail {
+export interface ESFInvoiceDetail {
   invoiceUuid: string; // Ссылка на основной счет-фактуру
   baseCount: number; // Количество единиц товара
   price: number; // Цена за единицу
@@ -54,7 +54,7 @@ export interface CatalogEntry {
  * Основной тип для электронного счета-фактуры
  * Полная информация о ЭСФ документе со всеми деталями
  */
-export interface Invoice {
+export interface ESFInvoice {
   // Идентификаторы и номера
   documentUuid: string; // Уникальный идентификатор документа
   invoiceNumber: string; // Номер счета-фактуры
@@ -126,7 +126,7 @@ export interface Invoice {
   amountToBePaid?: number; // Сумма к оплате
 
   // Детали и строки
-  details?: InvoiceDetail[]; // Список товаров/услуг в счете
+  details?: ESFInvoiceDetail[]; // Список товаров/услуг в счете
 
   // Служебные поля
   createdAt?: number; // Timestamp создания
@@ -269,7 +269,7 @@ export function createInvoiceDetail(
   price: number,
   unitCode: string,
   vatRate: string = "12",
-): InvoiceDetail {
+): ESFInvoiceDetail {
   const amount = quantity * price;
   const vatAmount = (amount * Number(vatRate)) / (100 + Number(vatRate));
   const amountWithoutVAT = amount - vatAmount;

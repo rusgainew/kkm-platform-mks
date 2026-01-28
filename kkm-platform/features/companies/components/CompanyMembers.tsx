@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Plus, Trash2, AlertCircle, CheckCircle, Loader2, Mail, User } from 'lucide-react';
+import { Users, Plus, Trash2, AlertCircle, CheckCircle, Mail, User } from 'lucide-react';
+import { Spinner } from '@/components/ui/Spinner';
+import { Button } from '@/components/ui/Button';
 import type { Employee, AddMemberRequest } from '@/types/entities';
 import { isValidEmail } from '@/types/entities';
 import {
@@ -261,20 +263,15 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
           </div>
 
           <div className="flex gap-2">
-            <button
+            <Button
               type="submit"
               disabled={isAddingMember}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              loading={isAddingMember}
+              variant="primary"
+              className="flex-1"
             >
-              {isAddingMember ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Добавление...
-                </>
-              ) : (
-                'Добавить'
-              )}
-            </button>
+              Добавить
+            </Button>
             <button
               type="button"
               onClick={() => {
@@ -295,7 +292,7 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
       {/* Members List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={32} className="animate-spin text-blue-400" />
+          <Spinner size="lg" label="Загрузка участников..." centered />
         </div>
       ) : members.length === 0 ? (
         <div className="text-center py-8 text-gray-400">

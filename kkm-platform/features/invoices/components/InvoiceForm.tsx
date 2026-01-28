@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { Button } from '@/components/ui/Button';
 
 interface InvoiceItem {
   id: string;
@@ -261,20 +262,15 @@ export default function InvoiceForm({ initialData, onSubmit }: InvoiceFormProps)
 
       {/* Кнопки */}
       <div className="flex gap-3">
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          loading={isLoading}
+          variant="primary"
+          className="flex-1"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              Сохранение...
-            </>
-          ) : (
-            'Сохранить счет'
-          )}
-        </button>
+          Сохранить счет
+        </Button>
       </div>
     </form>
   );

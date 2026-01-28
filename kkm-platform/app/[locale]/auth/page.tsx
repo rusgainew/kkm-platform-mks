@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 import ResetPasswordModal from '@/components/auth/ResetPasswordModal';
 import { getRedirectPathByRole } from '@/lib/utils/roleRedirect';
-import type { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/entities';
 
 export default function AuthPage() {
   const router = useRouter();

@@ -5,6 +5,8 @@ import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { ToastProvider } from "@/lib/providers/ToastProvider";
 import AuthInitializer from "@/components/auth/AuthInitializer";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
+import { RateLimitWarningBanner } from "@/components/rate-limit/RateLimitWarningBanner";
+import { RateLimitProvider } from "@/lib/providers/RateLimitProvider";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -31,9 +33,12 @@ export default async function LocaleLayout({
         <ErrorBoundary>
           <QueryProvider>
             <ToastProvider />
-            <AuthInitializer>
-              {children}
-            </AuthInitializer>
+            <RateLimitProvider>
+              <RateLimitWarningBanner />
+              <AuthInitializer>
+                {children}
+              </AuthInitializer>
+            </RateLimitProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

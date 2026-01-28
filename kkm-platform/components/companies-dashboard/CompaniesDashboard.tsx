@@ -18,6 +18,7 @@ import RecentCompaniesActivity from './RecentCompaniesActivity';
 import CompaniesList from '@/components/companies/CompaniesList';
 import { useListCompaniesQuery } from '@/lib/hooks/useCompaniesApi';
 import { DashboardSkeleton } from '@/components/loading';
+import type { Company } from '@/types/entities';
 
 export default function CompaniesDashboard() {
   const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
@@ -25,10 +26,10 @@ export default function CompaniesDashboard() {
 
   // Calculate stats
   const totalCompanies = companies.length;
-  const activeCompanies = companies.filter((c: { status: string }) => c.status === 'active').length;
-  const inactiveCompanies = companies.filter((c: { status: string }) => c.status === 'inactive').length;
-  const suspendedCompanies = companies.filter((c: { status: string }) => c.status === 'suspended').length;
-  const totalMembers = companies.reduce((sum: number, c: { member_count?: number }) => sum + (c.member_count || 0), 0);
+  const activeCompanies = companies.filter((c: Company) => c.status === 'active').length;
+  const inactiveCompanies = companies.filter((c: Company) => c.status === 'inactive').length;
+  const suspendedCompanies = companies.filter((c: Company) => c.status === 'suspended').length;
+  const totalMembers = companies.reduce((sum: number, c: Company) => sum + (c.member_count || 0), 0);
 
   if (isLoading) {
     return (
@@ -115,7 +116,7 @@ export default function CompaniesDashboard() {
               {/* Left Column - Charts */}
               <div className="lg:col-span-2">
                 <CompaniesOverviewChart
-                  data={companies.map((c) => ({
+                  data={companies.map((c: Company) => ({
                     name: c.name,
                     members: c.member_count || 0,
                   }))}

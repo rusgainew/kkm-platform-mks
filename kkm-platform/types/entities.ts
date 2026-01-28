@@ -6,11 +6,18 @@
  * @date 2026-01-27
  */
 
+// Import and re-export auth types for User interface
+import type { Permission, AuthTokens } from "./auth";
+import { ROLE_CONFIGS } from "./auth"; // Value export, not type
+export type { Permission, AuthTokens };
+export { ROLE_CONFIGS };
+
 // ============================================================================
 // USER TYPES
 // ============================================================================
 
 export interface User {
+  // API fields (from backend)
   user_id: string;
   email: string;
   first_name: string;
@@ -20,17 +27,22 @@ export interface User {
   created_at: number; // Unix timestamp
   updated_at: number; // Unix timestamp
   status: string;
+
+  // Frontend convenience fields (for components)
+  id?: string; // Alias for user_id or extracted from JWT
+  name?: string; // Computed from first_name + last_name
+  firstName?: string; // Alias for first_name
+  lastName?: string; // Alias for last_name
+  permissions?: Permission[]; // Computed from role
+  storeId?: string; // Optional store association for managers
 }
 
-export type UserRole = "admin" | "manager" | "cashier" | "employee";
-
-export interface CreateUserRequest {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  role: UserRole;
-}
+export type UserRole =
+  | "admin"
+  | "manager"
+  | "cashier"
+  | "employee"
+  | "store_manager";
 
 export interface UpdateUserRequest {
   first_name?: string;
@@ -270,6 +282,7 @@ export interface Document {
 export type DocumentStatus =
   | "draft"
   | "pending"
+  | "sent"
   | "approved"
   | "rejected"
   | "archived";

@@ -5,7 +5,7 @@
 'use client';
 
 import React from 'react';
-import { Company } from '@/types/company';
+import { Company } from '@/types/entities';
 import { Calendar, Users, Building2 } from 'lucide-react';
 
 interface RecentCompaniesActivityProps {

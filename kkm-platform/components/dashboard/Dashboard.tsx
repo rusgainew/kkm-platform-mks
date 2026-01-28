@@ -21,7 +21,7 @@ import RevenueTrendChart from './RevenueTrendChart';
 import RealtimeIndicator from './RealtimeIndicator';
 import CatalogDashboardWidget from './CatalogDashboardWidget';
 import { DashboardStats, SalesData, Terminal, InventoryItem } from '@/types';
-import type { User } from '@/types/auth';
+import type { User } from '@/types/entities';
 
 interface StoreData {
   id: string;

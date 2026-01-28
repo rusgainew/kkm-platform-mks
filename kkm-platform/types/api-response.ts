@@ -5,10 +5,7 @@
 
 import { ApiErrorCode, isValidEnumValue } from "@/types/enums";
 
-/**
- * Generic API Response Wrapper
- * Standardizes all API responses across the application
- */
+// Используем старое имя для обратной совместимости с устаревшим кодом
 export interface APIResponse<T = unknown> {
   /** Whether the request was successful */
   success: boolean;
@@ -32,21 +29,11 @@ export interface APIResponse<T = unknown> {
   };
 }
 
-/**
- * Paginated List Response
- * Used for endpoints that return lists with pagination
- */
-export interface ListResponse<T> extends APIResponse<T[]> {
-  data: T[];
-  meta: {
-    request_id: string;
-    timestamp: number;
-    version: string;
-    page: number;
-    page_size: number;
-    total_count: number;
-    total_pages: number;
-  };
+export interface ListResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 /**
@@ -177,18 +164,11 @@ export function createListResponse<T>(
   const total_pages = Math.ceil(pagination.total_count / pagination.page_size);
 
   return {
-    success: true,
-    data,
-    meta: {
-      timestamp: Math.floor(Date.now() / 1000),
-      request_id: generateRequestId(),
-      version: "1.0.0",
-      page: pagination.page,
-      page_size: pagination.page_size,
-      total_count: pagination.total_count,
-      total_pages,
-    },
-  } as ListResponse<T>;
+    items: data,
+    total: pagination.total_count,
+    page: pagination.page,
+    page_size: pagination.page_size,
+  };
 }
 
 /**

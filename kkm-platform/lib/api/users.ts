@@ -1,18 +1,4 @@
-const getApiBase = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-    // For localhost, use port 80 (nginx), not the app port
-    const baseUrl = isLocalhost
-      ? `http://${hostname}/api/v1`
-      : `${window.location.origin}/api/v1`;
-    return baseUrl;
-  }
-  return "http://localhost/api/v1";
-};
+import { getApiBase } from "./client";
 
 export type UserStatus = "active" | "disabled" | string;
 export type UserRoleApi = "admin" | "manager" | "cashier" | string;

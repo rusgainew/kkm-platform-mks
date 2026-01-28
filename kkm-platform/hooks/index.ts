@@ -1,22 +1,16 @@
 export * from "./useCart";
 export * from "./useOnlineStatus";
 
-// Store hooks
-export * from "./useAuth";
-export * from "./useUsers";
-export * from "./useInvoices";
+// Store hooks (still in use)
 export * from "./useCatalog";
-export * from "./useUI";
+export * from "./useCompanies";
+export * from "./useDocuments";
+export * from "./useHealthCheck";
+export * from "./useRateLimit";
+export * from "./useCatalogHealth";
 
 // React Query hooks
 export * from "../lib/hooks/useAuthQuery";
 export * from "../lib/hooks/useUsersQuery";
 export * from "../lib/hooks/useInvoicesQuery";
 export * from "../lib/hooks/useCatalogQuery";
-
-// Table/Filter hooks
-export * from "./useAdvancedTable";
-
-// Async & API hooks
-export * from "./useAsync";
-export * from "./useLocalStorage";

@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { X, Calendar, User } from 'lucide-react';
+import { Calendar, User } from 'lucide-react';
 import { Document } from '@/lib/api/documents';
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/documents/constants';
 import { formatDate } from '@/lib/documents/formatting';
+import { Modal, ModalButton } from '@/components/ui';
 
 interface ViewDocumentModalProps {
   document: Document;
@@ -16,21 +17,18 @@ export function ViewDocumentModal({ document, onClose }: ViewDocumentModalProps)
   const statusLabel = STATUS_LABELS[document.status as keyof typeof STATUS_LABELS] || document.status;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-800 bg-gray-900">
-          <h2 className="text-xl font-bold text-white">{document.title}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={document.title}
+      size="lg"
+      footer={
+        <ModalButton onClick={onClose} variant="primary" className="w-full">
+          Закрыть
+        </ModalButton>
+      }
+    >
+      <div className="space-y-6">
           {/* Status */}
           <div className="flex items-center gap-4">
             <div>
@@ -93,18 +91,7 @@ export function ViewDocumentModal({ document, onClose }: ViewDocumentModalProps)
               </div>
             </div>
           )}
-
-          {/* Close button */}
-          <div className="flex justify-end pt-4 border-t border-gray-800">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition"
-            >
-              Закрыть
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User, Permission, ROLE_CONFIGS, AuthTokens } from '@/types/auth';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { User, Permission, ROLE_CONFIGS, AuthTokens } from "@/types/entities";
 
 interface AuthState {
   user: User | null;
@@ -9,7 +9,7 @@ interface AuthState {
   login: (payload: { user: User; tokens?: AuthTokens }) => void;
   logout: () => void;
   hasPermission: (permission: Permission) => boolean;
-  switchRole: (role: User['role']) => void;
+  switchRole: (role: User["role"]) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
 
       hasPermission: (permission) => {
         const { user } = get();
-        if (!user) return false;
+        if (!user || !user.permissions) return false;
         return user.permissions.includes(permission);
       },
 
@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'auth-storage',
-    }
-  )
+      name: "auth-storage",
+    },
+  ),
 );

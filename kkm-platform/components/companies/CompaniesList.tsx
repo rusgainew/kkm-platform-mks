@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Building2, Mail, MapPin, MoreVertical, Search, Edit2, Trash2, AlertCircle, Loader2, Plus, Filter, ChevronDown } from 'lucide-react';
 import { useListCompaniesQuery, useDeleteCompanyMutation } from '@/lib/hooks/useCompaniesApi';
-import { Company } from '@/types/company';
+import type { Company } from '@/types/entities';
 import CompanyInfoModal from './CompanyInfoModal';
 import EditCompanyModal from './EditCompanyModal';
 import CreateCompanyModal from './CreateCompanyModal';
@@ -53,9 +53,9 @@ export default function CompaniesList() {
 
   // Мемоизация отфильтрованных и отсортированных компаний
   const filteredCompanies = useMemo(() => {
-    let result = companies.filter((company) => {
+    let result = companies.filter((company: Company) => {
       const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (company.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
       const matchesStatus = statusFilter === 'all' || company.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -278,7 +278,7 @@ export default function CompaniesList() {
                         <Edit2 size={18} className="text-gray-400" />
                       </button>
                       <button
-                        onClick={() => setDeleteConfirmId(company.id)}
+                        onClick={() => setDeleteConfirmId(company.id || company.company_id || null)}
                         className="p-2 hover:bg-gray-700 rounded transition"
                         title="Удалить"
                       >

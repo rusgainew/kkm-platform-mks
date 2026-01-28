@@ -29,16 +29,20 @@ import {
   User,
   UserRole,
   AuthTokens as StoreTokens,
-} from "@/types/auth";
+} from "@/types/entities";
 import { UserRole as UserRoleEnum } from "@/types/enums";
 
 function mapApiRoleToAppRole(role: string): UserRole {
   // API roles: admin, user, network_admin
-  // App roles: admin, user, network_admin (from enums)
-  if (role === "admin") return UserRoleEnum.ADMIN;
-  if (role === "network_admin") return UserRoleEnum.NETWORK_ADMIN;
-  if (role === "user") return UserRoleEnum.USER;
-  return UserRoleEnum.USER;
+  // App roles: admin, manager, cashier, employee, store_manager
+  if (role === "admin") return "admin";
+  if (role === "network_admin") return "admin"; // Map network_admin to admin
+  if (role === "manager") return "manager";
+  if (role === "cashier") return "cashier";
+  if (role === "employee") return "employee";
+  if (role === "store_manager") return "store_manager";
+  // Default to employee for unknown roles
+  return "employee";
 }
 
 // Extract user ID from JWT token
@@ -71,12 +75,22 @@ function mapApiUserToUser(apiUser: ApiUser, accessToken?: string): User {
   }
 
   return {
+    // Backend required fields
+    user_id: userId,
+    email: apiUser.email,
+    first_name: apiUser.first_name,
+    last_name: apiUser.last_name,
+    role,
+    is_active: true, // Default to true from login
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    status: "active",
+
+    // Frontend convenience fields
     id: userId,
     name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
     firstName: apiUser.first_name,
     lastName: apiUser.last_name,
-    email: apiUser.email,
-    role,
     permissions: roleConfig.permissions,
   };
 }

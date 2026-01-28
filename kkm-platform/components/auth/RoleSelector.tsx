@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/store/authStore';
-import { ROLE_CONFIGS } from '@/types/auth';
+import { ROLE_CONFIGS } from '@/types/entities';
 import { Shield, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,7 +36,7 @@ export default function RoleSelector() {
               <button
                 key={roleConfig.role}
                 onClick={() => {
-                  switchRole(roleConfig.role);
+                  switchRole(roleConfig.role as any);
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Edit2, Trash2, Search, Loader2 } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { listCompanies } from '@/lib/api/companies';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface Company {
   id: string;
@@ -26,7 +27,7 @@ export default function CompaniesList() {
         setIsLoading(true);
         setError(null);
         const response = await listCompanies();
-        const data = response?.data || [];
+        const data = response?.items || [];
         setCompanies(data as any);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки');
@@ -46,7 +47,7 @@ export default function CompaniesList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-blue-400" size={32} />
+        <Spinner size="lg" label="Загрузка компаний..." centered />
       </div>
     );
   }

@@ -3,7 +3,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { listCompanies, Company } from "@/lib/api/companies";
+import { listCompanies } from "@/lib/api/companies";
+import type { Company } from "@/types/entities";
 
 export const useCompanies = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -16,7 +17,7 @@ export const useCompanies = () => {
         setIsLoading(true);
         setError(null);
 
-        const response = await listCompanies(1, 100);
+        const response = await listCompanies({ page: 1, page_size: 100 });
 
         console.log("[useCompanies] Raw response:", response);
 
@@ -24,10 +25,10 @@ export const useCompanies = () => {
 
         // Check if response has data property
         if (response && typeof response === "object" && "data" in response) {
-          companiesData = response.data;
+          companiesData = (response.items || response.data || []) as Company[];
           console.log(
             "[useCompanies] Extracted from data property:",
-            companiesData
+            companiesData,
           );
         } else if (Array.isArray(response)) {
           companiesData = response;

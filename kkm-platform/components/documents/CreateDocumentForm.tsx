@@ -44,10 +44,13 @@ export default function CreateDocumentForm({
   // Set first company as default when companies load
   React.useEffect(() => {
     if (companies.length > 0 && !formData.organization_id) {
-      setFormData((prev) => ({
-        ...prev,
-        organization_id: companies[0].id,
-      }));
+      const firstCompanyId = companies[0].id || companies[0].company_id;
+      if (firstCompanyId) {
+        setFormData((prev) => ({
+          ...prev,
+          organization_id: firstCompanyId,
+        }));
+      }
     }
   }, [companies]);
 

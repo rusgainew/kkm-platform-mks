@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { Permission } from '@/types/auth';
+import { Permission } from '@/types/entities';
 import { ShieldAlert } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 

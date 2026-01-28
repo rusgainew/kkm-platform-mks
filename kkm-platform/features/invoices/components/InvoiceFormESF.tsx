@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
-import type { CreateInvoiceRequest, CatalogEntry, Invoice } from "@/types/invoice";
+import type { CreateInvoiceRequest, CatalogEntry, ESFInvoice } from "@/types/invoice";
 import {
   ESFOperationType,
   ESFDeliveryType,
@@ -22,7 +22,7 @@ import {
 } from "../lib/invoice-validation";
 
 interface InvoiceFormProps {
-  invoice?: Invoice;
+  invoice?: ESFInvoice;
   onSuccess?: () => void;
   onCancel?: () => void;
 }

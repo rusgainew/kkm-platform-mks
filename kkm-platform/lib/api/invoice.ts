@@ -7,9 +7,9 @@
  */
 
 import axios, { AxiosError, AxiosInstance } from "axios";
+import type { Invoice, InvoiceDetail } from "@/types/entities";
+import type { ListResponse } from "@/types/api-response";
 import type {
-  Invoice,
-  InvoiceDetail,
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
   AcceptOrRejectInvoiceRequest,
@@ -17,13 +17,14 @@ import type {
   RevokeInvoiceRequest,
   InvoiceFilters,
   InvoiceOperationResponse,
+} from "@/types";
+import type {
   ESFAPIResponse,
   ESFCreateInvoiceResponse,
   ESFInvoiceResponse,
   ESFInvoiceListResponse,
   ESFInvoiceActionResponse,
-  ListResponse,
-} from "@/types";
+} from "@/types/api-response";
 
 /**
  * Invoice API Error
@@ -132,23 +133,18 @@ class InvoiceAPIClient {
 
       // Преобразовать ответ в Invoice тип
       return {
-        documentUuid: response.data.data.documentUuid,
-        invoiceNumber:
+        id: response.data.data.documentUuid,
+        invoice_number:
           response.data.data.invoiceNumber || request.invoiceNumber || "",
-        status: {
-          code: response.data.data.status,
-          name: response.data.data.status,
-        },
-        totalAmount: 0,
-        isResident: request.isResident,
-        legalPerson: {
-          pin: "",
-          fullName: "",
-        },
-        contractor: {
-          pin: request.contractorTin,
-          fullName: "",
-        },
+        invoice_date:
+          request.invoiceDate || new Date().toISOString().split("T")[0],
+        delivery_date: request.deliveryDate,
+        total_amount: 0,
+        is_resident: request.isResident,
+        note: request.comment, // Используем comment вместо note
+        status: String(response.data.data.status || "draft"), // Приводим к string
+        created_at: Date.now(),
+        updated_at: Date.now(),
       };
     } catch (error) {
       if (error instanceof InvoiceAPIError) throw error;
@@ -239,19 +235,10 @@ class InvoiceAPIClient {
       );
 
       return {
-        success: true,
-        data: invoices,
-        meta: {
-          request_id: response.data.responseId || "",
-          timestamp: Math.floor(Date.now() / 1000),
-          version: "1.0.0",
-          page: params.page,
-          page_size: params.limit,
-          total_count: (response.data.data || []).length,
-          total_pages: Math.ceil(
-            (response.data.data || []).length / params.limit,
-          ),
-        },
+        items: invoices,
+        total: (response.data.data || []).length,
+        page: params.page,
+        page_size: params.limit,
       };
     } catch (error) {
       if (error instanceof InvoiceAPIError) throw error;
