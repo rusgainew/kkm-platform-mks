@@ -33,7 +33,7 @@ func NewDocumentQueryHandler(service *services.DocumentQueryService, logger *zap
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string	true	"Document ID"
-//	@Success		200		{object}	models.DocumentReadModel
+//	@Success		200		{object}	models.Document
 //	@Failure		404		{object}	models.APIResponse	"Document not found"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/documents-query/{id} [get]
@@ -73,7 +73,7 @@ func (h *DocumentQueryHandler) GetDocument(c *gin.Context) {
 //	@Param			type				query		string	false	"Document type filter"
 //	@Param			company_id			query		string	false	"Company ID filter"
 //	@Param			approval_status		query		string	false	"Approval status filter"
-//	@Success		200		{object}	models.APIResponse{data=models.ListDocumentsResponse}
+//	@Success		200		{object}	models.DocumentListResponse
 //	@Failure		400		{object}	models.APIResponse	"Invalid parameters"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/documents-query [get]
@@ -133,7 +133,7 @@ func (h *DocumentQueryHandler) ListDocuments(c *gin.Context) {
 //	@Param			type				query		string	false	"Document type filter"
 //	@Param			company_id			query		string	false	"Company ID filter"
 //	@Param			approval_status		query		string	false	"Approval status filter"
-//	@Success		200		{object}	models.APIResponse{data=models.SearchDocumentsResponse}
+//	@Success		200		{object}	models.DocumentListResponse
 //	@Failure		400		{object}	models.APIResponse	"Invalid parameters"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/documents-query/search [get]
@@ -195,7 +195,7 @@ func (h *DocumentQueryHandler) SearchDocuments(c *gin.Context) {
 //	@Param			company_id		query		string	true	"Company ID"
 //	@Param			page			query		int		false	"Page number"	default(1)
 //	@Param			per_page		query		int		false	"Items per page"	default(10)
-//	@Success		200		{object}	models.APIResponse{data=models.GetPendingApprovalResponse}
+//	@Success		200		{object}	models.DocumentListResponse
 //	@Failure		400		{object}	models.APIResponse	"Invalid parameters"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/documents-query/pending-approval [get]

@@ -366,6 +366,16 @@ func (h *CompanyHandler) GetOrganizationMembers(c *gin.Context) {
 		return
 	}
 
+	// TODO: Implement GetOrganizationMembers method in CompanyService
+	c.JSON(http.StatusNotImplemented, models.APIResponse{
+		Success: false,
+		Error: &models.APIError{
+			Code:    "NOT_IMPLEMENTED",
+			Message: "GetOrganizationMembers method is not implemented yet",
+		},
+	})
+
+	/* Original implementation - commented out until service method is implemented
 	page := 1
 	if p := c.Query("page"); p != "" {
 		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
@@ -405,6 +415,7 @@ func (h *CompanyHandler) GetOrganizationMembers(c *gin.Context) {
 			TotalPages: (int(total) + pageSize - 1) / pageSize,
 		},
 	})
+	*/
 }
 
 // AddMember добавляет члена в организацию
@@ -435,6 +446,16 @@ func (h *CompanyHandler) AddMember(c *gin.Context) {
 		return
 	}
 
+	// TODO: Implement AddMember method in CompanyService
+	c.JSON(http.StatusNotImplemented, models.APIResponse{
+		Success: false,
+		Error: &models.APIError{
+			Code:    "NOT_IMPLEMENTED",
+			Message: "AddMember method is not implemented yet",
+		},
+	})
+
+	/* Original implementation - commented out until service method is implemented
 	var req models.AddMemberRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Warn("Invalid request body", zap.Error(err))
@@ -469,6 +490,7 @@ func (h *CompanyHandler) AddMember(c *gin.Context) {
 		Success: true,
 		Data:    member,
 	})
+	*/
 }
 
 // RemoveMember удаляет члена из организации
@@ -500,6 +522,16 @@ func (h *CompanyHandler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	// TODO: Implement RemoveMember method in CompanyService
+	c.JSON(http.StatusNotImplemented, models.APIResponse{
+		Success: false,
+		Error: &models.APIError{
+			Code:    "NOT_IMPLEMENTED",
+			Message: "RemoveMember method is not implemented yet",
+		},
+	})
+
+	/* Original implementation - commented out until service method is implemented
 	err := h.service.RemoveMember(c.Request.Context(), orgID, memberID)
 	if err != nil {
 		statusCode, apiErr := errors.MapGRPCErrorToHTTP(err)
@@ -520,6 +552,6 @@ func (h *CompanyHandler) RemoveMember(c *gin.Context) {
 
 	c.JSON(http.StatusOK, models.APIResponse{
 		Success: true,
-		Message: "Member successfully removed",
 	})
+	*/
 }

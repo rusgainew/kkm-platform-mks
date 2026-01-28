@@ -168,6 +168,10 @@ func (i *Initializer) InitializeApplicationServices() error {
 	foreignCompanyQueryService := createForeignCompanyQueryService(cfg, connManager, metrics, tracer, logger)
 	i.container.SetForeignCompanyQueryService(foreignCompanyQueryService)
 
+	// Инициализация Analytics gRPC Client
+	analyticsClient := createAnalyticsClient(cfg, logger)
+	i.container.SetAnalyticsClient(analyticsClient)
+
 	return nil
 }
 
@@ -259,4 +263,27 @@ func createForeignCompanyQueryService(
 		tracer,
 		logger,
 	)
+}
+
+func createAnalyticsClient(
+	cfg *config.Config,
+	logger *zap.Logger,
+) *client.AnalyticsClient {
+	// Получаем адрес analytics-server из конфигурации
+	analyticsAddr := cfg.AnalyticsServiceURL
+	if analyticsAddr == "" {
+		logger.Warn("Analytics service URL is not set - analytics endpoints will fail")
+		return nil
+	}
+
+	// Создаем gRPC клиент
+	analyticsClient, err := client.NewAnalyticsClient(analyticsAddr, logger)
+	if err != nil {
+		logger.Error("Failed to connect to analytics-server", zap.Error(err), zap.String("address", analyticsAddr))
+		logger.Warn("Analytics client creation failed - analytics endpoints will fail")
+		return nil
+	}
+
+	logger.Info("Analytics gRPC client created successfully", zap.String("address", analyticsAddr))
+	return analyticsClient
 }

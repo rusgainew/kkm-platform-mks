@@ -33,7 +33,7 @@ func NewUserQueryHandler(service *services.UserQueryService, logger *zap.Logger)
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string	true	"User ID"
-//	@Success		200		{object}	models.UserReadModel
+//	@Success		200		{object}	models.User
 //	@Failure		404		{object}	models.APIResponse	"User not found"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/users-query/{id} [get]
@@ -127,7 +127,7 @@ func (h *UserQueryHandler) ListUsers(c *gin.Context) {
 //	@Param			page		query		int		false	"Page number"	default(1)
 //	@Param			per_page	query		int		false	"Items per page"	default(10)
 //	@Param			status		query		string	false	"User status filter"
-//	@Success		200		{object}	models.APIResponse{data=models.SearchUsersResponse}
+//	@Success		200		{object}	models.ListUsersResponse
 //	@Failure		400		{object}	models.APIResponse	"Invalid parameters"
 //	@Failure		500		{object}	models.APIResponse	"Internal server error"
 //	@Router			/users-query/search [get]

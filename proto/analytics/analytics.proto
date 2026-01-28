@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package analytics;
+
+option go_package = "github.com/rusgainew/kkm-project-mks/proto-lib/analytics";
+
+import "google/protobuf/timestamp.proto";
+
+// AnalyticsService предоставляет методы для получения аналитических данных
+service AnalyticsService {
+  // GetDashboardStats возвращает статистику для дашборда
+  rpc GetDashboardStats(StatsRequest) returns (StatsResponse);
+  
+  // GetSalesChart возвращает данные для графика продаж
+  rpc GetSalesChart(SalesChartRequest) returns (SalesChartResponse);
+  
+  // GetStatusDistribution возвращает распределение по статусам
+  rpc GetStatusDistribution(StatusRequest) returns (StatusResponse);
+  
+  // GetOperationTypeDistribution возвращает распределение по типам операций
+  rpc GetOperationTypeDistribution(OperationTypeRequest) returns (OperationTypeResponse);
+  
+  // GetTopContractors возвращает топ контрагентов
+  rpc GetTopContractors(TopContractorsRequest) returns (TopContractorsResponse);
+  
+  // GetMonthlyRevenue возвращает месячную выручку
+  rpc GetMonthlyRevenue(MonthlyRevenueRequest) returns (MonthlyRevenueResponse);
+}
+
+// StatsRequest запрос для получения статистики
+message StatsRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+}
+
+// StatsResponse ответ со статистикой
+message StatsResponse {
+  int64 total_invoices = 1;
+  double total_revenue = 2;
+  double average_amount = 3;
+  int64 unique_contractors = 4;
+  int64 pending_count = 5;
+  int64 approved_count = 6;
+  int64 rejected_count = 7;
+}
+
+// SalesChartRequest запрос для графика продаж
+message SalesChartRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+  string granularity = 3; // day, week, month
+}
+
+// SalesDataPoint точка данных для графика
+message SalesDataPoint {
+  string date = 1;
+  int64 count = 2;
+  double amount = 3;
+}
+
+// SalesChartResponse ответ с данными графика
+message SalesChartResponse {
+  repeated SalesDataPoint data_points = 1;
+}
+
+// StatusRequest запрос распределения по статусам
+message StatusRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+}
+
+// StatusDistributionItem элемент распределения по статусам
+message StatusDistributionItem {
+  string status = 1;
+  int64 count = 2;
+  double percentage = 3;
+}
+
+// StatusResponse ответ с распределением по статусам
+message StatusResponse {
+  repeated StatusDistributionItem items = 1;
+}
+
+// OperationTypeRequest запрос распределения по типам операций
+message OperationTypeRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+}
+
+// OperationTypeItem элемент распределения по типам операций
+message OperationTypeItem {
+  string operation_type = 1;
+  int64 count = 2;
+  double amount = 3;
+  double percentage = 4;
+}
+
+// OperationTypeResponse ответ с распределением по типам операций
+message OperationTypeResponse {
+  repeated OperationTypeItem items = 1;
+}
+
+// TopContractorsRequest запрос топ контрагентов
+message TopContractorsRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+  int32 limit = 3; // количество контрагентов
+}
+
+// TopContractorItem элемент топ контрагента
+message TopContractorItem {
+  string contractor_id = 1;
+  string contractor_name = 2;
+  int64 invoice_count = 3;
+  double total_amount = 4;
+}
+
+// TopContractorsResponse ответ с топ контрагентами
+message TopContractorsResponse {
+  repeated TopContractorItem contractors = 1;
+}
+
+// MonthlyRevenueRequest запрос месячной выручки
+message MonthlyRevenueRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+}
+
+// MonthlyRevenueItem элемент месячной выручки
+message MonthlyRevenueItem {
+  string month = 1;
+  double revenue = 2;
+  int64 invoice_count = 3;
+}
+
+// MonthlyRevenueResponse ответ с месячной выручкой
+message MonthlyRevenueResponse {
+  repeated MonthlyRevenueItem months = 1;
+}
