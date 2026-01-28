@@ -2,9 +2,10 @@ go 1.24.0
 
 use ./proto-lib
 
-use ./services/pkg
+use ./lib
 
 use (
+	./services/analytics-server
 	./services/api-gateway
 	./services/bank-account-query-server
 	./services/bank-account-server

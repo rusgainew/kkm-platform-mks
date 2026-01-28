@@ -8,8 +8,8 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/cache"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/client"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/observability"
+	"github.com/rusgainew/kkm-project-mks/lib/conversion"
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/company"
-	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
 	"go.uber.org/zap"
 )
 

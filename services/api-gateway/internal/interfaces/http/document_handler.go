@@ -9,7 +9,7 @@ import (
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/models"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/ports"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/validation"
-	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
+	"github.com/rusgainew/kkm-project-mks/lib/conversion"
 	"go.uber.org/zap"
 )
 

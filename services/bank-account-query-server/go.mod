@@ -8,6 +8,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/rusgainew/kkm-project-mks/proto-lib v0.0.0
+	github.com/rusgainew/kkm-project-mks/lib v0.0.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.38.0
@@ -44,3 +45,5 @@ require (
 )
 
 replace github.com/rusgainew/kkm-project-mks/proto-lib => ../../proto-lib
+
+replace github.com/rusgainew/kkm-project-mks/lib => ../../lib

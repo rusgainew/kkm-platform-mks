@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/application/services"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/errors"
-	"github.com/rusgainew/kkm-project-mks/services/pkg/conversion"
+	"github.com/rusgainew/kkm-project-mks/lib/conversion"
 	"go.uber.org/zap"
 )
 
