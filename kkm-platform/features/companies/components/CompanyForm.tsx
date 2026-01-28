@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import type { Company, CreateCompanyRequest, UpdateCompanyRequest, CompanyStatus } from '@/types/entities';
 import { isValidEmail } from '@/types/entities';
 
@@ -428,24 +429,15 @@ export default function CompanyForm({ initialData, onSubmit, mode = 'create' }: 
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-4">
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-                isLoading
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              loading={isLoading}
+              variant="primary"
+              className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Сохранение...
-                </>
-              ) : (
-                mode === 'create' ? 'Создать компанию' : 'Сохранить изменения'
-              )}
-            </button>
+              {mode === 'create' ? 'Создать компанию' : 'Сохранить изменения'}
+            </Button>
             <button
               type="button"
               onClick={() => router.push('/companies')}

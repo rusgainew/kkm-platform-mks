@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2, Upload, X, File } from 'lucide-react';
+import { Upload, X, File } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createDocument,
@@ -544,20 +545,15 @@ export default function DocumentForm({
             Отмена
           </button>
         )}
-        <button
+        <Button
           type="submit"
           disabled={isLoading || Object.keys(errors).some((k) => k !== 'files' && errors[k])}
-          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          loading={isLoading}
+          variant="success"
+          className="flex-1"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              Сохранение...
-            </>
-          ) : (
-            <>{isEditMode ? 'Обновить документ' : 'Создать документ'}</>
-          )}
-        </button>
+          {isEditMode ? 'Обновить документ' : 'Создать документ'}
+        </Button>
       </div>
     </form>
   );

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Save, Loader2, AlertCircle } from "lucide-react";
+import { Save, AlertCircle } from "lucide-react";
+import { Button } from '@/components/ui/Button';
 import type { CreateInvoiceRequest, CatalogEntry, ESFInvoice } from "@/types/invoice";
 import {
   ESFOperationType,
@@ -610,23 +611,16 @@ export function InvoiceFormESF({
 
         {/* Кнопки действий */}
         <div className="flex items-center gap-3 pt-4 border-t">
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            loading={isLoading}
+            variant="primary"
+            leftIcon={!isLoading ? <Save size={20} /> : undefined}
+            className="flex-1"
           >
-            {isLoading ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                {isEditing ? "Сохранение..." : "Создание..."}
-              </>
-            ) : (
-              <>
-                <Save size={20} />
-                {isEditing ? "Сохранить изменения" : "Создать счет-фактуру"}
-              </>
-            )}
-          </button>
+            {isEditing ? "Сохранить изменения" : "Создать счет-фактуру"}
+          </Button>
 
           {onCancel && (
             <button

@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import type { ApiUser } from '@/lib/api/users';
 import { assignUserRole } from '@/lib/api/users';
 
@@ -227,24 +228,15 @@ export default function UserRoleForm({ user }: UserRoleFormProps) {
 
           {/* Actions */}
           <div className="flex gap-4">
-            <button
+            <Button
               type="submit"
               disabled={isLoading || newRole === user.role}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                isLoading || newRole === user.role
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-purple-600 text-white hover:bg-purple-700 active:bg-purple-800'
-              }`}
+              loading={isLoading}
+              variant="primary"
+              className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Изменение...
-                </>
-              ) : (
-                'Изменить роль'
-              )}
-            </button>
+              Изменить роль
+            </Button>
             <button
               type="button"
               onClick={() => router.push('/users')}

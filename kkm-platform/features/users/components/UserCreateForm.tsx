@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, User, ArrowLeft, Loader2, AlertCircle, CheckCircle, Shield, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, AlertCircle, CheckCircle, Shield, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { createUser } from '@/lib/api/users';
 import type { RegisterRequest } from '@/lib/api/users';
 
@@ -491,20 +492,15 @@ export default function UserCreateForm() {
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <button
+            <Button
               type="submit"
               disabled={isLoading || !!successMessage}
-              className="flex-1 px-4 py-2 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              loading={isLoading}
+              variant="primary"
+              className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Создание...
-                </>
-              ) : (
-                'Создать пользователя'
-              )}
-            </button>
+              Создать пользователя
+            </Button>
             <button
               type="button"
               onClick={() => router.back()}

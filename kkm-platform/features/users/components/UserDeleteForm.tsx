@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import type { ApiUser } from '@/lib/api/users';
 import { deleteUser } from '@/lib/api/users';
 
@@ -172,27 +173,16 @@ export default function UserDeleteForm({ user }: UserDeleteFormProps) {
 
           {/* Actions */}
           <div className="flex gap-4">
-            <button
+            <Button
               type="submit"
               disabled={isLoading || !isConfirmed}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                isLoading || !isConfirmed
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
-              }`}
+              loading={isLoading}
+              variant="danger"
+              leftIcon={!isLoading ? <Trash2 size={18} /> : undefined}
+              className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Удаление...
-                </>
-              ) : (
-                <>
-                  <Trash2 size={18} />
-                  Удалить пользователя
-                </>
-              )}
-            </button>
+              Удалить пользователя
+            </Button>
             <button
               type="button"
               onClick={() => router.push('/users')}

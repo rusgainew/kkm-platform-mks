@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, Download, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, Download, AlertCircle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { createUser } from '@/lib/api/users';
 import type { RegisterRequest } from '@/lib/api/users';
 
@@ -191,23 +192,15 @@ bob.johnson@example.com,Bob,Johnson,SecurePass789!,cashier`;
           <Download className="w-5 h-5" />
           Скачать шаблон CSV
         </button>
-        <button
+        <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={isLoading}
+          variant="primary"
+          leftIcon={!isLoading ? <Upload className="w-5 h-5" /> : undefined}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Загрузка...
-            </>
-          ) : (
-            <>
-              <Upload className="w-5 h-5" />
-              Загрузить CSV
-            </>
-          )}
-        </button>
+          Загрузить CSV
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
