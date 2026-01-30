@@ -11,6 +11,7 @@ type UserRepository interface {
 	GetUser(ctx context.Context, userID string) (*pb.UserReadModel, error)
 	ListUsers(ctx context.Context, offset, limit int32, status, role string) ([]*pb.UserReadModel, int64, error)
 	SearchUsers(ctx context.Context, query string, offset, limit int32, status string) ([]*pb.UserReadModel, int64, error)
+	UpsertUser(ctx context.Context, user *pb.UserReadModel) error
 }
 
 // UserCache интерфейс для кеша пользователей

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/domain/models"
 	"github.com/rusgainew/kkm-project-mks/api-gateway/internal/infrastructure/client"
@@ -11,6 +12,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
+
+// formatTimestamp converts int64 timestamp to string
+func formatTimestamp(ts int64) string {
+	return strconv.FormatInt(ts, 10)
+}
 
 // UserService сервис для работы с пользователями и аутентификацией
 type UserService struct {
@@ -87,8 +93,8 @@ func (s *UserService) Register(ctx context.Context, email, password, firstName, 
 			FirstName: resp.User.FirstName,
 			LastName:  resp.User.LastName,
 			Role:      resp.User.Role,
-			CreatedAt: resp.User.CreatedAt,
-			UpdatedAt: resp.User.UpdatedAt,
+			CreatedAt: formatTimestamp(resp.User.CreatedAt),
+			UpdatedAt: formatTimestamp(resp.User.UpdatedAt),
 			Status:    resp.User.Status,
 		},
 	}, nil
@@ -132,8 +138,8 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*model
 			FirstName: resp.User.FirstName,
 			LastName:  resp.User.LastName,
 			Role:      resp.User.Role,
-			CreatedAt: resp.User.CreatedAt,
-			UpdatedAt: resp.User.UpdatedAt,
+			CreatedAt: formatTimestamp(resp.User.CreatedAt),
+			UpdatedAt: formatTimestamp(resp.User.UpdatedAt),
 			Status:    resp.User.Status,
 		},
 	}, nil
@@ -167,8 +173,8 @@ func (s *UserService) ValidateToken(ctx context.Context, token string) (*models.
 		FirstName: resp.FirstName,
 		LastName:  resp.LastName,
 		Role:      resp.Role,
-		CreatedAt: resp.CreatedAt,
-		UpdatedAt: resp.UpdatedAt,
+		CreatedAt: formatTimestamp(resp.CreatedAt),
+		UpdatedAt: formatTimestamp(resp.UpdatedAt),
 		Status:    resp.Status,
 	}, nil
 }
@@ -254,8 +260,8 @@ func (s *UserService) UpdateProfile(ctx context.Context, accessToken, userID, fi
 		FirstName: resp.FirstName,
 		LastName:  resp.LastName,
 		Role:      resp.Role,
-		CreatedAt: resp.CreatedAt,
-		UpdatedAt: resp.UpdatedAt,
+		CreatedAt: formatTimestamp(resp.CreatedAt),
+		UpdatedAt: formatTimestamp(resp.UpdatedAt),
 		Status:    resp.Status,
 	}, nil
 }
@@ -316,8 +322,8 @@ func (s *UserService) ListUsers(ctx context.Context, page, size int32, status, r
 			FirstName: u.FirstName,
 			LastName:  u.LastName,
 			Role:      u.Role,
-			CreatedAt: u.CreatedAt,
-			UpdatedAt: u.UpdatedAt,
+			CreatedAt: formatTimestamp(u.CreatedAt),
+			UpdatedAt: formatTimestamp(u.UpdatedAt),
 			Status:    u.Status,
 			IsActive:  u.Status == "active",
 		})
@@ -387,8 +393,8 @@ func (s *UserService) ResetPassword(ctx context.Context, resetToken, newPassword
 			FirstName: resp.User.FirstName,
 			LastName:  resp.User.LastName,
 			Role:      resp.User.Role,
-			CreatedAt: resp.User.CreatedAt,
-			UpdatedAt: resp.User.UpdatedAt,
+			CreatedAt: formatTimestamp(resp.User.CreatedAt),
+			UpdatedAt: formatTimestamp(resp.User.UpdatedAt),
 			Status:    resp.User.Status,
 		},
 	}, nil
@@ -422,8 +428,8 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (*models.User,
 		FirstName: resp.FirstName,
 		LastName:  resp.LastName,
 		Role:      resp.Role,
-		CreatedAt: resp.CreatedAt,
-		UpdatedAt: resp.UpdatedAt,
+		CreatedAt: formatTimestamp(resp.CreatedAt),
+		UpdatedAt: formatTimestamp(resp.UpdatedAt),
 		Status:    resp.Status,
 	}, nil
 }
@@ -458,8 +464,8 @@ func (s *UserService) AssignRole(ctx context.Context, accessToken, targetUserID,
 		FirstName: resp.FirstName,
 		LastName:  resp.LastName,
 		Role:      resp.Role,
-		CreatedAt: resp.CreatedAt,
-		UpdatedAt: resp.UpdatedAt,
+		CreatedAt: formatTimestamp(resp.CreatedAt),
+		UpdatedAt: formatTimestamp(resp.UpdatedAt),
 		Status:    resp.Status,
 	}, nil
 }

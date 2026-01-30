@@ -88,8 +88,8 @@ type User struct {
 	LastName  string `json:"last_name"`
 	Role      string `json:"role,omitempty"`
 	IsActive  bool   `json:"is_active,omitempty"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at,omitempty"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 	Status    string `json:"status,omitempty"`
 }
 

@@ -2,11 +2,18 @@
  * Create Company Modal - Using same style as CreateUserModal
  */
 
-'use client';
+"use client";
 
-import React, { useState, memo } from 'react';
-import { useCreateCompanyMutation } from '@/lib/hooks/useCompaniesApi';
-import { Modal, ModalButton, ErrorMessage, Input, Textarea } from '@/components/ui';
+import React, { useState, memo } from "react";
+import { useCreateCompanyMutation } from "@/lib/hooks/useCompaniesApi";
+import { useCurrentUserQuery } from "@/lib/hooks/useAuthApi";
+import {
+  Modal,
+  ModalButton,
+  ErrorMessage,
+  Input,
+  Textarea,
+} from "@/components/ui";
 
 interface CreateCompanyModalProps {
   isOpen: boolean;
@@ -14,38 +21,51 @@ interface CreateCompanyModalProps {
   onSuccess?: () => void;
 }
 
-const CreateCompanyModal = memo(function CreateCompanyModal({ isOpen, onClose, onSuccess }: CreateCompanyModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
+const CreateCompanyModal = memo(function CreateCompanyModal({
+  isOpen,
+  onClose,
+  onSuccess,
+}: CreateCompanyModalProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
 
+  const { data: currentUser } = useCurrentUserQuery();
   const createMutation = useCreateCompanyMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!name.trim()) {
-      setError('Название компании обязательно');
+      setError("Название компании обязательно");
+      return;
+    }
+
+    if (!currentUser?.user_id) {
+      setError("Не удалось определить текущего пользователя");
       return;
     }
 
     try {
       await createMutation.mutateAsync({
         name: name.trim(),
-        tin: '',
-        address: '',
-        phone: '',
-        email: '',
+        tin: "",
+        address: "",
+        phone: "",
+        email: "",
         description: description.trim(),
+        owner_id: currentUser.user_id,
       });
 
-      setName('');
-      setDescription('');
+      setName("");
+      setDescription("");
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при создании компании');
+      setError(
+        err instanceof Error ? err.message : "Ошибка при создании компании",
+      );
     }
   };
 
@@ -59,16 +79,29 @@ const CreateCompanyModal = memo(function CreateCompanyModal({ isOpen, onClose, o
       size="md"
       footer={
         <>
-          <ModalButton onClick={onClose} variant="secondary" disabled={createMutation.isPending}>
+          <ModalButton
+            onClick={onClose}
+            variant="secondary"
+            disabled={createMutation.isPending}
+          >
             Отмена
           </ModalButton>
-          <ModalButton type="submit" form="create-company-form" variant="primary" loading={createMutation.isPending}>
+          <ModalButton
+            type="submit"
+            form="create-company-form"
+            variant="primary"
+            loading={createMutation.isPending}
+          >
             Создать
           </ModalButton>
         </>
       }
     >
-      <form id="create-company-form" onSubmit={handleSubmit} className="space-y-4">
+      <form
+        id="create-company-form"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <ErrorMessage message={error} />
 
         <div>

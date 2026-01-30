@@ -8,6 +8,9 @@ import { StatCard } from "@/features/analytics/components/StatCard";
 import { LineChart } from "@/features/analytics/components/LineChart";
 import { BarChart } from "@/features/analytics/components/BarChart";
 import { PieChart } from "@/features/analytics/components/PieChart";
+
+// Отключаем static generation для этой страницы
+export const dynamic = "force-dynamic";
 import {
   useDashboardData,
   useSalesChart,
@@ -16,7 +19,11 @@ import {
   useTopContractors,
   useRevenueByMonth,
 } from "@/features/analytics/hooks/useDashboardData";
-import type { TimePeriod, DateRange, AnalyticsFilters } from "@/types/analytics";
+import type {
+  TimePeriod,
+  DateRange,
+  AnalyticsFilters,
+} from "@/types/analytics";
 
 /**
  * Главная страница Dashboard с аналитикой
@@ -28,16 +35,25 @@ export default function DashboardPage() {
   // Формируем фильтры
   const filters: AnalyticsFilters = {
     period: selectedPeriod,
-    ...(dateRange && { startDate: dateRange.startDate, endDate: dateRange.endDate }),
+    ...(dateRange && {
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    }),
   };
 
   // Загружаем данные
-  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData(filters);
-  const { data: salesChart, isLoading: isSalesLoading } = useSalesChart(filters);
-  const { data: statusStats, isLoading: isStatusLoading } = useInvoiceStatusStats(filters);
-  const { data: operationStats, isLoading: isOperationLoading } = useOperationTypeStats(filters);
-  const { data: topContractors, isLoading: isContractorsLoading } = useTopContractors(filters, 5);
-  const { data: revenueByMonth, isLoading: isRevenueLoading } = useRevenueByMonth(filters);
+  const { data: dashboardData, isLoading: isDashboardLoading } =
+    useDashboardData(filters);
+  const { data: salesChart, isLoading: isSalesLoading } =
+    useSalesChart(filters);
+  const { data: statusStats, isLoading: isStatusLoading } =
+    useInvoiceStatusStats(filters);
+  const { data: operationStats, isLoading: isOperationLoading } =
+    useOperationTypeStats(filters);
+  const { data: topContractors, isLoading: isContractorsLoading } =
+    useTopContractors(filters, 5);
+  const { data: revenueByMonth, isLoading: isRevenueLoading } =
+    useRevenueByMonth(filters);
 
   const handlePeriodChange = (period: TimePeriod, range?: DateRange) => {
     setSelectedPeriod(period);
@@ -85,7 +101,9 @@ export default function DashboardPage() {
                 value={dashboardData?.stats.totalRevenue || 0}
                 change={dashboardData?.stats.revenueChange}
                 changeType={
-                  (dashboardData?.stats.revenueChange || 0) > 0 ? "increase" : "decrease"
+                  (dashboardData?.stats.revenueChange || 0) > 0
+                    ? "increase"
+                    : "decrease"
                 }
                 format="currency"
                 icon={<DollarSign className="w-6 h-6" />}
@@ -95,7 +113,9 @@ export default function DashboardPage() {
                 value={dashboardData?.stats.totalInvoices || 0}
                 change={dashboardData?.stats.invoiceCountChange}
                 changeType={
-                  (dashboardData?.stats.invoiceCountChange || 0) > 0 ? "increase" : "decrease"
+                  (dashboardData?.stats.invoiceCountChange || 0) > 0
+                    ? "increase"
+                    : "decrease"
                 }
                 format="number"
                 icon={<FileText className="w-6 h-6" />}
@@ -105,7 +125,9 @@ export default function DashboardPage() {
                 value={dashboardData?.stats.averageInvoiceAmount || 0}
                 change={dashboardData?.stats.averageAmountChange}
                 changeType={
-                  (dashboardData?.stats.averageAmountChange || 0) > 0 ? "increase" : "decrease"
+                  (dashboardData?.stats.averageAmountChange || 0) > 0
+                    ? "increase"
+                    : "decrease"
                 }
                 format="currency"
                 icon={<TrendingUp className="w-6 h-6" />}
@@ -115,7 +137,9 @@ export default function DashboardPage() {
                 value={dashboardData?.stats.activeContractors || 0}
                 change={dashboardData?.stats.contractorsChange}
                 changeType={
-                  (dashboardData?.stats.contractorsChange || 0) > 0 ? "increase" : "decrease"
+                  (dashboardData?.stats.contractorsChange || 0) > 0
+                    ? "increase"
+                    : "decrease"
                 }
                 format="number"
                 icon={<Users className="w-6 h-6" />}
@@ -172,24 +196,26 @@ export default function DashboardPage() {
                   Топ контрагенты
                 </h3>
                 <div className="space-y-3">
-                  {(topContractors || []).map((contractor: any, index: number) => (
-                    <div
-                      key={contractor.contractorId}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-sm">
-                          {index + 1}
+                  {(topContractors || []).map(
+                    (contractor: any, index: number) => (
+                      <div
+                        key={contractor.contractorId}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-sm">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {contractor.contractorName}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {contractor.contractorName}
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {contractor.totalAmount.toLocaleString("ru-KZ")} ₸
                         </span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {contractor.totalAmount.toLocaleString("ru-KZ")} ₸
-                      </span>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               </div>
             </div>

@@ -14,6 +14,7 @@ type Config struct {
 	LogLevel         string
 	ShutdownTimeout  time.Duration
 	JaegerEndpoint   string
+	DatabaseURL      string
 	RedisURL         string
 	CacheTTL         time.Duration
 	RabbitMQURL      string
@@ -28,6 +29,7 @@ func Load() *Config {
 		LogLevel:         getEnv("LOG_LEVEL", "info"),
 		ShutdownTimeout:  getEnvDuration("SHUTDOWN_TIMEOUT", 30*time.Second),
 		JaegerEndpoint:   getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
+		DatabaseURL:      getEnv("USER_QUERY_DATABASE_URL", ""),
 		RedisURL:         getEnv("USER_QUERY_REDIS_URL", "redis://localhost:6379/0"),
 		CacheTTL:         getEnvDuration("USER_QUERY_CACHE_TTL", 10*time.Minute),
 		RabbitMQURL:      getEnv("USER_QUERY_RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/"),

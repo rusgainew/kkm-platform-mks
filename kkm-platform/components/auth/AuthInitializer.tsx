@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
-import { useTokenRefresh } from '@/lib/hooks/useTokenRefresh';
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { useTokenRefresh } from "@/lib/hooks/useTokenRefresh";
 
 /**
  * Инициализатор авторизации
@@ -12,7 +12,11 @@ import { useTokenRefresh } from '@/lib/hooks/useTokenRefresh';
  * - Активация автоматического обновления токенов
  * - Отображение загрузки во время инициализации
  */
-export default function AuthInitializer({ children }: { children?: React.ReactNode }) {
+export default function AuthInitializer({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const tokens = useAuthStore((state) => state.tokens);
@@ -26,15 +30,16 @@ export default function AuthInitializer({ children }: { children?: React.ReactNo
    * Ожидаем гидрации Zustand из localStorage
    */
   useEffect(() => {
-    console.log('[AuthInitializer] useEffect запущен');
-    // Даем Zustand время загрузиться из localStorage
-    // Требуется потому что Zustand persist middleware загружает данные асинхронно
-    const hydrationTimer = setTimeout(() => {
-      console.log('[AuthInitializer] Установлена гидрация = true');
+    console.log("[AuthInitializer] useEffect запущен");
+    setIsHydrated(useAuthStore.persist.hasHydrated());
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      console.log("[AuthInitializer] Установлена гидрация = true");
       setIsHydrated(true);
-    }, 50);
+    });
 
-    return () => clearTimeout(hydrationTimer);
+    return () => {
+      unsub();
+    };
   }, []);
 
   /**
@@ -42,27 +47,46 @@ export default function AuthInitializer({ children }: { children?: React.ReactNo
    */
   useEffect(() => {
     if (!isHydrated) {
-      console.log('[AuthInitializer] Еще не гидрирован, пропускаем проверку');
+      console.log("[AuthInitializer] Еще не гидрирован, пропускаем проверку");
       return;
     }
 
     const checkAuth = async () => {
       try {
-        console.log('[AuthInitializer] Проверка статуса авторизации после гидрации...');
-        console.log('[AuthInitializer] Аутентифицирован:', isAuthenticated);
-        console.log('[AuthInitializer] Пользователь:', user?.name || 'нет');
-        console.log('[AuthInitializer] Токены доступны:', !!tokens?.accessToken);
-        
+        console.log(
+          "[AuthInitializer] Проверка статуса авторизации после гидрации...",
+        );
+        console.log("[AuthInitializer] Аутентифицирован:", isAuthenticated);
+        console.log("[AuthInitializer] Пользователь:", user?.name || "нет");
+        console.log(
+          "[AuthInitializer] Токены доступны:",
+          !!tokens?.accessToken,
+        );
+
         if (isAuthenticated && user && tokens?.accessToken) {
-          console.log('[AuthInitializer] Сессия восстановлена из localStorage');
-          console.log('[AuthInitializer] Пользователь:', user.name, 'Роль:', user.role);
-          console.log('[AuthInitializer] Токен истечет через:', tokens.expiresIn, 'секунд');
-          console.log('[AuthInitializer] Длина токена доступа:', tokens.accessToken.length);
+          console.log("[AuthInitializer] Сессия восстановлена из localStorage");
+          console.log(
+            "[AuthInitializer] Пользователь:",
+            user.name,
+            "Роль:",
+            user.role,
+          );
+          console.log(
+            "[AuthInitializer] Токен истечет через:",
+            tokens.expiresIn,
+            "секунд",
+          );
+          console.log(
+            "[AuthInitializer] Длина токена доступа:",
+            tokens.accessToken.length,
+          );
         } else {
-          console.log('[AuthInitializer] Аутентифицированная сессия не найдена');
+          console.log(
+            "[AuthInitializer] Аутентифицированная сессия не найдена",
+          );
         }
       } catch (error) {
-        console.error('[AuthInitializer] Ошибка проверки авторизации:', error);
+        console.error("[AuthInitializer] Ошибка проверки авторизации:", error);
       }
 
       setIsInitialized(true);

@@ -20,6 +20,7 @@ import (
 
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/application/handlers"
+	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/application/ports"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/cache"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/config"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/messaging"
@@ -48,15 +49,28 @@ func main() {
 		zap.Int("metrics_port", cfg.MetricsPort),
 	)
 
-	// Initialize in-memory repository (data will come from RabbitMQ events)
-	userRepo := repository.NewInMemoryUserRepository(logger)
-	logger.Info("In-memory user repository initialized")
-
-	// Initialize Redis cache (optional)
 	// Create application lifecycle context
 	appCtx, appCancel := context.WithCancel(context.Background())
 	defer appCancel()
 
+	// Initialize PostgreSQL repository
+	var userRepo ports.UserRepository
+	if cfg.DatabaseURL != "" {
+		db, err := repository.InitDB(cfg.DatabaseURL)
+		if err != nil {
+			logger.Fatal("Failed to connect to PostgreSQL", zap.Error(err))
+		}
+		defer db.Close()
+
+		userRepo = repository.NewUserQueryRepository(db, logger)
+		logger.Info("PostgreSQL user repository initialized", zap.String("database_url", cfg.DatabaseURL))
+	} else {
+		// Fallback to in-memory repository if DATABASE_URL is not set
+		userRepo = repository.NewInMemoryUserRepository(logger)
+		logger.Warn("Using in-memory user repository (DATABASE_URL not configured)")
+	}
+
+	// Initialize Redis cache (optional)
 	var redisCache *cache.RedisCache
 	if cfg.RedisURL != "" {
 		redisClient := redis.NewClient(&redis.Options{

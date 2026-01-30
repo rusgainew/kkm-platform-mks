@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   User,
   Mail,
@@ -11,61 +11,61 @@ import {
   AlertCircle,
   Loader2,
   Plus,
-} from 'lucide-react';
-import type { ApiUser } from '@/lib/api/users';
-import { listUsersQuery } from '@/lib/api/users';
-import { formatDateTime } from '@/lib/utils/dateFormatter';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import ExportUsersButton from '@/features/users/components/ExportUsersButton';
-import { useAuthStore } from '@/store/authStore';
+} from "lucide-react";
+import type { ApiUser } from "@/lib/api/users";
+import { listUsersQuery } from "@/lib/api/users";
+import { formatDateTime } from "@/lib/utils/dateFormatter";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import ExportUsersButton from "@/features/users/components/ExportUsersButton";
+import { useAuthStore } from "@/store/authStore";
 
 interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'admin' | 'manager' | 'cashier' | 'viewer';
+  role: "admin" | "manager" | "cashier" | "viewer";
   store: string;
-  status: 'active' | 'inactive' | 'suspended';
+  status: "active" | "inactive" | "suspended";
   lastLogin: string;
   createdAt: string;
 }
 
 const getRoleBadgeColor = (role: string) => {
   const colors: Record<string, string> = {
-    admin: 'bg-red-900/20 text-red-300 border border-red-800',
-    manager: 'bg-blue-900/20 text-blue-300 border border-blue-800',
-    cashier: 'bg-green-900/20 text-green-300 border border-green-800',
-    viewer: 'bg-gray-800/50 text-gray-300 border border-gray-700',
+    admin: "bg-red-900/20 text-red-300 border border-red-800",
+    manager: "bg-blue-900/20 text-blue-300 border border-blue-800",
+    cashier: "bg-green-900/20 text-green-300 border border-green-800",
+    viewer: "bg-gray-800/50 text-gray-300 border border-gray-700",
   };
   return colors[role] || colors.viewer;
 };
 
 const getRoleLabel = (role: string) => {
   const labels: Record<string, string> = {
-    admin: 'Администратор',
-    manager: 'Менеджер',
-    cashier: 'Кассир',
-    viewer: 'Просмотр',
+    admin: "Администратор",
+    manager: "Менеджер",
+    cashier: "Кассир",
+    viewer: "Просмотр",
   };
   return labels[role] || role;
 };
 
 const getStatusBadgeColor = (status: string) => {
   const colors: Record<string, string> = {
-    active: 'bg-emerald-900/20 text-emerald-300 border border-emerald-800',
-    inactive: 'bg-gray-800/50 text-gray-300 border border-gray-700',
-    suspended: 'bg-orange-900/20 text-orange-300 border border-orange-800',
+    active: "bg-emerald-900/20 text-emerald-300 border border-emerald-800",
+    inactive: "bg-gray-800/50 text-gray-300 border border-gray-700",
+    suspended: "bg-orange-900/20 text-orange-300 border border-orange-800",
   };
   return colors[status] || colors.inactive;
 };
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    active: 'Активен',
-    inactive: 'Неактивен',
-    suspended: 'Заблокирован',
+    active: "Активен",
+    inactive: "Неактивен",
+    suspended: "Заблокирован",
   };
   return labels[status] || status;
 };
@@ -76,18 +76,23 @@ export default function UsersList() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [apiUsers, setApiUsers] = useState<ApiUser[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [perPage, setPerPage] = useState(50);
 
   // Проверяем роль пользователя
   useEffect(() => {
     if (currentUser) {
       const userRole = currentUser.role;
       // Если роль не admin и не manager - перенаправляем на страницу профиля
-      if (userRole !== 'admin' && userRole !== 'manager') {
-        console.log('[UsersList] User role is not admin/manager, redirecting to profile');
+      if (userRole !== "admin" && userRole !== "manager") {
+        console.log(
+          "[UsersList] User role is not admin/manager, redirecting to profile",
+        );
         router.replace(`/users/${currentUser.id}`);
       }
     }
@@ -99,13 +104,16 @@ export default function UsersList() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Call API to fetch users
-        const response = await listUsersQuery();
-        
+
+        // Call API to fetch users with pagination
+        const response = await listUsersQuery({
+          page: currentPage,
+          per_page: perPage,
+        });
+
         // Handle different response formats from API
         let apiUsersData: ApiUser[] = [];
-        
+
         // Check if response has a 'users' field with array
         if (response && Array.isArray(response.users)) {
           apiUsersData = response.users;
@@ -113,88 +121,133 @@ export default function UsersList() {
         // Check if response is an array
         else if (Array.isArray(response)) {
           apiUsersData = response;
-        }
-        else {
-          console.warn('[UsersList] Unexpected API response format:', response);
+        } else {
+          console.warn("[UsersList] Unexpected API response format:", response);
           apiUsersData = [];
         }
-        
-        console.log('[UsersList] Loaded users count:', apiUsersData.length);
-        console.log('[UsersList] Users data:', apiUsersData.map(u => ({ user_id: u.user_id, name: `${u.first_name} ${u.last_name}` })));
-        
+
+        console.log("[UsersList] Loaded users count:", apiUsersData.length);
+        console.log(
+          "[UsersList] Users data:",
+          apiUsersData.map((u) => ({
+            user_id: u.user_id,
+            name: `${u.first_name} ${u.last_name}`,
+          })),
+        );
+
         // Debug: log full structure of first user
         if (apiUsersData.length > 0) {
-          console.log('[UsersList] Full structure of first user:', apiUsersData[0]);
-          console.log('[UsersList] Available keys:', Object.keys(apiUsersData[0]));
+          console.log(
+            "[UsersList] Full structure of first user:",
+            apiUsersData[0],
+          );
+          console.log(
+            "[UsersList] Available keys:",
+            Object.keys(apiUsersData[0]),
+          );
         }
-        
+
+        // Set pagination info
+        const total =
+          response.total_count ||
+          response.page_info?.total_count ||
+          apiUsersData.length;
+        console.log("[UsersList] Pagination info:", {
+          total_count: response.total_count,
+          page_info: response.page_info,
+          calculated_total: total,
+          currentPage,
+          perPage,
+        });
+        setTotalCount(total);
+
         setApiUsers(apiUsersData);
-        
+
         // Transform API users to component users format
-        const transformedUsers: User[] = apiUsersData
-          .map((apiUser: ApiUser, index: number) => {
+        const transformedUsers: User[] = apiUsersData.map(
+          (apiUser: ApiUser, index: number) => {
             // Fallback ID: use user_id from API
-            const userId = apiUser.user_id || apiUser.email || `temp-${index}-${Date.now()}`;
-            
+            const userId =
+              apiUser.user_id || apiUser.email || `temp-${index}-${Date.now()}`;
+
             if (!apiUser.user_id) {
-              console.warn('[UsersList] User missing user_id, using fallback:', {
-                fallbackId: userId,
-                userData: apiUser
-              });
+              console.warn(
+                "[UsersList] User missing user_id, using fallback:",
+                {
+                  fallbackId: userId,
+                  userData: apiUser,
+                },
+              );
             }
-            
+
             return {
               id: userId,
               name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
               email: apiUser.email,
-              phone: apiUser.phone || '+7 (999) 000-00-00',
-              role: (apiUser.role as 'admin' | 'manager' | 'cashier' | 'viewer') || 'viewer',
-              store: 'Магазин',
-              status: (apiUser.status === 'active' ? 'active' : 'inactive') as 'active' | 'inactive' | 'suspended',
-              lastLogin: formatDateTime((apiUser.last_login_at || apiUser.updated_at) as string | number),
+              phone: apiUser.phone || "+7 (999) 000-00-00",
+              role:
+                (apiUser.role as "admin" | "manager" | "cashier" | "viewer") ||
+                "viewer",
+              store: "Магазин",
+              status: (apiUser.status === "active" ? "active" : "inactive") as
+                | "active"
+                | "inactive"
+                | "suspended",
+              lastLogin: formatDateTime(
+                (apiUser.last_login_at || apiUser.updated_at) as
+                  | string
+                  | number,
+              ),
               createdAt: formatDateTime(apiUser.created_at as string | number),
             };
-          });
-        
+          },
+        );
+
         // Check for duplicate IDs and log warning
         const ids = new Set<string>();
         const duplicates: string[] = [];
-        transformedUsers.forEach(user => {
+        transformedUsers.forEach((user) => {
           if (ids.has(user.id)) {
             duplicates.push(user.id);
           }
           ids.add(user.id);
         });
-        
+
         if (duplicates.length > 0) {
-          console.warn('[UsersList] Duplicate user IDs detected:', duplicates);
+          console.warn("[UsersList] Duplicate user IDs detected:", duplicates);
         }
-        
+
         setUsers(transformedUsers);
       } catch (err) {
-        let errorMessage = 'Ошибка загрузки пользователей';
-        
+        let errorMessage = "Ошибка загрузки пользователей";
+
         if (err instanceof Error) {
           const msg = err.message.toLowerCase();
-          
+
           // Если недостаточно прав - перенаправляем на страницу профиля
-          if (msg.includes('insufficient permissions') || msg.includes('forbidden') || msg.includes('403')) {
-            console.log('[UsersList] Insufficient permissions, redirecting to profile');
+          if (
+            msg.includes("insufficient permissions") ||
+            msg.includes("forbidden") ||
+            msg.includes("403")
+          ) {
+            console.log(
+              "[UsersList] Insufficient permissions, redirecting to profile",
+            );
             if (currentUser?.id) {
               router.replace(`/users/${currentUser.id}`);
               return;
             }
-            errorMessage = 'У вас нет прав для просмотра списка пользователей';
+            errorMessage = "У вас нет прав для просмотра списка пользователей";
           } else {
             errorMessage = err.message;
           }
-        } else if (typeof err === 'string') {
+        } else if (typeof err === "string") {
           errorMessage = err;
-        } else if (err && typeof err === 'object' && 'message' in err) {
+        } else if (err && typeof err === "object" && "message" in err) {
           errorMessage = String((err as Record<string, unknown>).message);
         }
-        
-        console.error('[UsersList] Error loading users:', errorMessage);
+
+        console.error("[UsersList] Error loading users:", errorMessage);
         setError(errorMessage);
       } finally {
         setIsLoading(false);
@@ -202,7 +255,7 @@ export default function UsersList() {
     };
 
     loadUsers();
-  }, []);
+  }, [currentPage, perPage]);
 
   // Оптимизированный обработчик refresh
 
@@ -212,8 +265,9 @@ export default function UsersList() {
       const matchesSearch =
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" || user.status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
@@ -338,8 +392,8 @@ export default function UsersList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            {users.length > 0 ? (
+              users.map((user) => (
                 <tr
                   key={user.id}
                   onClick={() => router.push(`/users/${user.id}`)}
@@ -376,7 +430,7 @@ export default function UsersList() {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(
-                        user.role
+                        user.role,
                       )}`}
                     >
                       {getRoleLabel(user.role)}
@@ -394,7 +448,7 @@ export default function UsersList() {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(
-                        user.status
+                        user.status,
                       )}`}
                     >
                       {getStatusLabel(user.status)}
@@ -407,7 +461,10 @@ export default function UsersList() {
                   </td>
 
                   {/* Actions */}
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                  <td
+                    className="px-6 py-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="flex items-center justify-center gap-2">
                       <Link
                         key={`edit-${user.id}`}
@@ -448,12 +505,78 @@ export default function UsersList() {
         </table>
       </div>
 
-      {/* Footer with Stats */}
+      {/* Footer with Pagination */}
       <div className="px-6 py-4 bg-gray-800/50 border-t border-gray-800">
-        <p className="text-sm text-gray-400">
-          Показано <span className="text-white font-semibold">{filteredUsers.length}</span> из{' '}
-          <span className="text-white font-semibold">{users.length}</span> пользователей
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-400">
+            Показано{" "}
+            <span className="text-white font-semibold">{users.length}</span> из{" "}
+            <span className="text-white font-semibold">{totalCount}</span>{" "}
+            пользователей
+          </p>
+
+          <div className="flex items-center gap-4">
+            {/* Per Page Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">На странице:</span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ««
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ‹
+              </button>
+
+              <span className="px-4 py-1 text-sm text-gray-300">
+                Страница{" "}
+                <span className="text-white font-semibold">{currentPage}</span>{" "}
+                из{" "}
+                <span className="text-white font-semibold">
+                  {Math.ceil(totalCount / perPage)}
+                </span>
+              </span>
+
+              <button
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={currentPage >= Math.ceil(totalCount / perPage)}
+                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ›
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.ceil(totalCount / perPage))}
+                disabled={currentPage >= Math.ceil(totalCount / perPage)}
+                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                »»
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

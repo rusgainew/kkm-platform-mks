@@ -181,6 +181,7 @@ describe("invoice-validation", () => {
       contractorTin: "12345678901234",
       deliveryTypeCode: "01",
       paymentCode: "1",
+      isPriceWithoutTaxes: false,
       catalogEntries: [
         {
           id: 1,

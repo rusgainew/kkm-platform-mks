@@ -1,4 +1,7 @@
 -- Создание таблицы для каталога товаров и услуг
+CREATE SCHEMA IF NOT EXISTS catalogs;
+SET search_path TO catalogs;
+
 CREATE TABLE IF NOT EXISTS catalog_items (
     id UUID PRIMARY KEY,
     organization_id UUID NOT NULL,
@@ -20,15 +23,15 @@ CREATE TABLE IF NOT EXISTS catalog_items (
 );
 
 -- Индексы для оптимизации запросов
-CREATE INDEX idx_catalog_items_organization ON catalog_items(organization_id);
-CREATE INDEX idx_catalog_items_code ON catalog_items(organization_id, code);
-CREATE INDEX idx_catalog_items_name ON catalog_items(name);
-CREATE INDEX idx_catalog_items_category ON catalog_items(category);
-CREATE INDEX idx_catalog_items_is_active ON catalog_items(is_active);
-CREATE INDEX idx_catalog_items_created_at ON catalog_items(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_organization ON catalog_items(organization_id);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_code ON catalog_items(organization_id, code);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_name ON catalog_items(name);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_category ON catalog_items(category);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_is_active ON catalog_items(is_active);
+CREATE INDEX IF NOT EXISTS idx_catalog_items_created_at ON catalog_items(created_at DESC);
 
 -- Уникальный индекс для кода внутри организации
-CREATE UNIQUE INDEX idx_catalog_items_org_code_unique ON catalog_items(organization_id, code);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_catalog_items_org_code_unique ON catalog_items(organization_id, code);
 
 -- Комментарии к таблице
 COMMENT ON TABLE catalog_items IS 'Каталог товаров и услуг организаций';

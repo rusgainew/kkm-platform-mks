@@ -83,6 +83,9 @@ package-lock.json
 *.db
 *.sqlite
 
+# Python virtualenv
+py_script/venv/
+
 # Passwords
 user_password.txt
 

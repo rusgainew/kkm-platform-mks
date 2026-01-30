@@ -20,11 +20,27 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
 
       login: ({ user, tokens }) => {
-        set({ user, tokens: tokens || null, isAuthenticated: true });
+        const currentTokens = get().tokens;
+        set({
+          user,
+          tokens: tokens || currentTokens || null,
+          isAuthenticated: true,
+        });
+        if (typeof window !== "undefined" && tokens) {
+          localStorage.setItem("accessToken", tokens.accessToken);
+          localStorage.setItem("refreshToken", tokens.refreshToken);
+          localStorage.setItem("token", tokens.accessToken);
+        }
       },
 
       logout: () => {
         set({ user: null, tokens: null, isAuthenticated: false });
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("token");
+          localStorage.removeItem("authToken");
+        }
       },
 
       hasPermission: (permission) => {

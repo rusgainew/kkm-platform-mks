@@ -9,12 +9,12 @@ services:
     image: postgres:15-alpine
     container_name: postgres-user
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: user_svc
       POSTGRES_PASSWORD: user_pass_2026
       POSTGRES_DB: user_db
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
     healthcheck:
@@ -33,8 +33,6 @@ services:
       POSTGRES_USER: company_svc
       POSTGRES_PASSWORD: company_pass_2026
       POSTGRES_DB: company_db
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_company_data:/var/lib/postgresql/data
     healthcheck:
@@ -53,8 +51,6 @@ services:
       POSTGRES_USER: catalog_svc
       POSTGRES_PASSWORD: catalog_pass_2026
       POSTGRES_DB: catalog_db
-    ports:
-      - "5434:5432"
     volumes:
       - postgres_catalog_data:/var/lib/postgresql/data
     healthcheck:
@@ -73,8 +69,6 @@ services:
       POSTGRES_USER: invoice_svc
       POSTGRES_PASSWORD: invoice_pass_2026
       POSTGRES_DB: invoice_db
-    ports:
-      - "5435:5432"
     volumes:
       - postgres_invoice_data:/var/lib/postgresql/data
     healthcheck:
@@ -93,8 +87,6 @@ services:
       POSTGRES_USER: bank_svc
       POSTGRES_PASSWORD: bank_pass_2026
       POSTGRES_DB: bank_account_db
-    ports:
-      - "5436:5432"
     volumes:
       - postgres_bank_account_data:/var/lib/postgresql/data
     healthcheck:
@@ -113,8 +105,6 @@ services:
       POSTGRES_USER: foreign_svc
       POSTGRES_PASSWORD: foreign_pass_2026
       POSTGRES_DB: foreign_company_db
-    ports:
-      - "5437:5432"
     volumes:
       - postgres_foreign_company_data:/var/lib/postgresql/data
     healthcheck:
@@ -133,8 +123,6 @@ services:
       POSTGRES_USER: document_svc
       POSTGRES_PASSWORD: document_pass_2026
       POSTGRES_DB: document_db
-    ports:
-      - "5438:5432"
     volumes:
       - postgres_document_data:/var/lib/postgresql/data
     healthcheck:
@@ -149,8 +137,6 @@ services:
     image: redis:7-alpine
     container_name: redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -169,9 +155,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: kkm_user
       RABBITMQ_DEFAULT_PASS: kkm_password
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -193,13 +176,17 @@ services:
     container_name: user-server
     restart: unless-stopped
     environment:
+      USER_SERVER_DB_DRIVER: postgres
       USER_SERVER_DB_URL: postgres://user_svc:user_pass_2026@postgres-user:5432/user_db?sslmode=disable
       USER_SERVER_JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       USER_SERVER_PORT: 50051
       USER_SERVER_METRICS_PORT: 9101
-    ports:
-      - "50051:50051"
-      - "9101:9101"
+      USER_SERVER_ADMIN_EMAIL: "admin@example.com"
+      USER_SERVER_ADMIN_PASSWORD: "Admin@2024Sec#secure99"
+      USER_SERVER_ADMIN_FIRST_NAME: "Admin"
+      USER_SERVER_ADMIN_LAST_NAME: "User"
+      USER_SERVER_RABBITMQ_ENABLED: "true"
+      USER_SERVER_RABBITMQ_URL: "amqp://kkm_user:kkm_password@rabbitmq:5672/"
     depends_on:
       postgres-user:
         condition: service_healthy
@@ -228,15 +215,18 @@ services:
       DB_SSLMODE: disable
       GRPC_PORT: 50052
       METRICS_PORT: 9103
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50052:50052"
-      - "9103:9103"
     depends_on:
       postgres-company:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9103/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - kkm-network
 
@@ -250,10 +240,8 @@ services:
       CATALOG_SERVER_DB_URL: postgres://catalog_svc:catalog_pass_2026@postgres-catalog:5432/catalog_db?sslmode=disable
       CATALOG_SERVER_PORT: 50053
       CATALOG_SERVER_METRICS_PORT: 9105
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       CATALOG_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50053:50053"
-      - "9105:9105"
     depends_on:
       postgres-catalog:
         condition: service_healthy
@@ -283,10 +271,8 @@ services:
       DB_SSLMODE: disable
       GRPC_PORT: 50054
       METRICS_PORT: 9107
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50054:50054"
-      - "9107:9107"
     depends_on:
       postgres-invoice:
         condition: service_healthy
@@ -305,10 +291,8 @@ services:
       BANK_ACCOUNT_SERVER_DB_URL: postgres://bank_svc:bank_pass_2026@postgres-bank-account:5432/bank_account_db?sslmode=disable
       BANK_ACCOUNT_SERVER_PORT: 50055
       BANK_ACCOUNT_SERVER_METRICS_PORT: 9109
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       BANK_ACCOUNT_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50055:50055"
-      - "9109:9109"
     depends_on:
       postgres-bank-account:
         condition: service_healthy
@@ -327,15 +311,18 @@ services:
       FOREIGN_COMPANY_SERVER_DB_URL: postgres://foreign_svc:foreign_pass_2026@postgres-foreign-company:5432/foreign_company_db?sslmode=disable
       FOREIGN_COMPANY_SERVER_PORT: 50056
       FOREIGN_COMPANY_SERVER_METRICS_PORT: 9111
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       FOREIGN_COMPANY_SERVER_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50056:50056"
-      - "9111:9111"
     depends_on:
       postgres-foreign-company:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9111/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - kkm-network
 
@@ -354,10 +341,8 @@ services:
       DB_SSLMODE: disable
       SERVER_PORT: 50057
       METRICS_PORT: 9113
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
-    ports:
-      - "50057:50057"
-      - "9113:9113"
     depends_on:
       postgres-document:
         condition: service_healthy
@@ -375,14 +360,14 @@ services:
     container_name: user-query-server
     restart: unless-stopped
     environment:
+      USER_QUERY_DATABASE_URL: postgres://user_svc:user_pass_2026@postgres-user:5432/user_db?sslmode=disable
       USER_QUERY_REDIS_URL: redis://redis:6379/0
       USER_QUERY_RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50061
       METRICS_PORT: 9102
-    ports:
-      - "50061:50061"
-      - "9102:9102"
     depends_on:
+      postgres-user:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -401,9 +386,7 @@ services:
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50063
       METRICS_PORT: 9106
-    ports:
-      - "50063:50063"
-      - "9106:9106"
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
     depends_on:
       redis:
         condition: service_healthy
@@ -423,9 +406,7 @@ services:
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50064
       METRICS_PORT: 9108
-    ports:
-      - "50064:50064"
-      - "9108:9108"
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
     depends_on:
       redis:
         condition: service_healthy
@@ -445,9 +426,7 @@ services:
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50065
       METRICS_PORT: 9110
-    ports:
-      - "50065:50065"
-      - "9110:9110"
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-minimum-32-characters-long"
     depends_on:
       redis:
         condition: service_healthy
@@ -466,9 +445,6 @@ services:
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50066
       METRICS_PORT: 9112
-    ports:
-      - "50066:50066"
-      - "9112:9112"
     depends_on:
       redis:
         condition: service_healthy
@@ -488,9 +464,6 @@ services:
       RABBITMQ_URL: amqp://kkm_user:kkm_password@rabbitmq:5672/
       GRPC_PORT: 50067
       METRICS_PORT: 9114
-    ports:
-      - "50067:50067"
-      - "9114:9114"
     depends_on:
       redis:
         condition: service_healthy
@@ -519,9 +492,6 @@ services:
       REDIS_TTL: 300
       LOG_LEVEL: info
       ENABLE_METRICS: "true"
-    ports:
-      - "50070:50070"
-      - "9115:9115"
     depends_on:
       postgres-invoice:
         condition: service_healthy
@@ -558,9 +528,6 @@ services:
       DOCUMENT_SERVICE_URL: document-server:50057
       DOCUMENT_QUERY_SERVICE_URL: document-query-server:50067
       ANALYTICS_SERVICE_URL: analytics-server:50070
-    ports:
-      - "8080:8080"
-      - "9090:9090"
     depends_on:
       - user-server
       - user-query-server
@@ -659,8 +626,6 @@ services:
       - "--web.console.libraries=/etc/prometheus/console_libraries"
       - "--web.console.templates=/etc/prometheus/consoles"
       - "--web.enable-lifecycle"
-    ports:
-      - "9091:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus-alerts.yml:/etc/prometheus/alerts.yml:ro
@@ -691,8 +656,6 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_SERVER_ROOT_URL: http://localhost:3000
       GF_INSTALL_PLUGINS: ""
-    ports:
-      - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana-provisioning:/etc/grafana/provisioning:ro
@@ -724,17 +687,6 @@ services:
     environment:
       COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
       COLLECTOR_OTLP_ENABLED: "true"
-    ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "16686:16686"
-      - "14268:14268"
-      - "14250:14250"
-      - "9411:9411"
-      - "4317:4317"
-      - "4318:4318"
     networks:
       - kkm-network
     healthcheck:

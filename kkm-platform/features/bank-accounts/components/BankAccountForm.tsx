@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Info } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createBankAccount, updateBankAccount } from '@/lib/api/bank-accounts';
+import React, { useState } from "react";
+import { Info } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createBankAccount, updateBankAccount } from "@/lib/api/bank-accounts";
 import type {
   BankAccount,
   CreateBankAccountRequest,
   UpdateBankAccountRequest,
-} from '@/types/entities';
+} from "@/types/entities";
 
 interface BankAccountFormProps {
   initialData?: BankAccount | null;
@@ -47,11 +48,11 @@ export default function BankAccountForm({
   const isEditMode = !!initialData?.id;
 
   const [formData, setFormData] = useState<FormData>({
-    account_number: initialData?.account_number || '',
-    bank_name: initialData?.bank_name || '',
-    bank_code: initialData?.bank_code || '',
-    currency: initialData?.currency || 'KGS',
-    owner_id: initialData?.owner_id || ownerId || '',
+    account_number: initialData?.account_number || "",
+    bank_name: initialData?.bank_name || "",
+    bank_code: initialData?.bank_code || "",
+    currency: initialData?.currency || "KGS",
+    owner_id: initialData?.owner_id || ownerId || "",
     is_active: initialData?.is_active ?? true,
   });
 
@@ -63,29 +64,29 @@ export default function BankAccountForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.account_number.trim()) {
-      newErrors.account_number = 'Номер счета обязателен';
+      newErrors.account_number = "Номер счета обязателен";
     } else if (!isValidAccountNumber(formData.account_number)) {
-      newErrors.account_number = 'Номер счета должен содержать ровно 20 цифр';
+      newErrors.account_number = "Номер счета должен содержать ровно 20 цифр";
     }
 
     if (!formData.bank_name.trim()) {
-      newErrors.bank_name = 'Название банка обязательно';
+      newErrors.bank_name = "Название банка обязательно";
     } else if (formData.bank_name.length < 3) {
-      newErrors.bank_name = 'Название банка должно содержать минимум 3 символа';
+      newErrors.bank_name = "Название банка должно содержать минимум 3 символа";
     }
 
     if (!formData.bank_code.trim()) {
-      newErrors.bank_code = 'БИК банка обязателен';
+      newErrors.bank_code = "БИК банка обязателен";
     } else if (!isValidBankCode(formData.bank_code)) {
-      newErrors.bank_code = 'БИК должен содержать от 6 до 9 цифр';
+      newErrors.bank_code = "БИК должен содержать от 6 до 9 цифр";
     }
 
     if (!formData.currency) {
-      newErrors.currency = 'Валюта обязательна';
+      newErrors.currency = "Валюта обязательна";
     }
 
     if (!formData.owner_id) {
-      newErrors.owner_id = 'Необходимо указать владельца счета';
+      newErrors.owner_id = "Необходимо указать владельца счета";
     }
 
     return newErrors;
@@ -95,7 +96,7 @@ export default function BankAccountForm({
   const createMutation = useMutation({
     mutationFn: (data: CreateBankAccountRequest) => createBankAccount(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
       onSuccess?.();
     },
   });
@@ -105,9 +106,9 @@ export default function BankAccountForm({
     mutationFn: (data: UpdateBankAccountRequest) =>
       updateBankAccount(initialData!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
       queryClient.invalidateQueries({
-        queryKey: ['bank-account', initialData!.id],
+        queryKey: ["bank-account", initialData!.id],
       });
       onSuccess?.();
     },
@@ -119,7 +120,7 @@ export default function BankAccountForm({
     // Отметить все поля как touched
     const allFields = Object.keys(formData).reduce(
       (acc, key) => ({ ...acc, [key]: true }),
-      {}
+      {},
     );
     setTouched(allFields);
 
@@ -162,10 +163,10 @@ export default function BankAccountForm({
         await createMutation.mutateAsync(createData);
       }
     } catch (error) {
-      console.error('Ошибка отправки формы:', error);
+      console.error("Ошибка отправки формы:", error);
       setErrors({
         submit:
-          error instanceof Error ? error.message : 'Ошибка сохранения данных',
+          error instanceof Error ? error.message : "Ошибка сохранения данных",
       });
     }
   };
@@ -176,7 +177,7 @@ export default function BankAccountForm({
     const validationErrors = validateForm();
     setErrors((prev) => ({
       ...prev,
-      [field]: validationErrors[field] || '',
+      [field]: validationErrors[field] || "",
     }));
   };
 
@@ -191,20 +192,27 @@ export default function BankAccountForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">
-          {isEditMode ? 'Редактировать банковский счет' : 'Добавить банковский счет'}
+          {isEditMode
+            ? "Редактировать банковский счет"
+            : "Добавить банковский счет"}
         </h2>
       </div>
 
       {/* Error messages */}
       {(errors.submit || submitError) && (
         <div className="p-4 bg-red-900/20 border border-red-800 text-red-300 rounded-lg">
-          {errors.submit || (submitError instanceof Error ? submitError.message : 'Ошибка сохранения')}
+          {errors.submit ||
+            (submitError instanceof Error
+              ? submitError.message
+              : "Ошибка сохранения")}
         </div>
       )}
 
       {/* Основные реквизиты */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-300">Банковские реквизиты</h3>
+        <h3 className="text-lg font-semibold text-gray-300">
+          Банковские реквизиты
+        </h3>
 
         {/* Номер счета */}
         <div>
@@ -215,14 +223,14 @@ export default function BankAccountForm({
             type="text"
             value={formData.account_number}
             onChange={(e) => {
-              const cleaned = e.target.value.replace(/\D/g, '').slice(0, 20);
+              const cleaned = e.target.value.replace(/\D/g, "").slice(0, 20);
               setFormData({ ...formData, account_number: cleaned });
             }}
-            onBlur={() => handleBlur('account_number')}
+            onBlur={() => handleBlur("account_number")}
             className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
               touched.account_number && errors.account_number
-                ? 'border-red-500'
-                : 'border-gray-700'
+                ? "border-red-500"
+                : "border-gray-700"
             } text-white focus:border-green-500 outline-none font-mono`}
             placeholder="12345678901234567890"
             maxLength={20}
@@ -246,11 +254,11 @@ export default function BankAccountForm({
             onChange={(e) =>
               setFormData({ ...formData, bank_name: e.target.value })
             }
-            onBlur={() => handleBlur('bank_name')}
+            onBlur={() => handleBlur("bank_name")}
             className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
               touched.bank_name && errors.bank_name
-                ? 'border-red-500'
-                : 'border-gray-700'
+                ? "border-red-500"
+                : "border-gray-700"
             } text-white focus:border-green-500 outline-none`}
             placeholder="ПАО Сбербанк"
           />
@@ -268,14 +276,14 @@ export default function BankAccountForm({
             type="text"
             value={formData.bank_code}
             onChange={(e) => {
-              const cleaned = e.target.value.replace(/\D/g, '').slice(0, 9);
+              const cleaned = e.target.value.replace(/\D/g, "").slice(0, 9);
               setFormData({ ...formData, bank_code: cleaned });
             }}
-            onBlur={() => handleBlur('bank_code')}
+            onBlur={() => handleBlur("bank_code")}
             className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
               touched.bank_code && errors.bank_code
-                ? 'border-red-500'
-                : 'border-gray-700'
+                ? "border-red-500"
+                : "border-gray-700"
             } text-white focus:border-green-500 outline-none font-mono`}
             placeholder="044525225"
             maxLength={9}
@@ -298,11 +306,11 @@ export default function BankAccountForm({
             onChange={(e) =>
               setFormData({ ...formData, currency: e.target.value })
             }
-            onBlur={() => handleBlur('currency')}
+            onBlur={() => handleBlur("currency")}
             className={`w-full px-4 py-2 rounded-lg bg-gray-800 border ${
               touched.currency && errors.currency
-                ? 'border-red-500'
-                : 'border-gray-700'
+                ? "border-red-500"
+                : "border-gray-700"
             } text-white focus:border-green-500 outline-none`}
           >
             <option value="KGS">🇰🇬 KGS - Кыргызский сом (с)</option>
@@ -321,24 +329,20 @@ export default function BankAccountForm({
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-300">Статус</h3>
 
-        <label className="flex items-center gap-3 p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
-          <input
-            type="checkbox"
+        <div className="p-4 bg-gray-800 rounded-lg">
+          <Switch
             checked={formData.is_active}
-            onChange={(e) =>
-              setFormData({ ...formData, is_active: e.target.checked })
+            onChange={(checked) =>
+              setFormData({ ...formData, is_active: checked })
             }
-            className="w-5 h-5 rounded border-gray-600 text-green-600 focus:ring-green-500"
+            label="Активный счет"
+            labelPosition="right"
+            size="md"
           />
-          <div>
-            <span className="text-gray-300 font-medium block">
-              Активный счет
-            </span>
-            <span className="text-gray-400 text-sm">
-              Счет доступен для проведения операций
-            </span>
-          </div>
-        </label>
+          <p className="text-gray-400 text-sm mt-2 ml-14">
+            Счет доступен для проведения операций
+          </p>
+        </div>
       </div>
 
       {/* Info box */}
@@ -374,10 +378,9 @@ export default function BankAccountForm({
           variant="success"
           className="flex-1"
         >
-          {isEditMode ? 'Обновить счет' : 'Создать счет'}
+          {isEditMode ? "Обновить счет" : "Создать счет"}
         </Button>
       </div>
     </form>
   );
 }
-

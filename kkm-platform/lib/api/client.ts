@@ -40,7 +40,28 @@ export const apiClient = axios.create({
 
 // Автоматически добавлять токен в заголовки
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  if (typeof window === "undefined") return config;
+
+  const readTokenFromPersistedState = (raw: string | null) => {
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return (
+      parsed.state?.accessToken ||
+      parsed.state?.tokens?.accessToken ||
+      parsed.state?.tokens?.access_token ||
+      parsed.state?.token ||
+      parsed.token ||
+      null
+    );
+  };
+
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("token") ||
+    readTokenFromPersistedState(localStorage.getItem("auth-storage")) ||
+    readTokenFromPersistedState(localStorage.getItem("auth-store"));
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

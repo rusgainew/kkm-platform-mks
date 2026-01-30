@@ -25,11 +25,11 @@ export interface ListUsersResponse {
   total_count?: number;
   page?: number;
   per_page?: number;
-  // Command service format
+  // Command service format (matches Go PageInfo struct)
   page_info?: {
     page: number;
     size: number;
-    total: number;
+    total_count: number;
   };
 }
 
@@ -85,23 +85,36 @@ function getAuthTokenFromStorage(): string | null {
 
   try {
     console.log("[API] Attempting to get token from localStorage...");
+
+    const readTokenFromPersistedState = (raw: string | null) => {
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return (
+        parsed.state?.accessToken ||
+        parsed.state?.tokens?.access_token ||
+        parsed.state?.tokens?.accessToken ||
+        parsed.state?.token ||
+        parsed.token ||
+        null
+      );
+    };
+
     const authStorage = localStorage.getItem("auth-storage");
+    const authStore = localStorage.getItem("auth-store");
 
-    if (!authStorage) {
-      console.warn("[API] auth-storage not found in localStorage");
-      return null;
-    }
-
-    const parsed = JSON.parse(authStorage);
     const token =
-      parsed.state?.accessToken || // Zustand store format
-      parsed.state?.tokens?.access_token || // Alternative format
-      parsed.state?.tokens?.accessToken; // Alternative format
+      readTokenFromPersistedState(authStorage) ||
+      readTokenFromPersistedState(authStore) ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("token");
 
     if (token) {
       console.log("[API] Found token in localStorage");
       return token;
     }
+
+    console.warn("[API] Token not found in localStorage");
     return null;
   } catch (err) {
     console.error("[API] Failed to parse auth token from storage:", err);
@@ -196,7 +209,21 @@ async function request<T>(
 
 // Users
 export const listUsers = () => request<ListUsersResponse>("/users");
-export const listUsersQuery = () => request<ListUsersResponse>("/users");
+export const listUsersQuery = (params?: {
+  page?: number;
+  per_page?: number;
+}) => {
+  const queryParams = new URLSearchParams();
+  // API uses 0-based page indexing, but we use 1-based in UI
+  if (params?.page) queryParams.append("page", (params.page - 1).toString());
+  // API uses 'size' parameter instead of 'per_page'
+  if (params?.per_page) queryParams.append("size", params.per_page.toString());
+
+  const queryString = queryParams.toString();
+  const path = queryString ? `/users?${queryString}` : "/users";
+
+  return request<ListUsersResponse>(path);
+};
 export const getUserById = (id: string) => request<ApiUser>(`/users/${id}`);
 
 // Auth flows

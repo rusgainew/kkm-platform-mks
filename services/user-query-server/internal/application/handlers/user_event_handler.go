@@ -8,18 +8,18 @@ import (
 	"go.uber.org/zap"
 
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
+	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/application/ports"
 	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/messaging"
-	"github.com/rusgainew/kkm-project-mks/user-query-server/internal/infrastructure/repository"
 )
 
 // UserEventHandler implements messaging.EventHandler for user events
 type UserEventHandler struct {
-	repo   *repository.InMemoryUserRepository
+	repo   ports.UserRepository
 	logger *zap.Logger
 }
 
 // NewUserEventHandler creates a new user event handler
-func NewUserEventHandler(repo *repository.InMemoryUserRepository, logger *zap.Logger) *UserEventHandler {
+func NewUserEventHandler(repo ports.UserRepository, logger *zap.Logger) *UserEventHandler {
 	return &UserEventHandler{
 		repo:   repo,
 		logger: logger,

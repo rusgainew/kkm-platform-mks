@@ -9,6 +9,7 @@ import {
   formatCurrency,
   validateCatalogEntry,
 } from "../lib/invoice-validation";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface InvoiceCatalogEntriesTableProps {
   entries: CatalogEntry[];
@@ -37,7 +38,9 @@ export function InvoiceCatalogEntriesTable({
 }: InvoiceCatalogEntriesTableProps) {
   const [editingEntry, setEditingEntry] = useState<EditingEntry | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newEntry, setNewEntry] = useState<CatalogEntry>(createEmptyCatalogEntry());
+  const [newEntry, setNewEntry] = useState<CatalogEntry>(
+    createEmptyCatalogEntry(),
+  );
   const [errors, setErrors] = useState<Record<number, string[]>>({});
 
   /**
@@ -79,7 +82,10 @@ export function InvoiceCatalogEntriesTable({
       return;
     }
 
-    const calculatedEntry = updateCatalogEntryCalculations(editingEntry.entry, vatRate);
+    const calculatedEntry = updateCatalogEntryCalculations(
+      editingEntry.entry,
+      vatRate,
+    );
     const updatedEntries = [...entries];
     updatedEntries[editingEntry.index] = calculatedEntry;
     onEntriesChange(updatedEntries);
@@ -108,7 +114,7 @@ export function InvoiceCatalogEntriesTable({
    */
   const handleNewEntryChange = (
     field: keyof CatalogEntry,
-    value: string | number
+    value: string | number,
   ) => {
     setNewEntry((prev) => ({
       ...prev,
@@ -121,7 +127,7 @@ export function InvoiceCatalogEntriesTable({
    */
   const handleEditEntryChange = (
     field: keyof CatalogEntry,
-    value: string | number
+    value: string | number,
   ) => {
     if (!editingEntry) return;
     setEditingEntry({
@@ -148,7 +154,9 @@ export function InvoiceCatalogEntriesTable({
             <input
               type="number"
               value={editingEntry.entry.id}
-              onChange={(e) => handleEditEntryChange("id", Number(e.target.value))}
+              onChange={(e) =>
+                handleEditEntryChange("id", Number(e.target.value))
+              }
               className="w-full px-2 py-1 border rounded dark:bg-gray-800"
               placeholder="ID товара"
             />
@@ -157,7 +165,9 @@ export function InvoiceCatalogEntriesTable({
             <input
               type="text"
               value={editingEntry.entry.unitClassificationCode}
-              onChange={(e) => handleEditEntryChange("unitClassificationCode", e.target.value)}
+              onChange={(e) =>
+                handleEditEntryChange("unitClassificationCode", e.target.value)
+              }
               className="w-full px-2 py-1 border rounded dark:bg-gray-800"
               placeholder="Код единицы"
             />
@@ -167,7 +177,9 @@ export function InvoiceCatalogEntriesTable({
               type="number"
               step="0.01"
               value={editingEntry.entry.quantity}
-              onChange={(e) => handleEditEntryChange("quantity", Number(e.target.value))}
+              onChange={(e) =>
+                handleEditEntryChange("quantity", Number(e.target.value))
+              }
               className="w-full px-2 py-1 border rounded dark:bg-gray-800"
               placeholder="Количество"
             />
@@ -177,7 +189,9 @@ export function InvoiceCatalogEntriesTable({
               type="number"
               step="0.01"
               value={editingEntry.entry.price}
-              onChange={(e) => handleEditEntryChange("price", Number(e.target.value))}
+              onChange={(e) =>
+                handleEditEntryChange("price", Number(e.target.value))
+              }
               className="w-full px-2 py-1 border rounded dark:bg-gray-800"
               placeholder="Цена"
             />
@@ -185,27 +199,29 @@ export function InvoiceCatalogEntriesTable({
           <td className="px-4 py-3 text-right">
             {formatCurrency(
               editingEntry.entry.quantity * editingEntry.entry.price,
-              currency
+              currency,
             )}
           </td>
           <td className="px-4 py-3 text-right">
             <div className="flex gap-1 justify-end">
-              <button
-                type="button"
-                onClick={handleSaveEdit}
-                className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
-                title="Сохранить"
-              >
-                <Check size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="p-1 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
-                title="Отмена"
-              >
-                <X size={18} />
-              </button>
+              <Tooltip content="Сохранить" position="top">
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
+                >
+                  <Check size={18} />
+                </button>
+              </Tooltip>
+              <Tooltip content="Отмена" position="top">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="p-1 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+                >
+                  <X size={18} />
+                </button>
+              </Tooltip>
             </div>
             {entryErrors.length > 0 && (
               <div className="text-xs text-red-500 mt-1">
@@ -223,30 +239,37 @@ export function InvoiceCatalogEntriesTable({
         <td className="px-4 py-3">{entry.id}</td>
         <td className="px-4 py-3">{entry.unitClassificationCode}</td>
         <td className="px-4 py-3 text-right">{entry.quantity}</td>
-        <td className="px-4 py-3 text-right">{formatCurrency(entry.price, currency)}</td>
+        <td className="px-4 py-3 text-right">
+          {formatCurrency(entry.price, currency)}
+        </td>
         <td className="px-4 py-3 text-right font-medium">
-          {formatCurrency(entry.totalAmount || entry.quantity * entry.price, currency)}
+          {formatCurrency(
+            entry.totalAmount || entry.quantity * entry.price,
+            currency,
+          )}
         </td>
         <td className="px-4 py-3">
           <div className="flex gap-1 justify-end">
-            <button
-              type="button"
-              onClick={() => handleStartEdit(index)}
-              disabled={disabled}
-              className="p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded disabled:opacity-50"
-              title="Редактировать"
-            >
-              <Edit2 size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRemoveEntry(index)}
-              disabled={disabled}
-              className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
-              title="Удалить"
-            >
-              <Trash2 size={18} />
-            </button>
+            <Tooltip content="Редактировать" position="top">
+              <button
+                type="button"
+                onClick={() => handleStartEdit(index)}
+                disabled={disabled}
+                className="p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded disabled:opacity-50"
+              >
+                <Edit2 size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Удалить" position="top">
+              <button
+                type="button"
+                onClick={() => handleRemoveEntry(index)}
+                disabled={disabled}
+                className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
+              >
+                <Trash2 size={18} />
+              </button>
+            </Tooltip>
           </div>
         </td>
       </tr>
@@ -291,8 +314,12 @@ export function InvoiceCatalogEntriesTable({
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {entries.length === 0 && !isAddingNew ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Нет добавленных позиций. Нажмите &ldquo;Добавить позицию&rdquo; для начала.
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                >
+                  Нет добавленных позиций. Нажмите &ldquo;Добавить
+                  позицию&rdquo; для начала.
                 </td>
               </tr>
             ) : (
@@ -309,7 +336,9 @@ export function InvoiceCatalogEntriesTable({
                   <input
                     type="number"
                     value={newEntry.id}
-                    onChange={(e) => handleNewEntryChange("id", Number(e.target.value))}
+                    onChange={(e) =>
+                      handleNewEntryChange("id", Number(e.target.value))
+                    }
                     className="w-full px-2 py-1 border rounded dark:bg-gray-800"
                     placeholder="ID товара"
                   />
@@ -317,7 +346,12 @@ export function InvoiceCatalogEntriesTable({
                 <td className="px-4 py-3">
                   <select
                     value={newEntry.unitClassificationCode}
-                    onChange={(e) => handleNewEntryChange("unitClassificationCode", e.target.value)}
+                    onChange={(e) =>
+                      handleNewEntryChange(
+                        "unitClassificationCode",
+                        e.target.value,
+                      )
+                    }
                     className="w-full px-2 py-1 border rounded dark:bg-gray-800"
                   >
                     <option value="796">Штука (796)</option>
@@ -334,7 +368,9 @@ export function InvoiceCatalogEntriesTable({
                     type="number"
                     step="0.01"
                     value={newEntry.quantity}
-                    onChange={(e) => handleNewEntryChange("quantity", Number(e.target.value))}
+                    onChange={(e) =>
+                      handleNewEntryChange("quantity", Number(e.target.value))
+                    }
                     className="w-full px-2 py-1 border rounded dark:bg-gray-800"
                     placeholder="Количество"
                   />
@@ -344,7 +380,9 @@ export function InvoiceCatalogEntriesTable({
                     type="number"
                     step="0.01"
                     value={newEntry.price}
-                    onChange={(e) => handleNewEntryChange("price", Number(e.target.value))}
+                    onChange={(e) =>
+                      handleNewEntryChange("price", Number(e.target.value))
+                    }
                     className="w-full px-2 py-1 border rounded dark:bg-gray-800"
                     placeholder="Цена"
                   />
@@ -354,26 +392,28 @@ export function InvoiceCatalogEntriesTable({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1 justify-end">
-                    <button
-                      type="button"
-                      onClick={handleAddEntry}
-                      className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
-                      title="Добавить"
-                    >
-                      <Check size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingNew(false);
-                        setNewEntry(createEmptyCatalogEntry());
-                        setErrors({});
-                      }}
-                      className="p-1 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
-                      title="Отмена"
-                    >
-                      <X size={18} />
-                    </button>
+                    <Tooltip content="Добавить" position="top">
+                      <button
+                        type="button"
+                        onClick={handleAddEntry}
+                        className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
+                      >
+                        <Check size={18} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Отмена" position="top">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingNew(false);
+                          setNewEntry(createEmptyCatalogEntry());
+                          setErrors({});
+                        }}
+                        className="p-1 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+                      >
+                        <X size={18} />
+                      </button>
+                    </Tooltip>
                   </div>
                   {newEntryErrors.length > 0 && (
                     <div className="text-xs text-red-500 mt-1">

@@ -16,15 +16,17 @@ import (
 
 // UserHandler обработчик HTTP запросов для пользователей
 type UserHandler struct {
-	service *services.UserService
-	logger  *zap.Logger
+	service      *services.UserService
+	queryService *services.UserQueryService
+	logger       *zap.Logger
 }
 
 // NewUserHandler создает новый UserHandler
-func NewUserHandler(service *services.UserService, logger *zap.Logger) *UserHandler {
+func NewUserHandler(service *services.UserService, queryService *services.UserQueryService, logger *zap.Logger) *UserHandler {
 	return &UserHandler{
-		service: service,
-		logger:  logger,
+		service:      service,
+		queryService: queryService,
+		logger:       logger,
 	}
 }
 
@@ -500,7 +502,7 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 	statusFilter := c.Query("status")
 	role := c.Query("role")
 
-	resp, err := h.service.ListUsers(c.Request.Context(), conversion.SafeIntToInt32WithDefault(page, 0), conversion.SafeIntToInt32WithDefault(size, 20), statusFilter, role)
+	resp, err := h.queryService.ListUsers(c.Request.Context(), conversion.SafeIntToInt32WithDefault(page, 0), conversion.SafeIntToInt32WithDefault(size, 20), statusFilter, role)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok {
@@ -522,7 +524,32 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	// Transform protobuf response to models.ListUsersResponse
+	users := make([]models.User, 0, len(resp.Users))
+	for _, u := range resp.Users {
+		users = append(users, models.User{
+			UserID:    u.Id,
+			Email:     u.Email,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			Role:      u.Role,
+			Status:    u.Status,
+			CreatedAt: u.CreatedAt,
+			UpdatedAt: u.UpdatedAt,
+			IsActive:  u.Status == "active",
+		})
+	}
+
+	response := models.ListUsersResponse{
+		Users: users,
+		Page: models.PageInfo{
+			Page:       resp.Page,
+			Size:       resp.PerPage,
+			TotalCount: int32(resp.TotalCount),
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // ForgotPassword инициирует восстановление пароля

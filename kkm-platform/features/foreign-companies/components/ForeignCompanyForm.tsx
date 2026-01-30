@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useToast } from "@/components/ui/Toast";
 import {
   createForeignCompany,
   updateForeignCompany,
@@ -85,6 +85,7 @@ export function ForeignCompanyForm({
   onSuccess,
   onCancel,
 }: ForeignCompanyFormProps) {
+  const { showToast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!company;
 
@@ -128,7 +129,8 @@ export function ForeignCompanyForm({
     if (!formData.country.trim()) {
       newErrors.country = "Код страны обязателен";
     } else if (!isValidCountryCode(formData.country.toUpperCase())) {
-      newErrors.country = "Неверный формат кода страны (ISO 3166-1 alpha-2, например: US, CN, RU)";
+      newErrors.country =
+        "Неверный формат кода страны (ISO 3166-1 alpha-2, например: US, CN, RU)";
     }
 
     // Адрес (обязательное)
@@ -159,7 +161,8 @@ export function ForeignCompanyForm({
     if (!formData.currency.trim()) {
       newErrors.currency = "Код валюты обязателен";
     } else if (!isValidCurrencyCode(formData.currency.toUpperCase())) {
-      newErrors.currency = "Неверный формат кода валюты (ISO 4217, например: USD, EUR, CNY)";
+      newErrors.currency =
+        "Неверный формат кода валюты (ISO 4217, например: USD, EUR, CNY)";
     }
 
     setErrors(newErrors);
@@ -175,12 +178,18 @@ export function ForeignCompanyForm({
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Иностранная компания успешно создана");
+      showToast({
+        message: "Иностранная компания успешно создана",
+        variant: "success",
+      });
       queryClient.invalidateQueries({ queryKey: ["foreign-companies"] });
       onSuccess?.();
     },
     onError: (error: Error) => {
-      toast.error(`Ошибка при создании: ${error.message}`);
+      showToast({
+        message: `Ошибка при создании: ${error.message}`,
+        variant: "error",
+      });
     },
   });
 
@@ -199,7 +208,10 @@ export function ForeignCompanyForm({
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Иностранная компания успешно обновлена");
+      showToast({
+        message: "Иностранная компания успешно обновлена",
+        variant: "success",
+      });
       queryClient.invalidateQueries({ queryKey: ["foreign-companies"] });
       queryClient.invalidateQueries({
         queryKey: ["foreign-company", company?.id],
@@ -207,7 +219,10 @@ export function ForeignCompanyForm({
       onSuccess?.();
     },
     onError: (error: Error) => {
-      toast.error(`Ошибка при обновлении: ${error.message}`);
+      showToast({
+        message: `Ошибка при обновлении: ${error.message}`,
+        variant: "error",
+      });
     },
   });
 
@@ -219,12 +234,18 @@ export function ForeignCompanyForm({
       await deleteForeignCompany(id);
     },
     onSuccess: () => {
-      toast.success("Иностранная компания успешно удалена");
+      showToast({
+        message: "Иностранная компания успешно удалена",
+        variant: "success",
+      });
       queryClient.invalidateQueries({ queryKey: ["foreign-companies"] });
       onSuccess?.();
     },
     onError: (error: Error) => {
-      toast.error(`Ошибка при удалении: ${error.message}`);
+      showToast({
+        message: `Ошибка при удалении: ${error.message}`,
+        variant: "error",
+      });
     },
   });
 
@@ -235,7 +256,10 @@ export function ForeignCompanyForm({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Пожалуйста, исправьте ошибки в форме");
+      showToast({
+        message: "Пожалуйста, исправьте ошибки в форме",
+        variant: "error",
+      });
       return;
     }
 
@@ -273,7 +297,9 @@ export function ForeignCompanyForm({
    * Обработчик изменения поля
    */
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -462,7 +488,9 @@ export function ForeignCompanyForm({
               placeholder="contact@example.com"
             />
             {errors.contact_email && (
-              <p className="mt-1 text-sm text-red-500">{errors.contact_email}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.contact_email}
+              </p>
             )}
           </div>
 
@@ -489,7 +517,9 @@ export function ForeignCompanyForm({
               placeholder="+1 (555) 123-4567"
             />
             {errors.contact_phone && (
-              <p className="mt-1 text-sm text-red-500">{errors.contact_phone}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.contact_phone}
+              </p>
             )}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Международный формат телефона (минимум 10 цифр)
@@ -545,8 +575,8 @@ export function ForeignCompanyForm({
             {isLoading
               ? "Сохранение..."
               : isEditing
-              ? "Сохранить изменения"
-              : "Создать компанию"}
+                ? "Сохранить изменения"
+                : "Создать компанию"}
           </button>
 
           {onCancel && (
@@ -581,8 +611,8 @@ export function ForeignCompanyForm({
               Подтвердите удаление
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Вы уверены, что хотите удалить компанию &ldquo;{company?.name}&rdquo;? Это
-              действие нельзя отменить.
+              Вы уверены, что хотите удалить компанию &ldquo;{company?.name}
+              &rdquo;? Это действие нельзя отменить.
             </p>
             <div className="flex gap-3">
               <button

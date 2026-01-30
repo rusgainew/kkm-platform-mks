@@ -65,8 +65,8 @@ function mapApiUserToUser(apiUser: ApiUser, accessToken?: string): User {
   const role = mapApiRoleToAppRole(apiUser.role);
   const roleConfig = ROLE_CONFIGS[role];
 
-  // If apiUser.id is missing, try to extract from JWT token
-  let userId = apiUser.id;
+  // Prefer explicit user_id, fallback to id, then JWT
+  let userId = apiUser.user_id || apiUser.id;
   if (!userId || userId === "undefined") {
     console.warn(
       "[mapApiUserToUser] apiUser.id is missing, attempting to extract from JWT token",
@@ -105,17 +105,21 @@ function mapTokens(tokens?: AuthTokens): StoreTokens | undefined {
 
 export function useCurrentUserQuery() {
   const login = useAuthStore((s) => s.login);
+  const accessToken = useAuthStore((s) => s.tokens?.accessToken);
   const query = useQuery({
     queryKey: ["me"],
     queryFn: getCurrentUser,
     retry: 1,
     staleTime: 1000,
+    enabled: !!accessToken,
   });
 
   if (query.data) {
     const tokens = useAuthStore.getState().tokens;
     const user = mapApiUserToUser(query.data, tokens?.accessToken);
-    login({ user });
+    if (tokens?.accessToken) {
+      login({ user, tokens });
+    }
   }
 
   return query;
@@ -244,7 +248,11 @@ export function useResetPasswordMutation() {
 
 // Admin utilities
 export function useListUsersQuery(enabled = true) {
-  return useQuery({ queryKey: ["users"], queryFn: listUsersQuery, enabled });
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => listUsersQuery(),
+    enabled,
+  });
 }
 
 export function useUserByIdQuery(id?: string) {

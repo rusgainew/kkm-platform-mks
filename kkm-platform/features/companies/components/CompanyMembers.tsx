@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Plus, Trash2, AlertCircle, CheckCircle, Mail, User } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
-import { Button } from '@/components/ui/Button';
-import type { Employee, AddMemberRequest } from '@/types/entities';
-import { isValidEmail } from '@/types/entities';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Users,
+  Plus,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  Mail,
+  User,
+} from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
+import type { Employee, AddMemberRequest } from "@/types/entities";
+import { isValidEmail } from "@/types/entities";
 import {
   getCompanyMembers,
   addCompanyMember,
   removeCompanyMember,
   updateMemberRole,
-} from '@/lib/api/companies';
+} from "@/lib/api/companies";
 
 interface CompanyMembersProps {
   companyId: string;
@@ -19,7 +28,11 @@ interface CompanyMembersProps {
   isOwner?: boolean;
 }
 
-export default function CompanyMembers({ companyId, companyName, isOwner = false }: CompanyMembersProps) {
+export default function CompanyMembers({
+  companyId,
+  companyName,
+  isOwner = false,
+}: CompanyMembersProps) {
   const [members, setMembers] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -28,8 +41,8 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form state
-  const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState<string>('employee');
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState<string>("employee");
   const [emailError, setEmailError] = useState<string | null>(null);
 
   // Load members on mount
@@ -41,11 +54,15 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
       if (response.success && response.data) {
         setMembers(response.data);
       } else {
-        setError(response.error?.message || 'Не удалось загрузить список участников');
+        setError(
+          response.error?.message || "Не удалось загрузить список участников",
+        );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки участников');
-      console.error('[CompanyMembers] Load error:', err);
+      setError(
+        err instanceof Error ? err.message : "Ошибка загрузки участников",
+      );
+      console.error("[CompanyMembers] Load error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -60,11 +77,11 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
 
     // Validation
     if (!newMemberEmail.trim()) {
-      setEmailError('Email обязателен');
+      setEmailError("Email обязателен");
       return;
     }
     if (!isValidEmail(newMemberEmail)) {
-      setEmailError('Введите корректный email');
+      setEmailError("Введите корректный email");
       return;
     }
 
@@ -80,22 +97,24 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
       };
 
       const response = await addCompanyMember(companyId, memberData);
-      
+
       if (response.success && response.data) {
-        setMembers(prev => [...prev, response.data!]);
+        setMembers((prev) => [...prev, response.data!]);
         setSuccessMessage(`Участник ${newMemberEmail} успешно добавлен`);
-        setNewMemberEmail('');
-        setNewMemberRole('employee');
+        setNewMemberEmail("");
+        setNewMemberRole("employee");
         setShowAddForm(false);
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        setError(response.error?.message || 'Не удалось добавить участника');
+        setError(response.error?.message || "Не удалось добавить участника");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при добавлении участника');
-      console.error('[CompanyMembers] Add error:', err);
+      setError(
+        err instanceof Error ? err.message : "Ошибка при добавлении участника",
+      );
+      console.error("[CompanyMembers] Add error:", err);
     } finally {
       setIsAddingMember(false);
     }
@@ -111,66 +130,74 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
 
     try {
       const response = await removeCompanyMember(companyId, userId);
-      
+
       if (response.success) {
-        setMembers(prev => prev.filter(m => m.user_id !== userId));
+        setMembers((prev) => prev.filter((m) => m.user_id !== userId));
         setSuccessMessage(`Участник ${userName} удален из компании`);
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        setError(response.error?.message || 'Не удалось удалить участника');
+        setError(response.error?.message || "Не удалось удалить участника");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при удалении участника');
-      console.error('[CompanyMembers] Remove error:', err);
+      setError(
+        err instanceof Error ? err.message : "Ошибка при удалении участника",
+      );
+      console.error("[CompanyMembers] Remove error:", err);
     }
   };
 
-  const handleUpdateRole = async (userId: string, userName: string, newRole: string) => {
+  const handleUpdateRole = async (
+    userId: string,
+    userName: string,
+    newRole: string,
+  ) => {
     setError(null);
     setSuccessMessage(null);
 
     try {
       const response = await updateMemberRole(companyId, userId, newRole);
-      
+
       if (response.success && response.data) {
-        setMembers(prev => prev.map(m => 
-          m.user_id === userId ? response.data! : m
-        ));
+        setMembers((prev) =>
+          prev.map((m) => (m.user_id === userId ? response.data! : m)),
+        );
         setSuccessMessage(`Роль участника ${userName} обновлена`);
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        setError(response.error?.message || 'Не удалось обновить роль');
+        setError(response.error?.message || "Не удалось обновить роль");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при обновлении роли');
-      console.error('[CompanyMembers] Update role error:', err);
+      setError(
+        err instanceof Error ? err.message : "Ошибка при обновлении роли",
+      );
+      console.error("[CompanyMembers] Update role error:", err);
     }
   };
 
   const getRoleName = (role: string): string => {
     const roleMap: Record<string, string> = {
-      owner: 'Владелец',
-      admin: 'Администратор',
-      manager: 'Менеджер',
-      employee: 'Сотрудник',
-      cashier: 'Кассир',
+      owner: "Владелец",
+      admin: "Администратор",
+      manager: "Менеджер",
+      employee: "Сотрудник",
+      cashier: "Кассир",
     };
     return roleMap[role] || role;
   };
 
   const getRoleColor = (role: string): string => {
     const colorMap: Record<string, string> = {
-      owner: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      admin: 'bg-red-500/20 text-red-400 border-red-500/30',
-      manager: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      employee: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-      cashier: 'bg-green-500/20 text-green-400 border-green-500/30',
+      owner: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+      admin: "bg-red-500/20 text-red-400 border-red-500/30",
+      manager: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      employee: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+      cashier: "bg-green-500/20 text-green-400 border-green-500/30",
     };
-    return colorMap[role] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    return colorMap[role] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
   };
 
   return (
@@ -180,7 +207,9 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
         <div className="flex items-center gap-3">
           <Users size={24} className="text-blue-400" />
           <div>
-            <h3 className="text-lg font-semibold text-white">Участники компании</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Участники компании
+            </h3>
             <p className="text-sm text-gray-400">{companyName}</p>
           </div>
         </div>
@@ -213,11 +242,19 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
 
       {/* Add Member Form */}
       {showAddForm && isOwner && (
-        <form onSubmit={handleAddMember} className="mb-6 bg-gray-900/50 border border-gray-600 rounded-lg p-4 space-y-4">
-          <h4 className="text-sm font-semibold text-white">Добавить нового участника</h4>
-          
+        <form
+          onSubmit={handleAddMember}
+          className="mb-6 bg-gray-900/50 border border-gray-600 rounded-lg p-4 space-y-4"
+        >
+          <h4 className="text-sm font-semibold text-white">
+            Добавить нового участника
+          </h4>
+
           <div>
-            <label htmlFor="memberEmail" className="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              htmlFor="memberEmail"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
               Email <span className="text-red-400">*</span>
             </label>
             <input
@@ -232,8 +269,8 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
               placeholder="user@example.com"
               className={`w-full px-3 py-2 rounded-lg bg-gray-800 border outline-none transition-colors ${
                 emailError
-                  ? 'border-red-600 focus:border-red-500'
-                  : 'border-gray-600 focus:border-blue-500'
+                  ? "border-red-600 focus:border-red-500"
+                  : "border-gray-600 focus:border-blue-500"
               } text-white placeholder-gray-500 disabled:opacity-50`}
             />
             {emailError && (
@@ -245,7 +282,10 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
           </div>
 
           <div>
-            <label htmlFor="memberRole" className="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              htmlFor="memberRole"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
               Роль
             </label>
             <select
@@ -276,8 +316,8 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
               type="button"
               onClick={() => {
                 setShowAddForm(false);
-                setNewMemberEmail('');
-                setNewMemberRole('employee');
+                setNewMemberEmail("");
+                setNewMemberRole("employee");
                 setEmailError(null);
               }}
               disabled={isAddingMember}
@@ -315,7 +355,9 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
                     <h4 className="text-white font-medium">
                       {member.first_name} {member.last_name}
                     </h4>
-                    <span className={`px-2 py-0.5 rounded-full text-xs border ${getRoleColor(member.role)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs border ${getRoleColor(member.role)}`}
+                    >
                       {getRoleName(member.role)}
                     </span>
                   </div>
@@ -327,11 +369,17 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
               </div>
 
               {/* Actions (only for owner) */}
-              {isOwner && member.role !== 'owner' && (
+              {isOwner && member.role !== "owner" && (
                 <div className="flex items-center gap-2">
                   <select
                     value={member.role}
-                    onChange={(e) => handleUpdateRole(member.user_id, `${member.first_name} ${member.last_name}`, e.target.value)}
+                    onChange={(e) =>
+                      handleUpdateRole(
+                        member.user_id,
+                        `${member.first_name} ${member.last_name}`,
+                        e.target.value,
+                      )
+                    }
                     className="px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-sm text-white hover:border-gray-500 transition-colors outline-none"
                   >
                     <option value="employee">Сотрудник</option>
@@ -339,13 +387,19 @@ export default function CompanyMembers({ companyId, companyName, isOwner = false
                     <option value="manager">Менеджер</option>
                     <option value="admin">Администратор</option>
                   </select>
-                  <button
-                    onClick={() => handleRemoveMember(member.user_id, `${member.first_name} ${member.last_name}`)}
-                    className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                    title="Удалить участника"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <Tooltip content="Удалить участника" position="top">
+                    <button
+                      onClick={() =>
+                        handleRemoveMember(
+                          member.user_id,
+                          `${member.first_name} ${member.last_name}`,
+                        )
+                      }
+                      className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </Tooltip>
                 </div>
               )}
             </div>

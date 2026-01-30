@@ -1,16 +1,23 @@
-'use client';
+"use client";
 
-import { Plus, Minus, Trash2 } from 'lucide-react';
-import { CartItem } from '@/types';
+import { Plus, Minus, Trash2 } from "lucide-react";
+import { CartItem } from "@/types";
 
 interface CartProps {
   items: CartItem[];
-  onUpdateQuantity: (productId: number, delta: number) => void;
-  onRemoveItem: (productId: number) => void;
+  onUpdateQuantity: (productId: number | string, delta: number) => void;
+  onRemoveItem: (productId: number | string) => void;
 }
 
-export default function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+export default function Cart({
+  items,
+  onUpdateQuantity,
+  onRemoveItem,
+}: CartProps) {
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const tax = subtotal * 0.2; // 20% НДС
   const total = subtotal + tax;
 
@@ -30,9 +37,14 @@ export default function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProp
           </div>
         ) : (
           items.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+            <div
+              key={item.id}
+              className="bg-white rounded-lg p-3 shadow-sm border border-gray-200"
+            >
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-gray-900 flex-1">{item.name}</h3>
+                <h3 className="font-semibold text-gray-900 flex-1">
+                  {item.name}
+                </h3>
                 <button
                   onClick={() => onRemoveItem(item.id)}
                   className="text-red-500 hover:text-red-700 ml-2"
@@ -48,7 +60,9 @@ export default function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProp
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                  <span className="w-8 text-center font-semibold">
+                    {item.quantity}
+                  </span>
                   <button
                     onClick={() => onUpdateQuantity(item.id, 1)}
                     className="w-8 h-8 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
@@ -57,8 +71,12 @@ export default function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProp
                   </button>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">{item.price.toFixed(2)} ₽ × {item.quantity}</p>
-                  <p className="font-bold text-gray-900">{(item.price * item.quantity).toFixed(2)} ₽</p>
+                  <p className="text-sm text-gray-500">
+                    {item.price.toFixed(2)} ₽ × {item.quantity}
+                  </p>
+                  <p className="font-bold text-gray-900">
+                    {(item.price * item.quantity).toFixed(2)} ₽
+                  </p>
                 </div>
               </div>
             </div>

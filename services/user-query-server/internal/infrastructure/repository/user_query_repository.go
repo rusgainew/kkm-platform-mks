@@ -2,13 +2,34 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 
 	pb "github.com/rusgainew/kkm-project-mks/proto-lib/api"
 )
+
+// InitDB initializes PostgreSQL database connection
+func InitDB(databaseURL string) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("postgres", databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Set connection pool settings
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+
+	return db, nil
+}
 
 type UserQueryRepository struct {
 	db     *sqlx.DB
@@ -31,18 +52,26 @@ func (r *UserQueryRepository) GetUser(ctx context.Context, userID string) (*pb.U
 	`
 
 	var user pb.UserReadModel
+	var phone, lastLoginAt sql.NullString
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&user.Id,
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
-		&user.Phone,
+		&phone,
 		&user.Status,
 		&user.Role,
-		&user.LastLoginAt,
+		&lastLoginAt,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
+
+	if phone.Valid {
+		user.Phone = phone.String
+	}
+	if lastLoginAt.Valid {
+		user.LastLoginAt = lastLoginAt.String
+	}
 
 	if err != nil {
 		r.logger.Error("Failed to get user",
@@ -97,20 +126,27 @@ func (r *UserQueryRepository) ListUsers(ctx context.Context, offset, limit int32
 	var users []*pb.UserReadModel
 	for rows.Next() {
 		var user pb.UserReadModel
+		var phone, lastLoginAt sql.NullString
 		if err := rows.Scan(
 			&user.Id,
 			&user.Email,
 			&user.FirstName,
 			&user.LastName,
-			&user.Phone,
+			&phone,
 			&user.Status,
 			&user.Role,
-			&user.LastLoginAt,
+			&lastLoginAt,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		); err != nil {
 			r.logger.Error("Failed to scan user", zap.Error(err))
 			return nil, 0, fmt.Errorf("failed to scan user: %w", err)
+		}
+		if phone.Valid {
+			user.Phone = phone.String
+		}
+		if lastLoginAt.Valid {
+			user.LastLoginAt = lastLoginAt.String
 		}
 		users = append(users, &user)
 	}
@@ -167,20 +203,27 @@ func (r *UserQueryRepository) SearchUsers(ctx context.Context, searchQuery strin
 	var users []*pb.UserReadModel
 	for rows.Next() {
 		var user pb.UserReadModel
+		var phone, lastLoginAt sql.NullString
 		if err := rows.Scan(
 			&user.Id,
 			&user.Email,
 			&user.FirstName,
 			&user.LastName,
-			&user.Phone,
+			&phone,
 			&user.Status,
 			&user.Role,
-			&user.LastLoginAt,
+			&lastLoginAt,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		); err != nil {
 			r.logger.Error("Failed to scan user", zap.Error(err))
 			return nil, 0, fmt.Errorf("failed to scan user: %w", err)
+		}
+		if phone.Valid {
+			user.Phone = phone.String
+		}
+		if lastLoginAt.Valid {
+			user.LastLoginAt = lastLoginAt.String
 		}
 		users = append(users, &user)
 	}

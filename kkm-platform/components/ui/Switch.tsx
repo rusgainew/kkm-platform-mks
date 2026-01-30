@@ -10,7 +10,7 @@ export interface SwitchProps {
   /** Размер переключателя */
   size?: "sm" | "md" | "lg";
   /** Label текст */
-  label?: string;
+  label?: React.ReactNode;
   /** Позиция label */
   labelPosition?: "left" | "right";
   /** Дополнительные CSS классы */

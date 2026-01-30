@@ -1,4 +1,7 @@
 -- Создание таблицы для банковских счетов
+CREATE SCHEMA IF NOT EXISTS bank_accounts;
+SET search_path TO bank_accounts;
+
 CREATE TABLE IF NOT EXISTS bank_accounts (
     id UUID PRIMARY KEY,
     organization_id UUID NOT NULL,
@@ -17,17 +20,17 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
 );
 
 -- Индексы для оптимизации запросов
-CREATE INDEX idx_bank_accounts_organization ON bank_accounts(organization_id);
-CREATE INDEX idx_bank_accounts_bank ON bank_accounts(bank_id);
-CREATE INDEX idx_bank_accounts_is_active ON bank_accounts(is_active);
-CREATE INDEX idx_bank_accounts_is_default ON bank_accounts(organization_id, is_default);
-CREATE INDEX idx_bank_accounts_created_at ON bank_accounts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_organization ON bank_accounts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_bank ON bank_accounts(bank_id);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_is_active ON bank_accounts(is_active);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_is_default ON bank_accounts(organization_id, is_default);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_created_at ON bank_accounts(created_at DESC);
 
 -- Уникальный индекс для номера счета внутри организации
-CREATE UNIQUE INDEX idx_bank_accounts_org_number_unique ON bank_accounts(organization_id, account_number);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bank_accounts_org_number_unique ON bank_accounts(organization_id, account_number);
 
 -- Уникальный индекс для счета по умолчанию (только один на организацию)
-CREATE UNIQUE INDEX idx_bank_accounts_org_default_unique ON bank_accounts(organization_id) WHERE is_default = true;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bank_accounts_org_default_unique ON bank_accounts(organization_id) WHERE is_default = true;
 
 -- Комментарии к таблице
 COMMENT ON TABLE bank_accounts IS 'Банковские счета организаций';

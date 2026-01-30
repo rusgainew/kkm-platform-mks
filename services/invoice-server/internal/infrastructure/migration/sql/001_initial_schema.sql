@@ -1,5 +1,8 @@
 -- Invoice tables schema
 
+CREATE SCHEMA IF NOT EXISTS invoices;
+SET search_path TO invoices;
+
 -- Main invoice table
 CREATE TABLE IF NOT EXISTS invoices (
     id SERIAL PRIMARY KEY,

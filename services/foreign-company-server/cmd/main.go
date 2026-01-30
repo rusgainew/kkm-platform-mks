@@ -113,6 +113,10 @@ func main() {
 		metricsAddr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.MetricsPort)
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.Handler())
+		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
+		})
 
 		metricsServer := &http.Server{
 			Addr:         metricsAddr,

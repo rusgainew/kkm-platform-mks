@@ -4,8 +4,13 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Save, AlertCircle } from "lucide-react";
-import { Button } from '@/components/ui/Button';
-import type { CreateInvoiceRequest, CatalogEntry, ESFInvoice } from "@/types/invoice";
+import { Button } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
+import type {
+  CreateInvoiceRequest,
+  CatalogEntry,
+  ESFInvoice,
+} from "@/types/invoice";
 import {
   ESFOperationType,
   ESFDeliveryType,
@@ -62,9 +67,13 @@ export function InvoiceFormESF({
   const [formData, setFormData] = useState<FormData>({
     operationTypeCode: invoice?.operationType || ESFOperationType.SALES,
     invoiceNumber: invoice?.invoiceNumber || "",
-    deliveryDate: invoice?.deliveryDate || new Date().toISOString().split("T")[0],
+    deliveryDate:
+      invoice?.deliveryDate || new Date().toISOString().split("T")[0],
     invoiceDate: invoice?.invoiceDate || "",
-    contractorTin: (invoice?.contractor && "tin" in invoice.contractor) ? String(invoice.contractor.tin) : "",
+    contractorTin:
+      invoice?.contractor && "tin" in invoice.contractor
+        ? String(invoice.contractor.tin)
+        : "",
     supplierBankAccount: invoice?.legalPersonBankAccount || "",
     contractorBankAccount: "",
     deliveryTypeCode: invoice?.deliveryCode || ESFDeliveryType.DIRECT,
@@ -113,14 +122,18 @@ export function InvoiceFormESF({
    * Мутация для обновления счета-фактуры
    */
   const updateMutation = useMutation({
-    mutationFn: async (data: CreateInvoiceRequest & { documentUuid: string }) => {
+    mutationFn: async (
+      data: CreateInvoiceRequest & { documentUuid: string },
+    ) => {
       const response = await invoiceAPI.updateInvoice(data);
       return response;
     },
     onSuccess: () => {
       toast.success("Счет-фактура успешно обновлена");
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["invoice", invoice?.documentUuid] });
+      queryClient.invalidateQueries({
+        queryKey: ["invoice", invoice?.documentUuid],
+      });
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -249,7 +262,9 @@ export function InvoiceFormESF({
               </label>
               <select
                 value={formData.operationTypeCode}
-                onChange={(e) => handleFieldChange("operationTypeCode", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("operationTypeCode", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.operationTypeCode
@@ -268,7 +283,9 @@ export function InvoiceFormESF({
                 </option>
               </select>
               {errors.operationTypeCode && (
-                <p className="mt-1 text-sm text-red-500">{errors.operationTypeCode}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.operationTypeCode}
+                </p>
               )}
             </div>
 
@@ -280,7 +297,9 @@ export function InvoiceFormESF({
               <input
                 type="text"
                 value={formData.invoiceNumber}
-                onChange={(e) => handleFieldChange("invoiceNumber", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("invoiceNumber", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.invoiceNumber
@@ -290,7 +309,9 @@ export function InvoiceFormESF({
                 placeholder="СФ-001 (опционально)"
               />
               {errors.invoiceNumber && (
-                <p className="mt-1 text-sm text-red-500">{errors.invoiceNumber}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.invoiceNumber}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Если не указан, будет сгенерирован автоматически
@@ -305,7 +326,9 @@ export function InvoiceFormESF({
               <input
                 type="date"
                 value={formData.deliveryDate}
-                onChange={(e) => handleFieldChange("deliveryDate", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("deliveryDate", e.target.value)
+                }
                 disabled={isLoading}
                 max={new Date().toISOString().split("T")[0]}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
@@ -315,7 +338,9 @@ export function InvoiceFormESF({
                 } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               />
               {errors.deliveryDate && (
-                <p className="mt-1 text-sm text-red-500">{errors.deliveryDate}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.deliveryDate}
+                </p>
               )}
             </div>
 
@@ -327,7 +352,9 @@ export function InvoiceFormESF({
               <input
                 type="date"
                 value={formData.invoiceDate}
-                onChange={(e) => handleFieldChange("invoiceDate", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("invoiceDate", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.invoiceDate
@@ -336,7 +363,9 @@ export function InvoiceFormESF({
                 } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               />
               {errors.invoiceDate && (
-                <p className="mt-1 text-sm text-red-500">{errors.invoiceDate}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.invoiceDate}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Если не указана, используется текущая дата
@@ -350,7 +379,9 @@ export function InvoiceFormESF({
               </label>
               <select
                 value={formData.currencyCode}
-                onChange={(e) => handleFieldChange("currencyCode", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("currencyCode", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.currencyCode
@@ -365,7 +396,9 @@ export function InvoiceFormESF({
                 ))}
               </select>
               {errors.currencyCode && (
-                <p className="mt-1 text-sm text-red-500">{errors.currencyCode}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.currencyCode}
+                </p>
               )}
             </div>
 
@@ -376,7 +409,9 @@ export function InvoiceFormESF({
               </label>
               <select
                 value={formData.taxRateVATCode}
-                onChange={(e) => handleFieldChange("taxRateVATCode", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("taxRateVATCode", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.taxRateVATCode
@@ -391,7 +426,9 @@ export function InvoiceFormESF({
                 ))}
               </select>
               {errors.taxRateVATCode && (
-                <p className="mt-1 text-sm text-red-500">{errors.taxRateVATCode}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.taxRateVATCode}
+                </p>
               )}
             </div>
           </div>
@@ -411,7 +448,9 @@ export function InvoiceFormESF({
               <input
                 type="text"
                 value={formData.contractorTin}
-                onChange={(e) => handleFieldChange("contractorTin", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("contractorTin", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.contractorTin
@@ -421,7 +460,9 @@ export function InvoiceFormESF({
                 placeholder="01206200110100"
               />
               {errors.contractorTin && (
-                <p className="mt-1 text-sm text-red-500">{errors.contractorTin}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.contractorTin}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 14 цифр для резидентов КР
@@ -429,21 +470,15 @@ export function InvoiceFormESF({
             </div>
 
             {/* Резидент */}
-            <div className="flex items-center pt-6">
-              <input
-                type="checkbox"
+            <div className="pt-6">
+              <Switch
                 id="isResident"
                 checked={formData.isResident}
-                onChange={(e) => handleFieldChange("isResident", e.target.checked)}
+                onChange={(checked) => handleFieldChange("isResident", checked)}
                 disabled={isLoading}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                label="Покупатель - резидент Кыргызстана"
+                labelPosition="right"
               />
-              <label
-                htmlFor="isResident"
-                className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Покупатель - резидент Кыргызстана
-              </label>
             </div>
 
             {/* Банковский счет поставщика */}
@@ -454,7 +489,9 @@ export function InvoiceFormESF({
               <input
                 type="text"
                 value={formData.supplierBankAccount}
-                onChange={(e) => handleFieldChange("supplierBankAccount", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("supplierBankAccount", e.target.value)
+                }
                 disabled={isLoading}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
                 placeholder="1234567890123456789012"
@@ -469,7 +506,9 @@ export function InvoiceFormESF({
               <input
                 type="text"
                 value={formData.contractorBankAccount}
-                onChange={(e) => handleFieldChange("contractorBankAccount", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("contractorBankAccount", e.target.value)
+                }
                 disabled={isLoading}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
                 placeholder="1234567890123456789012"
@@ -491,7 +530,9 @@ export function InvoiceFormESF({
               </label>
               <select
                 value={formData.deliveryTypeCode}
-                onChange={(e) => handleFieldChange("deliveryTypeCode", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("deliveryTypeCode", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.deliveryTypeCode
@@ -519,7 +560,9 @@ export function InvoiceFormESF({
                 </option>
               </select>
               {errors.deliveryTypeCode && (
-                <p className="mt-1 text-sm text-red-500">{errors.deliveryTypeCode}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.deliveryTypeCode}
+                </p>
               )}
             </div>
 
@@ -530,7 +573,9 @@ export function InvoiceFormESF({
               </label>
               <select
                 value={formData.paymentCode}
-                onChange={(e) => handleFieldChange("paymentCode", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("paymentCode", e.target.value)
+                }
                 disabled={isLoading}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 ${
                   errors.paymentCode
@@ -558,7 +603,9 @@ export function InvoiceFormESF({
                 </option>
               </select>
               {errors.paymentCode && (
-                <p className="mt-1 text-sm text-red-500">{errors.paymentCode}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.paymentCode}
+                </p>
               )}
             </div>
           </div>
@@ -576,7 +623,9 @@ export function InvoiceFormESF({
           {errors.catalogEntries && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
-              <p className="text-sm text-red-700 dark:text-red-300">{errors.catalogEntries}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {errors.catalogEntries}
+              </p>
             </div>
           )}
         </div>

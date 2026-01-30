@@ -17,7 +17,7 @@ export function useCatalogHealth() {
   const check = async () => {
     setChecking(true);
     try {
-      const response = await fetch("/api/catalog/health");
+      const response = await fetch("/api/v1/health");
       const data = await response.json();
       setHealth(data);
     } catch (error) {

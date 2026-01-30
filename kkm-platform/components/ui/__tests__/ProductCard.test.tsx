@@ -33,7 +33,7 @@ describe("ProductCard", () => {
   it("should render product image when image is provided", () => {
     const handleAddToCart = vi.fn();
     const { container } = render(
-      <ProductCard product={mockProduct} onAddToCart={handleAddToCart} />
+      <ProductCard product={mockProduct} onAddToCart={handleAddToCart} />,
     );
 
     const image = container.querySelector("img");
@@ -44,13 +44,16 @@ describe("ProductCard", () => {
   it("should render placeholder icon when image is not provided", () => {
     const handleAddToCart = vi.fn();
     const { container } = render(
-      <ProductCard product={mockProductWithoutImage} onAddToCart={handleAddToCart} />
+      <ProductCard
+        product={mockProductWithoutImage}
+        onAddToCart={handleAddToCart}
+      />,
     );
 
     // Check for Package icon placeholder
     const placeholder = container.querySelector(".bg-gray-700");
     expect(placeholder).toBeInTheDocument();
-    
+
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
@@ -73,7 +76,12 @@ describe("ProductCard", () => {
       price: 100,
     };
 
-    render(<ProductCard product={productWithWholePrice} onAddToCart={handleAddToCart} />);
+    render(
+      <ProductCard
+        product={productWithWholePrice}
+        onAddToCart={handleAddToCart}
+      />,
+    );
 
     expect(screen.getByText("100.00 ₽")).toBeInTheDocument();
   });
@@ -86,7 +94,7 @@ describe("ProductCard", () => {
     };
 
     const { container } = render(
-      <ProductCard product={longNameProduct} onAddToCart={handleAddToCart} />
+      <ProductCard product={longNameProduct} onAddToCart={handleAddToCart} />,
     );
 
     const title = screen.getByText(longNameProduct.name);
@@ -96,7 +104,7 @@ describe("ProductCard", () => {
   it("should have hover effects applied via CSS classes", () => {
     const handleAddToCart = vi.fn();
     const { container } = render(
-      <ProductCard product={mockProduct} onAddToCart={handleAddToCart} />
+      <ProductCard product={mockProduct} onAddToCart={handleAddToCart} />,
     );
 
     const card = screen.getByRole("button");

@@ -168,7 +168,7 @@ func (rc *RouteConfigurator) configureBankAccountRoutes(protected *gin.RouterGro
 
 // configureUserRoutes конфигурирует маршруты пользователей
 func (rc *RouteConfigurator) configureUserRoutes(api *gin.RouterGroup) {
-	userHandler := NewUserHandler(rc.container.UserService(), rc.logger)
+	userHandler := NewUserHandler(rc.container.UserService(), rc.container.UserQueryService(), rc.logger)
 
 	// Public routes с rate limiting для защиты от brute-force
 	api.POST("/users/register", rc.authRateLimiter.Middleware(), userHandler.Register)
@@ -183,7 +183,7 @@ func (rc *RouteConfigurator) configureUserRoutes(api *gin.RouterGroup) {
 
 // configureProtectedUserRoutes конфигурирует защищенные маршруты пользователей
 func (rc *RouteConfigurator) configureProtectedUserRoutes(protected *gin.RouterGroup) {
-	userHandler := NewUserHandler(rc.container.UserService(), rc.logger)
+	userHandler := NewUserHandler(rc.container.UserService(), rc.container.UserQueryService(), rc.logger)
 	users := protected.Group("/users")
 	{
 		users.GET("/me", userHandler.GetMe)
@@ -193,6 +193,7 @@ func (rc *RouteConfigurator) configureProtectedUserRoutes(protected *gin.RouterG
 		users.PUT("/profile", userHandler.UpdateProfile)
 		users.PUT("/password", userHandler.ChangePassword)
 		users.GET("", middleware.RequireAdmin(rc.logger), userHandler.ListUsers)
+		users.POST("", middleware.RequireAdmin(rc.logger), userHandler.Register) // Создание пользователя администратором
 	}
 }
 

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { Permission } from '@/types/entities';
-import { ShieldAlert } from 'lucide-react';
-import { ReactNode, useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+import { Permission } from "@/types/entities";
+import { ShieldAlert } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -23,21 +23,29 @@ export default function ProtectedRoute({
   const tokens = useAuthStore((state) => state.tokens);
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(useAuthStore.persist.hasHydrated());
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setIsHydrated(true);
+    });
+    return () => {
+      unsub();
+    };
+  }, []);
 
   // Проверяем авторизацию после гидрации
   useEffect(() => {
-    // Даём время на hydration Zustand из localStorage
-    const timer = setTimeout(() => {
-      if (!hasRedirected && (!user || !tokens?.accessToken)) {
-        console.log('[ProtectedRoute] Not authenticated, redirecting to /auth');
-        setHasRedirected(true);
-        router.replace('/auth');
-      }
-      setIsInitialized(true);
-    }, 100);
+    if (!isHydrated) return;
 
-    return () => clearTimeout(timer);
-  }, [hasRedirected, user, tokens, router]);
+    if (!hasRedirected && (!user || !tokens?.accessToken)) {
+      console.log("[ProtectedRoute] Not authenticated, redirecting to /auth");
+      setHasRedirected(true);
+      router.replace("/auth");
+    }
+    setIsInitialized(true);
+  }, [hasRedirected, user, tokens, router, isHydrated]);
 
   // Показываем загрузку пока проверяем авторизацию
   if (!isInitialized) {
@@ -59,7 +67,9 @@ export default function ProtectedRoute({
         <div className="flex items-center justify-center h-screen bg-gray-950">
           <div className="text-center">
             <ShieldAlert className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-300 mb-2">Требуется авторизация</h3>
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">
+              Требуется авторизация
+            </h3>
             <p className="text-gray-500">Пожалуйста, войдите в систему</p>
           </div>
         </div>
@@ -69,21 +79,26 @@ export default function ProtectedRoute({
 
   const hasReq = requiredPermission ? hasPermission(requiredPermission) : true;
 
-  if (requiredPermission && !hasReq){
+  if (requiredPermission && !hasReq) {
     return (
       fallback || (
         <div className="flex items-center justify-center h-screen bg-gray-950">
           <div className="text-center max-w-md">
             <ShieldAlert className="w-16 h-16 text-red-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-300 mb-2">Доступ запрещен</h3>
-            <p className="text-gray-500 mb-4">У вас нет прав для просмотра этого раздела</p>
-            
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">
+              Доступ запрещен
+            </h3>
+            <p className="text-gray-500 mb-4">
+              У вас нет прав для просмотра этого раздела
+            </p>
+
             <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-4 text-left">
               <p className="text-sm text-yellow-200 mb-2">
                 <span className="font-semibold">💡 Что дальше?</span>
               </p>
               <p className="text-xs text-yellow-100 mb-3">
-                Обратитесь к администратору системы для получения необходимых прав доступа.
+                Обратитесь к администратору системы для получения необходимых
+                прав доступа.
               </p>
               <p className="text-xs text-yellow-100 mb-2">
                 Администратор должен:
@@ -101,13 +116,17 @@ export default function ProtectedRoute({
                   📋 Информация для администратора
                 </summary>
                 <pre className="mt-2 bg-gray-900 p-3 rounded overflow-auto text-gray-400 text-xs">
-{JSON.stringify({
-  email: user.email,
-  currentRole: user.role,
-  requiredPermission,
-  userPermissions: user.permissions,
-  hasPermissionResult: hasReq,
-}, null, 2)}
+                  {JSON.stringify(
+                    {
+                      email: user.email,
+                      currentRole: user.role,
+                      requiredPermission,
+                      userPermissions: user.permissions,
+                      hasPermissionResult: hasReq,
+                    },
+                    null,
+                    2,
+                  )}
                 </pre>
               </details>
             )}

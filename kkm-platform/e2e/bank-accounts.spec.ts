@@ -275,9 +275,10 @@ test.describe("Bank Accounts Management", () => {
 
   test.describe("Bank Accounts List", () => {
     test("should display list of bank accounts", async ({ page }) => {
-      await expect(
-        page.locator('[data-testid="bank-account-item"]'),
-      ).toHaveCount({ min: 0 });
+      const count = await page
+        .locator('[data-testid="bank-account-item"]')
+        .count();
+      expect(count).toBeGreaterThanOrEqual(0);
     });
 
     test("should show account details in list", async ({ page }) => {

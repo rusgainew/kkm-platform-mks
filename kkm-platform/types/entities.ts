@@ -110,6 +110,7 @@ export interface CreateCompanyRequest {
   email: string;
   website?: string;
   description?: string;
+  owner_id: string;
 }
 
 export interface UpdateCompanyRequest {
