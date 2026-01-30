@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/domain/ports/services.go содержит реализацию пакета ports.
 package ports
 
 import (

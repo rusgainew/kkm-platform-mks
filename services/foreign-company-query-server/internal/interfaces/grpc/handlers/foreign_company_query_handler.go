@@ -1,3 +1,4 @@
+// Файл foreign-company-query-server/internal/interfaces/grpc/handlers/foreign_company_query_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

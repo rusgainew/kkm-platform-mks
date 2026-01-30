@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/interfaces/grpc/handlers/user_query_handler_test.go содержит реализацию пакета handlers.
 package handlers
 
 import (
@@ -38,6 +39,11 @@ func (m *MockUserRepository) SearchUsers(ctx context.Context, query string, offs
 		return nil, 0, args.Error(2)
 	}
 	return args.Get(0).([]*pb.UserReadModel), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockUserRepository) UpsertUser(ctx context.Context, user *pb.UserReadModel) error {
+	args := m.Called(ctx, user)
+	return args.Error(0)
 }
 
 // MockRedisCache мок для cache

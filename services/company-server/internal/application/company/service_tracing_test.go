@@ -1,3 +1,4 @@
+// Файл company-server/internal/application/company/service_tracing_test.go содержит реализацию пакета company.
 package company
 
 import (

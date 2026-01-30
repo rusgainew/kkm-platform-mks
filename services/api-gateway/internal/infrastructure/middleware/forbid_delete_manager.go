@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/forbid_delete_manager.go содержит реализацию пакета middleware.
 package middleware
 
 import (

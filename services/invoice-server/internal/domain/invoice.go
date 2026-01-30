@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/domain/invoice.go содержит реализацию пакета domain.
 package domain
 
 import (

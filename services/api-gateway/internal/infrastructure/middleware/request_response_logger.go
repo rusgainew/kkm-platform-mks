@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/request_response_logger.go содержит реализацию пакета middleware.
 package middleware
 
 import (

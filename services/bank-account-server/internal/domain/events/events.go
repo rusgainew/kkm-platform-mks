@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/domain/events/events.go содержит реализацию пакета events.
 package events
 
 import (

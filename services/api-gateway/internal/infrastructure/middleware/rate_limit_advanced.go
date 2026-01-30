@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/rate_limit_advanced.go содержит реализацию пакета middleware.
 package middleware
 
 import (

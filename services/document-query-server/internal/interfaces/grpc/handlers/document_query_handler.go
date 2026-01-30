@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/interfaces/grpc/handlers/document_query_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

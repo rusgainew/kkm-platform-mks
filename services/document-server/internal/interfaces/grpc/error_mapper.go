@@ -1,3 +1,4 @@
+// Файл document-server/internal/interfaces/grpc/error_mapper.go содержит реализацию пакета grpc.
 package grpc
 
 import (

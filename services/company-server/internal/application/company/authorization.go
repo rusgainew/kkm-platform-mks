@@ -1,3 +1,4 @@
+// Файл company-server/internal/application/company/authorization.go содержит реализацию пакета company.
 package company
 
 import (

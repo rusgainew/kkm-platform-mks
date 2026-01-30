@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/middleware_test.go содержит реализацию пакета middleware_test.
 package middleware_test
 
 import (

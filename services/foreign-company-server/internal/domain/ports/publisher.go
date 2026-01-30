@@ -1,3 +1,4 @@
+// Файл foreign-company-server/internal/domain/ports/publisher.go содержит реализацию пакета ports.
 package ports
 
 import "context"

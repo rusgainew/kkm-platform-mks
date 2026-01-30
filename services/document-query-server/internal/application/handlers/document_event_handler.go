@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/application/handlers/document_event_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

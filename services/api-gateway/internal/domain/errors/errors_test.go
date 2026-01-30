@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/domain/errors/errors_test.go содержит реализацию пакета errors.
 package errors
 
 import (

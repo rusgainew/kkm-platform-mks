@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/interfaces/grpc/health_handler.go содержит реализацию пакета grpc.
 package grpc
 
 import (

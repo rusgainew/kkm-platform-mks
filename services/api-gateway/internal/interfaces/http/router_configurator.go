@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/router_configurator.go содержит реализацию пакета http.
 package http
 
 import (

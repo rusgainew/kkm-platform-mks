@@ -1,3 +1,4 @@
+// Файл invoice-query-server/internal/domain/ports/repository.go содержит реализацию пакета ports.
 package ports
 
 import (

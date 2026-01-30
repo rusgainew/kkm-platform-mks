@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/infrastructure/messaging/noop_publisher.go содержит реализацию пакета messaging.
 package messaging
 
 import (

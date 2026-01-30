@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/infrastructure/repository/inmemory_user_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

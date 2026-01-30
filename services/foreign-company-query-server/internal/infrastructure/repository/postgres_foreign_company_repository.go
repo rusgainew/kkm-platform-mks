@@ -1,3 +1,4 @@
+// Файл foreign-company-query-server/internal/infrastructure/repository/postgres_foreign_company_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/auth/service.go содержит реализацию пакета auth.
 package auth
 
 import (

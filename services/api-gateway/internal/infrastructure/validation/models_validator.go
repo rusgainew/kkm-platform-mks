@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/validation/models_validator.go содержит реализацию пакета validation.
 package validation
 
 import (

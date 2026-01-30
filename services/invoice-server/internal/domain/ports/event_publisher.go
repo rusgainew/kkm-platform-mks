@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/domain/ports/event_publisher.go содержит реализацию пакета ports.
 package ports
 
 import "context"

@@ -1,3 +1,4 @@
+// Файл catalog-query-server/internal/infrastructure/repository/inmemory_catalog_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

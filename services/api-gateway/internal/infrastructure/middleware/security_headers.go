@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/security_headers.go содержит реализацию пакета middleware.
 package middleware
 
 import (

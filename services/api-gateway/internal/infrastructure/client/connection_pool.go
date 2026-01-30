@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/client/connection_pool.go содержит реализацию пакета client.
 package client
 
 import (

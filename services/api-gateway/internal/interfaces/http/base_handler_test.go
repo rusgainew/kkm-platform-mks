@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/base_handler_test.go содержит реализацию пакета http_test.
 package http_test
 
 import (

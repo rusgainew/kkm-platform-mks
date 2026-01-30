@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/application/bankaccount/service.go содержит реализацию пакета bankaccount.
 package bankaccount
 
 import (

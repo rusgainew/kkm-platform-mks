@@ -1,3 +1,4 @@
+// Файл company-server/internal/domain/employee.go содержит реализацию пакета domain.
 package domain
 
 import (

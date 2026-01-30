@@ -1,3 +1,4 @@
+// Файл invoice-query-server/internal/infrastructure/repository/inmemory_invoice_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/infrastructure/repository/postgres_financial_repo.go содержит реализацию пакета repository.
 package repository
 
 import (

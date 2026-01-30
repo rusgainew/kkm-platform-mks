@@ -1,3 +1,4 @@
+// Файл invoice-query-server/internal/infrastructure/repository/postgres_invoice_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

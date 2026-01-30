@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/domain/models/models.go содержит реализацию пакета models.
 package models
 
 // Company модель компании (Organization)

@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/foreign_company_query_handler_test.go содержит реализацию пакета http.
 package http
 
 import (

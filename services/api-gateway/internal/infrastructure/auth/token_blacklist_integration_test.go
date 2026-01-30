@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/auth/token_blacklist_integration_test.go содержит реализацию пакета auth.
 package auth
 
 import (

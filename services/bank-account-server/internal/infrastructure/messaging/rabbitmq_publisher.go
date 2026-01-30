@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/infrastructure/messaging/rabbitmq_publisher.go содержит реализацию пакета messaging.
 package messaging
 
 import (

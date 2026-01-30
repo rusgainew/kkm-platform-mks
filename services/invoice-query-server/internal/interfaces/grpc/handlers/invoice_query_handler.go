@@ -1,3 +1,4 @@
+// Файл invoice-query-server/internal/interfaces/grpc/handlers/invoice_query_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

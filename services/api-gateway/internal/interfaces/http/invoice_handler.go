@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/invoice_handler.go содержит реализацию пакета http.
 package http
 
 import (

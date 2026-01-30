@@ -1,3 +1,4 @@
+// Файл foreign-company-query-server/internal/infrastructure/migration/migration.go содержит реализацию пакета migration.
 package migration
 
 import (

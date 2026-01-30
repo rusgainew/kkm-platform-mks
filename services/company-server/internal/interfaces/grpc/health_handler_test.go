@@ -1,3 +1,4 @@
+// Файл company-server/internal/interfaces/grpc/health_handler_test.go содержит реализацию пакета grpc.
 package grpc
 
 import (

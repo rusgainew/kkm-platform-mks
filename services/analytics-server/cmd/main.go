@@ -1,3 +1,4 @@
+// Файл analytics-server/cmd/main.go содержит реализацию пакета main.
 package main
 
 import (

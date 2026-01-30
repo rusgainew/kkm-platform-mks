@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/tests/integration/services_test.go содержит реализацию пакета integration.
 package integration
 
 import (

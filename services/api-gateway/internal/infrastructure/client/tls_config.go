@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/client/tls_config.go содержит реализацию пакета client.
 package client
 
 import (

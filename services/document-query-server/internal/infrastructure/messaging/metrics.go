@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/infrastructure/messaging/metrics.go содержит реализацию пакета messaging.
 package messaging
 
 import (

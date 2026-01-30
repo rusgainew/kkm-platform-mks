@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/middleware/rbac.go содержит реализацию пакета middleware.
 package middleware
 
 import (

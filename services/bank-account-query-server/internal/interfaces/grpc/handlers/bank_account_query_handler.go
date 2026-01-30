@@ -1,3 +1,4 @@
+// Файл bank-account-query-server/internal/interfaces/grpc/handlers/bank_account_query_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

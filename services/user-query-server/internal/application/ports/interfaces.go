@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/application/ports/interfaces.go содержит реализацию пакета ports.
 package ports
 
 import (

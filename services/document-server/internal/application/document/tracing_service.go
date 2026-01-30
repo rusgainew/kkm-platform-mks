@@ -1,3 +1,4 @@
+// Файл document-server/internal/application/document/tracing_service.go содержит реализацию пакета document.
 package document
 
 import (

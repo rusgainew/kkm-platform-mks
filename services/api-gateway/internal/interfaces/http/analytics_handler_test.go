@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/analytics_handler_test.go содержит реализацию пакета http.
 package http
 
 import (

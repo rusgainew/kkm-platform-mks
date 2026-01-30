@@ -1,3 +1,4 @@
+// Файл document-server/internal/interfaces/grpc/document_handler_with_tracing.go содержит реализацию пакета grpc.
 package grpc
 
 import (

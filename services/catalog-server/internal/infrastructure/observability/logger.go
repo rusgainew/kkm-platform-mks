@@ -1,3 +1,4 @@
+// Файл catalog-server/internal/infrastructure/observability/logger.go содержит реализацию пакета observability.
 package observability
 
 import (

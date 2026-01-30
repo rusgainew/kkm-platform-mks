@@ -1,3 +1,4 @@
+// Файл company-server/internal/infrastructure/repository/postgres_organization_repo.go содержит реализацию пакета repository.
 package repository
 
 import (

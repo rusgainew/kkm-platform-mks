@@ -1,3 +1,4 @@
+// Файл catalog-server/internal/application/catalog/service.go содержит реализацию пакета catalog.
 package catalog
 
 import (

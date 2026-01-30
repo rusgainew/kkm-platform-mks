@@ -1,3 +1,4 @@
+// Файл analytics-server/internal/application/services/analytics_service.go содержит реализацию пакета services.
 package services
 
 import (

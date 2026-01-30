@@ -1,3 +1,4 @@
+// Файл document-server/internal/domain/ports/cache.go содержит реализацию пакета ports.
 package ports
 
 import (

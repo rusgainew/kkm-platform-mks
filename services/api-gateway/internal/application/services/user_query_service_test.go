@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/application/services/user_query_service_test.go содержит реализацию пакета services.
 package services
 
 import (

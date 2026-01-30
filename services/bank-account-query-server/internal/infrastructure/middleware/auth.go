@@ -1,3 +1,4 @@
+// Файл bank-account-query-server/internal/infrastructure/middleware/auth.go содержит реализацию пакета middleware.
 package middleware
 
 import (

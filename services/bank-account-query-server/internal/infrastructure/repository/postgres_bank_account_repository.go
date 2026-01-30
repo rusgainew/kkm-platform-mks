@@ -1,3 +1,4 @@
+// Файл bank-account-query-server/internal/infrastructure/repository/postgres_bank_account_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

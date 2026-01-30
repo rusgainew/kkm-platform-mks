@@ -1,3 +1,4 @@
+// Файл document-server/internal/application/document/validation_test.go содержит реализацию пакета document.
 package document
 
 import (

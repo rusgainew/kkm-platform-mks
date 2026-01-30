@@ -1,3 +1,4 @@
+// Файл foreign-company-server/internal/application/foreigncompany/service.go содержит реализацию пакета foreigncompany.
 package foreigncompany
 
 import (

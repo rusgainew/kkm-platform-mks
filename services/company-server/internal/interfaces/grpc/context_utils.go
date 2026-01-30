@@ -1,3 +1,4 @@
+// Файл company-server/internal/interfaces/grpc/context_utils.go содержит реализацию пакета grpc.
 package grpc
 
 import (

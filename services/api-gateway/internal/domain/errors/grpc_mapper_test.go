@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/domain/errors/grpc_mapper_test.go содержит реализацию пакета errors_test.
 package errors_test
 
 import (

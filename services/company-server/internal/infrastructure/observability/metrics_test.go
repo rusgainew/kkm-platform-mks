@@ -1,3 +1,4 @@
+// Файл company-server/internal/infrastructure/observability/metrics_test.go содержит реализацию пакета observability.
 package observability
 
 import (

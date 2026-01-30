@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/repository/optimistic_locking.go содержит реализацию пакета repository.
 package repository
 
 import (

@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/infrastructure/repository/upsert.go содержит реализацию пакета repository.
 package repository
 
 import (

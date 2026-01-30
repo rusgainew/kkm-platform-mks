@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/interfaces/grpc/bankaccount_handler.go содержит реализацию пакета grpc.
 package grpc
 
 import (

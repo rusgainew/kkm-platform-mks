@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/application/handlers/user_event_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

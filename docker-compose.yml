@@ -475,7 +475,7 @@ services:
   analytics-server:
     build:
       context: .
-      dockerfile: services/analytics-server/Dockerfile
+      dockerfile: services/analytics-server-python/Dockerfile
     container_name: analytics-server
     restart: unless-stopped
     environment:

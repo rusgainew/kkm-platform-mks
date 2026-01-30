@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/interfaces/grpc/invoice_handlers_test.go содержит реализацию пакета grpc.
 package grpc
 
 import (

@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/infrastructure/observability/logger.go содержит реализацию пакета observability.
 package observability
 
 import (

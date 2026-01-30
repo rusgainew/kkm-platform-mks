@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/middleware/rate_limit.go содержит реализацию пакета middleware.
 package middleware
 
 import (

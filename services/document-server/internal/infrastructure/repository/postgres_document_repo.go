@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/repository/postgres_document_repo.go содержит реализацию пакета repository.
 package repository
 
 import (

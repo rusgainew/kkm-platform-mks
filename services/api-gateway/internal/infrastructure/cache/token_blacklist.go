@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/cache/token_blacklist.go содержит реализацию пакета cache.
 package cache
 
 import (

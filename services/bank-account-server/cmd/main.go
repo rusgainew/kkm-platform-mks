@@ -1,3 +1,4 @@
+// Файл bank-account-server/cmd/main.go содержит реализацию пакета main.
 package main
 
 import (

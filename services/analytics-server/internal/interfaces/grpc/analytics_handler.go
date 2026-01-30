@@ -1,3 +1,4 @@
+// Файл analytics-server/internal/interfaces/grpc/analytics_handler.go содержит реализацию пакета grpc.
 package grpc
 
 import (

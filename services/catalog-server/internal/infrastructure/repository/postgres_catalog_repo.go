@@ -1,3 +1,4 @@
+// Файл catalog-server/internal/infrastructure/repository/postgres_catalog_repo.go содержит реализацию пакета repository.
 package repository
 
 import (

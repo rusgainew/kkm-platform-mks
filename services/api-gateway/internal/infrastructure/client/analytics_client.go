@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/client/analytics_client.go содержит реализацию пакета client.
 package client
 
 import (

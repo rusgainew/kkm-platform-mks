@@ -1,3 +1,4 @@
+// Файл api-gateway/pkg/context/context.go содержит реализацию пакета context.
 package context
 
 import (

@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/masking/masking_test.go содержит реализацию пакета masking.
 package masking
 
 import (

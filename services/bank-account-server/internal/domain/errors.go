@@ -1,3 +1,4 @@
+// Файл bank-account-server/internal/domain/errors.go содержит реализацию пакета domain.
 package domain
 
 import "errors"

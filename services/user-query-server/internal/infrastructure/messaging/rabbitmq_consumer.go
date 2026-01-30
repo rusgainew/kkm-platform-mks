@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/infrastructure/messaging/rabbitmq_consumer.go содержит реализацию пакета messaging.
 package messaging
 
 import (

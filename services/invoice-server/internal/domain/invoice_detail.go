@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/domain/invoice_detail.go содержит реализацию пакета domain.
 package domain
 
 // InvoiceDetail представляет позицию (строку) в счете-фактуре

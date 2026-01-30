@@ -1,3 +1,4 @@
+// Файл catalog-query-server/internal/interfaces/grpc/handlers/catalog_query_handler.go содержит реализацию пакета handlers.
 package handlers
 
 import (

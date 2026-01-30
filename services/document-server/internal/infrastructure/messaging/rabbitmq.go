@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/messaging/rabbitmq.go содержит реализацию пакета messaging.
 package messaging
 
 import (

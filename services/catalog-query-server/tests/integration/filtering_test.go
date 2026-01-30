@@ -1,3 +1,4 @@
+// Файл catalog-query-server/tests/integration/filtering_test.go содержит реализацию пакета integration_test.
 package integration_test
 
 import (

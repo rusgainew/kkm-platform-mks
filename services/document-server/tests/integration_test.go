@@ -1,3 +1,4 @@
+// Файл document-server/tests/integration_test.go содержит реализацию пакета tests.
 package tests
 
 import (

@@ -1,3 +1,4 @@
+// Файл analytics-server/internal/infrastructure/observability/tracer.go содержит реализацию пакета observability.
 package observability
 
 import (

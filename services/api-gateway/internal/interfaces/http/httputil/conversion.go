@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/interfaces/http/httputil/conversion.go содержит реализацию пакета httputil.
 package httputil
 
 import (

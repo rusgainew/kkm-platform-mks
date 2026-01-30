@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/observability/tracing.go содержит реализацию пакета observability.
 package observability
 
 import (

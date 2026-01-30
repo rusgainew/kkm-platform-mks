@@ -1,3 +1,4 @@
+// Файл foreign-company-server/internal/interfaces/grpc/foreign_company_handler.go содержит реализацию пакета grpc.
 package grpc
 
 import (

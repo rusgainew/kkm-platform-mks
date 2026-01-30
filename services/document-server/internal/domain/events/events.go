@@ -1,3 +1,4 @@
+// Файл document-server/internal/domain/events/events.go содержит реализацию пакета events.
 package events
 
 // DocumentCreatedEvent события создания документа

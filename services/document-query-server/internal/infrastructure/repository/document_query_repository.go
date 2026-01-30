@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/infrastructure/repository/document_query_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

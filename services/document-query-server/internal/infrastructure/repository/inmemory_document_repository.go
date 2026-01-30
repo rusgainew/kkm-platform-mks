@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/infrastructure/repository/inmemory_document_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

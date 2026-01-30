@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/infrastructure/health/health.go содержит реализацию пакета health.
 package health
 
 import (

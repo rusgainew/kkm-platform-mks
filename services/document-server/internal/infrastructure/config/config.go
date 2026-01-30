@@ -1,3 +1,4 @@
+// Файл document-server/internal/infrastructure/config/config.go содержит реализацию пакета config.
 package config
 
 import (

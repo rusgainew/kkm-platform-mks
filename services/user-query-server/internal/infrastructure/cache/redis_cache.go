@@ -1,3 +1,4 @@
+// Файл user-query-server/internal/infrastructure/cache/redis_cache.go содержит реализацию пакета cache.
 package cache
 
 import (

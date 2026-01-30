@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/domain/financial.go содержит реализацию пакета domain.
 package domain
 
 // FinancialData содержит финансовые данные счета

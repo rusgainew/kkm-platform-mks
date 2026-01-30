@@ -1,3 +1,4 @@
+// Файл analytics-server/internal/infrastructure/repository/postgres_analytics_repository.go содержит реализацию пакета repository.
 package repository
 
 import (

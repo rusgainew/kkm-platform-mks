@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/auth/key_provider.go содержит реализацию пакета auth.
 package auth
 
 import (

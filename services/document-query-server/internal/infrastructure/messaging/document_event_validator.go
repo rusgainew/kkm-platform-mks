@@ -1,3 +1,4 @@
+// Файл document-query-server/internal/infrastructure/messaging/document_event_validator.go содержит реализацию пакета messaging.
 package messaging
 
 import (

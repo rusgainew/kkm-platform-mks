@@ -1,3 +1,4 @@
+// Файл analytics-server/internal/infrastructure/repository/analytics_repository_metrics.go содержит реализацию пакета repository.
 package repository
 
 import (

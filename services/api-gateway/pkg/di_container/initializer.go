@@ -1,3 +1,4 @@
+// Файл api-gateway/pkg/di_container/initializer.go содержит реализацию пакета di_container.
 package di_container
 
 import (

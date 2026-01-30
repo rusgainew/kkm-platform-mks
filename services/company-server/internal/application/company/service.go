@@ -1,3 +1,4 @@
+// Файл company-server/internal/application/company/service.go содержит реализацию пакета company.
 package company
 
 import (

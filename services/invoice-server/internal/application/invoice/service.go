@@ -1,3 +1,4 @@
+// Файл invoice-server/internal/application/invoice/service.go содержит реализацию пакета invoice.
 package invoice
 
 import (

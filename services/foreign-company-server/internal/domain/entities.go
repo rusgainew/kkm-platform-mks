@@ -1,3 +1,4 @@
+// Файл foreign-company-server/internal/domain/entities.go содержит реализацию пакета domain.
 package domain
 
 import (

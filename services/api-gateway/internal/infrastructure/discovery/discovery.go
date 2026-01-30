@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/discovery/discovery.go содержит реализацию пакета discovery.
 package discovery
 
 import (

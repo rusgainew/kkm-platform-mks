@@ -1,3 +1,4 @@
+// Файл api-gateway/internal/infrastructure/auth/key_rotation_test.go содержит реализацию пакета auth.
 package auth
 
 import (

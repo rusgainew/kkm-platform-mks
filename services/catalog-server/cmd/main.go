@@ -1,3 +1,4 @@
+// Файл catalog-server/cmd/main.go содержит реализацию пакета main.
 package main
 
 import (
