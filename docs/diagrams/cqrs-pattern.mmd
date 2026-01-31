@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant Client as Клиент
+    participant Gateway as API Gateway
+    participant CmdSvc as Command Service
+    participant DB as PostgreSQL
+    participant MQ as RabbitMQ
+    participant QuerySvc as Query Service
+    participant Cache as Redis
+
+    %% Write Operation (Command)
+    Client->>Gateway: POST /api/v1/users (Create User)
+    Gateway->>CmdSvc: gRPC CreateUser()
+    CmdSvc->>DB: INSERT INTO users
+    DB-->>CmdSvc: OK
+    CmdSvc->>MQ: Publish UserCreated Event
+    CmdSvc-->>Gateway: User ID
+    Gateway-->>Client: 201 Created
+
+    %% Event Processing
+    MQ->>QuerySvc: UserCreated Event
+    QuerySvc->>DB: Read Latest User Data
+    QuerySvc->>Cache: Update Cache
+    
+    %% Read Operation (Query)
+    Client->>Gateway: GET /api/v1/users/:id
+    Gateway->>QuerySvc: gRPC GetUser()
+    QuerySvc->>Cache: Check Cache
+    alt Cache Hit
+        Cache-->>QuerySvc: User Data
+    else Cache Miss
+        QuerySvc->>DB: SELECT FROM users
+        DB-->>QuerySvc: User Data
+        QuerySvc->>Cache: Store in Cache
+    end
+    QuerySvc-->>Gateway: User Data
+    Gateway-->>Client: 200 OK + User JSON

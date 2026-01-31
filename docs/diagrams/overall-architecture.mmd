@@ -1,0 +1,184 @@
+graph TB
+    subgraph "Клиент"
+        Client[Браузер / HTTP Client]
+        Frontend[Next.js Frontend<br/>:4000]
+    end
+
+    subgraph "Entry Point"
+        Nginx[Nginx Reverse Proxy<br/>:80/:443<br/>Rate Limiting, Gzip, SSL]
+    end
+
+    subgraph "API Layer"
+        Gateway[API Gateway<br/>:8080 HTTP<br/>:9090 gRPC<br/>REST → gRPC Router]
+    end
+
+    subgraph "Command Services - CQRS Write Side"
+        UserCmd[User Server<br/>:50051<br/>Metrics: 9101]
+        CompanyCmd[Company Server<br/>:50052<br/>Metrics: 9103]
+        CatalogCmd[Catalog Server<br/>:50053<br/>Metrics: 9105]
+        InvoiceCmd[Invoice Server<br/>:50054<br/>Metrics: 9107]
+        BankCmd[Bank Account Server<br/>:50055<br/>Metrics: 9109]
+        ForeignCmd[Foreign Company Server<br/>:50056<br/>Metrics: 9111]
+        DocumentCmd[Document Server<br/>:50057<br/>Metrics: 9113]
+    end
+
+    subgraph "Query Services - CQRS Read Side"
+        UserQuery[User Query Server<br/>:50061<br/>Metrics: 9102]
+        CatalogQuery[Catalog Query Server<br/>:50063<br/>Metrics: 9106]
+        InvoiceQuery[Invoice Query Server<br/>:50064<br/>Metrics: 9108]
+        BankQuery[Bank Account Query<br/>:50065<br/>Metrics: 9110]
+        ForeignQuery[Foreign Company Query<br/>:50066<br/>Metrics: 9112]
+        DocumentQuery[Document Query Server<br/>:50067<br/>Metrics: 9114]
+    end
+
+    Analytics[Analytics Server Python<br/>:50060<br/>Metrics: 9115]
+
+    subgraph "Message Broker"
+        RabbitMQ[RabbitMQ<br/>:5672 AMQP<br/>:15672 Management UI<br/>События/Синхронизация]
+    end
+
+    subgraph "Data Layer - PostgreSQL DB per Service"
+        DB_User[(postgres-user<br/>:5432<br/>user_db)]
+        DB_Company[(postgres-company<br/>company_db)]
+        DB_Catalog[(postgres-catalog<br/>catalog_db)]
+        DB_Invoice[(postgres-invoice<br/>invoice_db)]
+        DB_Bank[(postgres-bank-account<br/>bank_account_db)]
+        DB_Foreign[(postgres-foreign-company<br/>foreign_company_db)]
+        DB_Document[(postgres-document<br/>document_db)]
+    end
+
+    subgraph "Cache Layer"
+        Redis[Redis<br/>:6379<br/>Query Cache &<br/>Session Storage]
+    end
+
+    subgraph "Observability Stack"
+        Prometheus[Prometheus<br/>:9091<br/>Метрики]
+        Grafana[Grafana<br/>:3000<br/>Визуализация]
+        Jaeger[Jaeger<br/>:16686<br/>Distributed Tracing]
+    end
+
+    %% Client Flow
+    Client -->|HTTP/HTTPS| Nginx
+    Client -->|HTTP :4000| Frontend
+    Frontend -->|HTTP API| Nginx
+    Nginx -->|HTTP :8080| Gateway
+
+    %% API Gateway to Services
+    Gateway -->|gRPC| UserCmd
+    Gateway -->|gRPC| CompanyCmd
+    Gateway -->|gRPC| CatalogCmd
+    Gateway -->|gRPC| InvoiceCmd
+    Gateway -->|gRPC| BankCmd
+    Gateway -->|gRPC| ForeignCmd
+    Gateway -->|gRPC| DocumentCmd
+    
+    Gateway -->|gRPC| UserQuery
+    Gateway -->|gRPC| CatalogQuery
+    Gateway -->|gRPC| InvoiceQuery
+    Gateway -->|gRPC| BankQuery
+    Gateway -->|gRPC| ForeignQuery
+    Gateway -->|gRPC| DocumentQuery
+    Gateway -->|gRPC| Analytics
+
+    %% Command Services to Databases
+    UserCmd -->|Write| DB_User
+    CompanyCmd -->|Write| DB_Company
+    CatalogCmd -->|Write| DB_Catalog
+    InvoiceCmd -->|Write| DB_Invoice
+    BankCmd -->|Write| DB_Bank
+    ForeignCmd -->|Write| DB_Foreign
+    DocumentCmd -->|Write| DB_Document
+
+    %% Command Services to RabbitMQ (Events)
+    UserCmd -->|Publish Events| RabbitMQ
+    CompanyCmd -->|Publish Events| RabbitMQ
+    CatalogCmd -->|Publish Events| RabbitMQ
+    InvoiceCmd -->|Publish Events| RabbitMQ
+    BankCmd -->|Publish Events| RabbitMQ
+    ForeignCmd -->|Publish Events| RabbitMQ
+    DocumentCmd -->|Publish Events| RabbitMQ
+
+    %% Query Services from RabbitMQ (Event Handlers)
+    RabbitMQ -->|Subscribe Events| UserQuery
+    RabbitMQ -->|Subscribe Events| CatalogQuery
+    RabbitMQ -->|Subscribe Events| InvoiceQuery
+    RabbitMQ -->|Subscribe Events| BankQuery
+    RabbitMQ -->|Subscribe Events| ForeignQuery
+    RabbitMQ -->|Subscribe Events| DocumentQuery
+
+    %% Query Services to Databases
+    UserQuery -->|Read| DB_User
+    CatalogQuery -->|Read| DB_Catalog
+    InvoiceQuery -->|Read| DB_Invoice
+    BankQuery -->|Read| DB_Bank
+    ForeignQuery -->|Read| DB_Foreign
+    DocumentQuery -->|Read| DB_Document
+
+    %% Query Services to Redis
+    UserQuery <-->|Cache| Redis
+    CatalogQuery <-->|Cache| Redis
+    InvoiceQuery <-->|Cache| Redis
+    BankQuery <-->|Cache| Redis
+    ForeignQuery <-->|Cache| Redis
+    DocumentQuery <-->|Cache| Redis
+
+    %% Analytics Server
+    DB_User -->|Read Aggregated Data| Analytics
+    DB_Company -->|Read Aggregated Data| Analytics
+    DB_Invoice -->|Read Aggregated Data| Analytics
+    Redis <-->|Cache| Analytics
+
+    %% Monitoring
+    UserCmd -->|Metrics :9101| Prometheus
+    CompanyCmd -->|Metrics :9103| Prometheus
+    CatalogCmd -->|Metrics :9105| Prometheus
+    InvoiceCmd -->|Metrics :9107| Prometheus
+    BankCmd -->|Metrics :9109| Prometheus
+    ForeignCmd -->|Metrics :9111| Prometheus
+    DocumentCmd -->|Metrics :9113| Prometheus
+    
+    UserQuery -->|Metrics :9102| Prometheus
+    CatalogQuery -->|Metrics :9106| Prometheus
+    InvoiceQuery -->|Metrics :9108| Prometheus
+    BankQuery -->|Metrics :9110| Prometheus
+    ForeignQuery -->|Metrics :9112| Prometheus
+    DocumentQuery -->|Metrics :9114| Prometheus
+    Analytics -->|Metrics :9115| Prometheus
+    
+    Gateway -->|Metrics :9090| Prometheus
+    Nginx -->|Metrics :9100| Prometheus
+
+    Prometheus -->|Data Source| Grafana
+    
+    Gateway -->|Traces| Jaeger
+    UserCmd -->|Traces| Jaeger
+    CompanyCmd -->|Traces| Jaeger
+    UserQuery -->|Traces| Jaeger
+
+    style Nginx fill:#ff9800,stroke:#e65100,color:#000
+    style Gateway fill:#2196f3,stroke:#0d47a1,color:#fff
+    style Frontend fill:#00bcd4,stroke:#006064,color:#fff
+    
+    style UserCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style CompanyCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style CatalogCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style InvoiceCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style BankCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style ForeignCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    style DocumentCmd fill:#4caf50,stroke:#1b5e20,color:#fff
+    
+    style UserQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    style CatalogQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    style InvoiceQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    style BankQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    style ForeignQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    style DocumentQuery fill:#9c27b0,stroke:#4a148c,color:#fff
+    
+    style Analytics fill:#ff5722,stroke:#bf360c,color:#fff
+    
+    style RabbitMQ fill:#ff6f00,stroke:#e65100,color:#fff
+    style Redis fill:#f44336,stroke:#b71c1c,color:#fff
+    
+    style Prometheus fill:#e91e63,stroke:#880e4f,color:#fff
+    style Grafana fill:#ff9800,stroke:#e65100,color:#000
+    style Jaeger fill:#9e9e9e,stroke:#212121,color:#fff

@@ -1,0 +1,38 @@
+graph LR
+    subgraph "Command Services - Publishers"
+        UserCmd[User Server]
+        CompanyCmd[Company Server]
+        CatalogCmd[Catalog Server]
+        InvoiceCmd[Invoice Server]
+    end
+
+    subgraph "RabbitMQ Exchanges & Queues"
+        Exchange[Topic Exchange<br/>kkm.events]
+        Q_User[Queue: user.events]
+        Q_Catalog[Queue: catalog.events]
+        Q_Invoice[Queue: invoice.events]
+    end
+
+    subgraph "Query Services - Consumers"
+        UserQuery[User Query Server]
+        CatalogQuery[Catalog Query Server]
+        InvoiceQuery[Invoice Query Server]
+    end
+
+    UserCmd -->|user.created<br/>user.updated<br/>user.deleted| Exchange
+    CompanyCmd -->|company.created<br/>company.updated| Exchange
+    CatalogCmd -->|product.created<br/>product.updated| Exchange
+    InvoiceCmd -->|invoice.created<br/>invoice.paid| Exchange
+
+    Exchange -->|Routing Key: user.*| Q_User
+    Exchange -->|Routing Key: catalog.*| Q_Catalog
+    Exchange -->|Routing Key: invoice.*| Q_Invoice
+
+    Q_User -->|Consume| UserQuery
+    Q_Catalog -->|Consume| CatalogQuery
+    Q_Invoice -->|Consume| InvoiceQuery
+
+    style Exchange fill:#ff6f00,stroke:#e65100,color:#fff
+    style Q_User fill:#ffa726,stroke:#f57c00,color:#fff
+    style Q_Catalog fill:#ffa726,stroke:#f57c00,color:#fff
+    style Q_Invoice fill:#ffa726,stroke:#f57c00,color:#fff

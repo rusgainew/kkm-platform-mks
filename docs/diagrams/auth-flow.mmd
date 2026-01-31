@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Client as Клиент
+    participant Nginx as Nginx
+    participant Gateway as API Gateway
+    participant UserCmd as User Server
+    participant DB as PostgreSQL
+    
+    %% Login Flow
+    Client->>Nginx: POST /api/v1/auth/login<br/>{email, password}
+    Nginx->>Gateway: Forward Request
+    Gateway->>UserCmd: gRPC Login(email, password)
+    UserCmd->>DB: SELECT * FROM users WHERE email = ?
+    DB-->>UserCmd: User Record
+    UserCmd->>UserCmd: bcrypt.Compare(hash, password)
+    UserCmd->>UserCmd: jwt.Sign({user_id, role}, secret)
+    UserCmd-->>Gateway: JWT Token + Refresh Token
+    Gateway-->>Nginx: 200 OK + Set-Cookie
+    Nginx-->>Client: JWT Token
+
+    %% Authenticated Request
+    Client->>Nginx: GET /api/v1/companies<br/>Authorization: Bearer JWT
+    Nginx->>Gateway: Forward + JWT
+    Gateway->>Gateway: Verify JWT Signature
+    Gateway->>Gateway: Extract user_id, role from JWT
+    Gateway->>Gateway: Check Role Permissions
+    alt Authorized
+        Gateway->>UserCmd: gRPC with user context
+        UserCmd-->>Gateway: Company List
+        Gateway-->>Nginx: 200 OK + Data
+        Nginx-->>Client: Response
+    else Unauthorized
+        Gateway-->>Nginx: 403 Forbidden
+        Nginx-->>Client: Access Denied
+    end
